@@ -3,7 +3,7 @@
 NotesInternals::NotesInternals(QObject *parent) : QObject(parent),hashFunction_("sha256"),encryptionEnabled_(false)
 {
     QCA::init();
-    LoadUnencryptedCategories();
+    loadUnencryptedCategories();
 }
 
 const CategoriesMap::iterator NotesInternals::addCategory(QString categoryName)
@@ -11,9 +11,8 @@ const CategoriesMap::iterator NotesInternals::addCategory(QString categoryName)
     Category* category=new Category();
     CategoriesMap::iterator ret=categoriesMap_.insert(std::pair<NameDate,Category*>(NameDate(categoryName,QDateTime::currentDateTime()),category));
     category->encrypted_=encryptionEnabled_;
-    category->folderName_=determineNewCategoryFolderName(ret);
-    QDir::mkdir(category->folderName_);
-    saveCategoryFile(ret);
+    category->folderName_="";
+    updateCategoryFile(ret);
     return ret;
 }
 
@@ -21,25 +20,19 @@ void NotesInternals::removeCategory(CategoriesMap::iterator &categoryIterator)
 {
     QDir dir(getCategoryFolderName(categoryIterator));
     dir.removeRecursively();
-    categoriesMap_.erase(categoryIterator);
     delete getCategory(categoryIterator);
+    categoriesMap_.erase(categoryIterator);
 }
 
 const CategoriesMap::iterator NotesInternals::renameCategory(CategoriesMap::iterator &categoryIterator, QString newCategoryName)
 {
     QString oldFolderName=getCategoryFolderName(categoryIterator);
     Category* category=getCategory_(categoryIterator);
-    if(!QDir::rename(oldFolderName,oldFolderName+".bak"))
-        return NULL;
+    if(!QDir("./").rename(oldFolderName,oldFolderName+".bak"))
+        return categoriesMap_.end();
     categoriesMap_.erase(categoryIterator);
     CategoriesMap::iterator ret=categoriesMap_.insert(std::pair<NameDate,Category*>(NameDate(newCategoryName,QDateTime::currentDateTime()),category));
-    QString newFolderName=determineNewCategoryFolderName(ret);
-    if(!QDir::rename(oldFolderName+".bak",newFolderName))
-        return NULL;
-    category->folderName_=newFolderName;
-    saveCategoryFile(ret);
-    QDir dir(oldFolderName+".bak");
-    dir.removeRecursively();
+    updateCategoryFile(ret);
     return ret;
 }
 
@@ -47,40 +40,212 @@ const EntriesMap::iterator NotesInternals::addEntry(CategoriesMap::iterator &cat
 {
     Entry* entry=new Entry();
     EntriesMap::iterator ret=getCategory_(categoryIterator)->entriesMap_.insert(std::pair<NameDate,Entry*>(NameDate(entryName,QDateTime::currentDateTime()),entry));
-    entry->fileName_=determineNewEntryFileName(categoryIterator,ret);
-    saveEntryFile(categoryIterator,ret);
+    entry->fileName_="";
+    updateEntryFile(categoryIterator,ret);
     return ret;
 }
 
-void NotesInternals::removeEntry(std::multimap::iterator &categoryIterator, std::multimap::iterator &entryIterator)
+void NotesInternals::removeEntry(CategoriesMap::iterator &categoryIterator, EntriesMap::iterator &entryIterator)
 {
     QFile file(getCategoryFolderName(categoryIterator)+getEntryFileName(entryIterator));
     file.remove();
-    getCategory_(categoryIterator)->entriesMap()->erase(entryIterator);
     delete getEntry_(entryIterator);
+    getCategory_(categoryIterator)->entriesMap_.erase(entryIterator);
 }
 
 const EntriesMap::iterator NotesInternals::renameEntry(CategoriesMap::iterator &categoryIterator, EntriesMap::iterator &entryIterator, QString newEntryName)
 {
     QString oldFileName=getCategoryFolderName(categoryIterator)+getEntryFileName(entryIterator);
     Entry* entry=getEntry_(entryIterator);
-    Category* category=getCategory(categoryIterator);
+    Category* category=getCategory_(categoryIterator);
     QFile file(oldFileName);
     if(!file.rename(oldFileName+".bak"))
-        return NULL;
+        return category->entriesMap_.end();
     category->entriesMap_.erase(entryIterator);
     EntriesMap::iterator ret=category->entriesMap_.insert(std::pair<NameDate,Entry*>(NameDate(newEntryName,QDateTime::currentDateTime()),entry));
-    entry->fileName_=determineNewEntryFileName(categoryIterator,ret);
-    saveEntryFile(categoryIterator,ret);
-    file.setFileName(oldFileName+".bak");
-    file.remove();
+    updateEntryFile(categoryIterator,ret);
     return ret;
 }
 
-QString NotesInternals::determineNewCategoryFolderName(const CategoriesMap::iterator &categoryIterator)
+const EntriesMap::iterator NotesInternals::moveEntry(CategoriesMap::iterator &oldCategoryIterator, EntriesMap::iterator &entryIterator, CategoriesMap::iterator &newCategoryIterator)
 {
+    std::pair<NameDate,Entry*> tmp=*entryIterator;
+    getCategory_(oldCategoryIterator)->entriesMap_.erase(entryIterator);
+    EntriesMap::iterator ret=getCategory_(newCategoryIterator)->entriesMap_.insert(tmp);
+    QDir("./").rename(getCategoryFolderName(oldCategoryIterator)+getEntry_(ret)->fileName_,getCategoryFolderName(newCategoryIterator)+getEntry_(ret)->fileName_+".tmp");
+    getEntry_(ret)->fileName_=getEntry_(ret)->fileName_+".tmp";
+    updateEntryFile(newCategoryIterator,ret);
+    return ret;
+}
+
+const EntriesMap::iterator NotesInternals::modifyEntryText(CategoriesMap::iterator &categoryIterator, EntriesMap::iterator &entryIterator, QString newEntryText)
+{
+    getEntry_(entryIterator)->entryText_=newEntryText;
+    updateEntryFile(categoryIterator,entryIterator);
+    return entryIterator;
+}
+
+bool NotesInternals::enableEncryption(const QCA::SecureArray &password)
+{
+    if(!cryptoBuffer_.readKeyIV(password,QString("./enc/pw")))
+        return false;
+    encryptionEnabled_=true;
+    loadEncryptedCategories();
+    return true;
+}
+
+void NotesInternals::disableEncryption()
+{
+    removeEncryptedCategories();
+    encryptionEnabled_=false;
+}
+
+void NotesInternals::loadUnencryptedCategories()
+{
+    QDirIterator dirIterator("./plain/",QDirIterator::Subdirectories);
+    QFile file;
+    QByteArray content;
+    QString folderName,filePath;
+    QString categoryName;
+    QString entryName;
+    QString entryText;
+    Category *category;
+    Entry *entry;
+    while(dirIterator.hasNext())
+    {
+        folderName=dirIterator.next();
+        if(!folderName.endsWith('.'))
+        {
+            file.setFileName(folderName+"category");
+            if(file.exists())
+            {
+                //read category file
+                file.open(QFile::ReadOnly);
+                content=file.readAll();
+                file.close();
+
+                categoryName=(content.indexOf('\n')==-1)?content:content.mid(0,content.indexOf('\n'));
+
+                //create new category from current folder
+                category=new Category();
+                category->folderName_=folderName;
+                category->encrypted_=false;
+
+                categoriesMap_.insert(std::pair<NameDate,Category*>(NameDate(categoryName,QDateTime::currentDateTime()),category));
+
+                QDirIterator fileIterator(folderName,QStringList()<<"*.entry",QDir::Files,QDirIterator::NoIteratorFlags);
+
+                while(fileIterator.hasNext())
+                {
+                    filePath=fileIterator.next();
+                    file.setFileName(filePath);
+                    file.open(QFile::ReadOnly);
+                    content=file.readAll();
+                    file.close();
+
+                    int i=content.indexOf('\n');
+                    entryName=content.mid(0,i);
+                    entryText=content.mid(i);
+
+                    entry=new Entry();
+                    entry->fileName_=QDir(folderName).relativeFilePath(filePath);
+                    entry->entryText_=entryText;
+
+                    category->entriesMap_.insert(std::pair<NameDate,Entry*>(NameDate(entryName,QDateTime::currentDateTime()),entry));
+                }
+            }
+        }
+    }
+}
+
+void NotesInternals::loadEncryptedCategories()
+{
+
+}
+
+void NotesInternals::removeEncryptedCategories()
+{
+
+}
+
+bool NotesInternals::updateEntryFile(CategoriesMap::iterator &categoryIterator, EntriesMap::iterator &entryIterator)
+{
+    //save previous file name
+    QString previousFileName=getEntryFileName(entryIterator);
+
+    //prepare content to write, depending on encryption
+    QByteArray content;
+    if(getCategoryEncrypted(categoryIterator))
+    {
+        QCA::InitializationVector iv(32);
+        content=iv.toByteArray()+cryptoBuffer_.encrypt(QCA::SecureArray((getEntryName(entryIterator)+QString("\n")+getEntryText(entryIterator)).toUtf8()),iv).toByteArray();
+    }
+    else
+        content=(getEntryName(entryIterator)+QString("\n")+getEntryText(entryIterator)).toUtf8();
+
+    //backup previous file if there is one
+    QFile file;
+    if(previousFileName!="")
+    {
+        file.setFileName(getCategoryFolderName(categoryIterator)+previousFileName);
+        file.rename(previousFileName+".bak");
+    }
+
+    //use hash of content as new filename (with failsafe in case of collision)
     hashFunction_.clear();
-    hashFunction_.update(getCategoryName(categoryIterator).toUtf8());
+    hashFunction_.update(content);
+    QString hash=QString(hashFunction_.final().toByteArray());
+    QString fileName=hash+QString(".entry");
+    file.setFileName(getCategoryFolderName(categoryIterator)+fileName);
+    int i=0;
+    while(file.exists())
+    {
+        fileName=hash+QString("-")+QString::number(i++)+QString(".entry");
+        file.setFileName(getCategoryFolderName(categoryIterator)+fileName);
+    }
+
+    //write content
+    file.open(QFile::WriteOnly);
+    file.write(content);
+    file.close();
+
+    //set new filename
+    getEntry_(entryIterator)->fileName_=fileName;
+
+    //delete backup
+    if(previousFileName!="")
+    {
+        file.setFileName(getCategoryFolderName(categoryIterator)+previousFileName);
+        file.remove();
+    }
+    return true;
+}
+
+bool NotesInternals::updateCategoryFile(CategoriesMap::iterator &categoryIterator)
+{
+    //save previous folder name
+    QString previousFolderName=getCategoryFolderName(categoryIterator);
+
+    //prepare content
+    QByteArray content;
+    if(getCategoryEncrypted(categoryIterator))
+    {
+        QCA::InitializationVector iv(32);
+        content=iv.toByteArray()+cryptoBuffer_.encrypt(QCA::SecureArray(getCategoryName(categoryIterator).toUtf8()),iv).toByteArray();
+    }
+    else
+        content=getCategoryName(categoryIterator).toUtf8();
+
+    //back up existing file, rename previous folder
+    if(previousFolderName!="")
+    {
+        QFile::rename(previousFolderName+"category",previousFolderName+"category.bak");
+        QDir("./").rename(previousFolderName,previousFolderName+".tmp");
+    }
+
+    //use hash of content for new folder name, again with failsafe for collisions
+    hashFunction_.clear();
+    hashFunction_.update(content);
     QString hash=QString(hashFunction_.final().toByteArray());
     QString pre=getCategoryEncrypted(categoryIterator)?QString("./enc/"):QString("./plain/");
     QString folderName=pre+hash+QString("/");
@@ -91,44 +256,29 @@ QString NotesInternals::determineNewCategoryFolderName(const CategoriesMap::iter
         folderName=pre+hash+QString::number(i++)+QString("/");
         dir.setPath(folderName);
     }
-    return folderName;
-}
 
-QString NotesInternals::determineNewEntryFileName(const CategoriesMap::iterator &categoryIterator, const EntriesMap::iterator &entryIterator)
-{
-
-}
-
-bool NotesInternals::saveEntryFile(std::multimap::iterator &categoryIterator, std::multimap::iterator &entryIterator)
-{
-    QFile file(getCategoryFolderName(categoryIterator)+getEntryFileName(entryIterator));
-    QByteArray content;
-    if(getCategoryEncrypted(categoryIterator))
-    {
-        QCA::InitializationVector iv(32);
-        content=iv.toByteArray()+cryptoBuffer_.encrypt(QCA::SecureArray((getEntryName(entryIterator)+QString("\n")+getEntryText(entryIterator)).toUtf8()),iv).toByteArray();
-    }
+    //rename previous folder if there was one or create new one
+    if(previousFolderName!="")
+        QDir("./").rename(previousFolderName+".tmp",folderName);
     else
-        content=(getEntryName(entryIterator)+QString("\n")+getEntryText(entryIterator)).toUtf8();
+        QDir("./").mkpath(folderName);
+
+    //write content to category file
+    QFile file(folderName+"category");
     file.open(QFile::WriteOnly);
     file.write(content);
     file.close();
-}
 
-bool NotesInternals::saveCategoryFile(CategoriesMap::iterator &categoryIterator)
-{
-    QFile file(getCategoryFolderName(categoryIterator)+"category");
-    QByteArray content;
-    if(getCategoryEncrypted(categoryIterator))
+    //set new folder name
+    getCategory_(categoryIterator)->folderName_=folderName;
+
+    //delete backup
+    if(previousFolderName!="")
     {
-        QCA::InitializationVector iv(32);
-        content=iv.toByteArray()+cryptoBuffer_.encrypt(QCA::SecureArray(getCategoryName(categoryIterator).toUtf8()),iv).toByteArray();
+        file.setFileName(folderName+"category.bak");
+        file.remove();
     }
-    else
-        content=getCategoryName(categoryIterator);
-    file.open(QFile::WriteOnly);
-    file.write(content);
-    file.close();
+    return true;
 }
 
 /*

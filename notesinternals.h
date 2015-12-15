@@ -12,6 +12,7 @@
 #include <QDir>
 #include <QDirIterator>
 #include <QDateTime>
+#include <QDirIterator>
 #include <Qca-qt5/QtCrypto/QtCrypto>
 #include "cryptobuffer.h"
 
@@ -61,7 +62,7 @@ public:
 
     bool enableEncryption(const QCA::SecureArray & password);
     void disableEncryption();
-    bool encryptionEnabled();
+    bool encryptionEnabled() {return encryptionEnabled_;}
 
     const CategoriesMap* categoriesMap(){return &categoriesMap_;}
 
@@ -87,15 +88,12 @@ private:
     CategoriesMap categoriesMap_;
     bool encryptionEnabled_;
 
-    void LoadUnencryptedCategories();
-    void LoadEncryptedCategories();
+    void loadUnencryptedCategories();
+    void loadEncryptedCategories();
+    void removeEncryptedCategories();
 
-    QString determineNewCategoryFolderName(const CategoriesMap::iterator &categoryIterator);
-    QString determineNewEntryFileName(const CategoriesMap::iterator &categoryIterator,const EntriesMap::iterator &entryIterator);
-    bool saveEntryFile(CategoriesMap::iterator &categoryIterator,EntriesMap::iterator &entryIterator);
     bool updateEntryFile(CategoriesMap::iterator &categoryIterator,EntriesMap::iterator &entryIterator);
-    bool saveCategoryFile(CategoriesMap::iterator &categoryIterator);
-    bool updateCategoryFiles(CategoriesMap::iterator &categoryIterator);
+    bool updateCategoryFile(CategoriesMap::iterator &categoryIterator);
     static Category* getCategory_(const CategoriesMap::iterator &categoryIterator)
         {return (*(CategoriesMap::iterator)categoryIterator).second;}
     static Entry* getEntry_(const EntriesMap::iterator &entryIterator)

@@ -8,7 +8,6 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     notesInternals(this)
 {
     ui->setupUi(this);
-    ui->tagsComboBox->setModel();
 }
 
 NotizenMainWindow::~NotizenMainWindow()
