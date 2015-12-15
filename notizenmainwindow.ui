@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>599</width>
-    <height>535</height>
+    <width>640</width>
+    <height>480</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -196,6 +196,25 @@
        </layout>
       </item>
       <item>
+       <widget class="QPushButton" name="decryptPushButton">
+        <property name="minimumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="printPushButton">
         <property name="enabled">
          <bool>true</bool>
@@ -230,25 +249,6 @@
         <property name="icon">
          <iconset resource="icons.qrc">
           <normaloff>:/icons/save.ico</normaloff>:/icons/save.ico</iconset>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="decryptPushButton">
-        <property name="minimumSize">
-         <size>
-          <width>48</width>
-          <height>48</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>48</width>
-          <height>48</height>
-         </size>
-        </property>
-        <property name="text">
-         <string/>
         </property>
        </widget>
       </item>
@@ -306,7 +306,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>599</width>
+     <width>640</width>
      <height>21</height>
     </rect>
    </property>
