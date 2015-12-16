@@ -11,6 +11,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = Notizen
 TEMPLATE = app
 CONFIG += crypto
+CONFIG += c++11
 
 SOURCES += main.cpp\
         notizenmainwindow.cpp \

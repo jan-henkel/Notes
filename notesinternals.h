@@ -14,6 +14,7 @@
 #include <QDateTime>
 #include <QDirIterator>
 #include <Qca-qt5/QtCrypto/QtCrypto>
+#include <QAbstractListModel>
 #include "cryptobuffer.h"
 
 class Entry;
@@ -39,7 +40,7 @@ class Category
 public:
     Category();
     ~Category();
-    const EntriesMap* entriesMap(){return &entriesMap_;}
+    const EntriesMap* entriesMap() const{return &entriesMap_;}
 private:
     bool encrypted_;
     QString folderName_;
@@ -51,14 +52,14 @@ class NotesInternals : public QObject
     Q_OBJECT
 public:
     NotesInternals(QObject *parent);
-    const CategoriesMap::iterator addCategory(QString categoryName);
-    void removeCategory(CategoriesMap::iterator &categoryIterator);
-    const CategoriesMap::iterator renameCategory(CategoriesMap::iterator &categoryIterator,QString newCategoryName);
-    const EntriesMap::iterator addEntry(CategoriesMap::iterator &categoryIterator,QString entryName);
-    void removeEntry(CategoriesMap::iterator &categoryIterator,EntriesMap::iterator &entryIterator);
-    const EntriesMap::iterator renameEntry(CategoriesMap::iterator &categoryIterator,EntriesMap::iterator &entryIterator,QString newEntryName);
-    const EntriesMap::iterator moveEntry(CategoriesMap::iterator &oldCategoryIterator,EntriesMap::iterator &entryIterator,CategoriesMap::iterator &newCategoryIterator);
-    const EntriesMap::iterator modifyEntryText(CategoriesMap::iterator &categoryIterator,EntriesMap::iterator &entryIterator,QString newEntryText);
+    const CategoriesMap::const_iterator addCategory(QString categoryName);
+    void removeCategory(CategoriesMap::const_iterator &categoryIterator);
+    const CategoriesMap::const_iterator renameCategory(CategoriesMap::const_iterator &categoryIterator,QString newCategoryName);
+    const EntriesMap::const_iterator addEntry(CategoriesMap::const_iterator &categoryIterator,QString entryName);
+    void removeEntry(CategoriesMap::const_iterator &categoryIterator,EntriesMap::const_iterator &entryIterator);
+    const EntriesMap::const_iterator renameEntry(CategoriesMap::const_iterator &categoryIterator,EntriesMap::const_iterator &entryIterator,QString newEntryName);
+    const EntriesMap::const_iterator moveEntry(CategoriesMap::const_iterator &oldCategoryIterator,EntriesMap::const_iterator &entryIterator,CategoriesMap::const_iterator &newCategoryIterator);
+    const EntriesMap::const_iterator modifyEntryText(CategoriesMap::const_iterator &categoryIterator,EntriesMap::const_iterator &entryIterator,QString newEntryText);
 
     bool enableEncryption(const QCA::SecureArray & password);
     void disableEncryption();
@@ -66,22 +67,24 @@ public:
 
     const CategoriesMap* categoriesMap(){return &categoriesMap_;}
 
-    static QString getCategoryName(const CategoriesMap::iterator &categoryIterator)
-        {return (*(CategoriesMap::iterator)categoryIterator).first.first;}
-    static bool getCategoryEncrypted(const CategoriesMap::iterator &categoryIterator)
-        {return (*(CategoriesMap::iterator)categoryIterator).second->encrypted_;}
-    static QString getCategoryFolderName(const CategoriesMap::iterator &categoryIterator)
-        {return (*(CategoriesMap::iterator)categoryIterator).second->folderName_;}
-    static const Category* getCategory(const CategoriesMap::iterator &categoryIterator)
-        {return (*(CategoriesMap::iterator)categoryIterator).second;}
-    static QString getEntryName(const EntriesMap::iterator &entryIterator)
-        {return (*(EntriesMap::iterator)entryIterator).first.first;}
-    static QString getEntryText(const EntriesMap::iterator &entryIterator)
-        {return (*(EntriesMap::iterator)entryIterator).second->entryText_;}
-    static QString getEntryFileName(const EntriesMap::iterator &entryIterator)
-        {return (*(EntriesMap::iterator)entryIterator).second->fileName_;}
-    static const Entry* getEntry(const EntriesMap::iterator &entryIterator)
-        {return (*(EntriesMap::iterator)entryIterator).second;}
+    static QString getCategoryName(const CategoriesMap::const_iterator &categoryIterator)
+        {return (*(CategoriesMap::const_iterator)categoryIterator).first.first;}
+    static bool getCategoryEncrypted(const CategoriesMap::const_iterator &categoryIterator)
+        {return (*(CategoriesMap::const_iterator)categoryIterator).second->encrypted_;}
+    static QString getCategoryFolderName(const CategoriesMap::const_iterator &categoryIterator)
+        {return (*(CategoriesMap::const_iterator)categoryIterator).second->folderName_;}
+    static const Category* getCategory(const CategoriesMap::const_iterator &categoryIterator)
+        {return (*(CategoriesMap::const_iterator)categoryIterator).second;}
+    static QString getEntryName(const EntriesMap::const_iterator &entryIterator)
+        {return (*(EntriesMap::const_iterator)entryIterator).first.first;}
+    static QString getEntryText(const EntriesMap::const_iterator &entryIterator)
+        {return (*(EntriesMap::const_iterator)entryIterator).second->entryText_;}
+    static QString getEntryFileName(const EntriesMap::const_iterator &entryIterator)
+        {return (*(EntriesMap::const_iterator)entryIterator).second->fileName_;}
+    static const Entry* getEntry(const EntriesMap::const_iterator &entryIterator)
+        {return (*(EntriesMap::const_iterator)entryIterator).second;}
+
+
 private:
     CryptoBuffer cryptoBuffer_;
     QCA::Hash hashFunction_;
@@ -92,13 +95,21 @@ private:
     void loadEncryptedCategories();
     void removeEncryptedCategories();
 
-    bool updateEntryFile(CategoriesMap::iterator &categoryIterator,EntriesMap::iterator &entryIterator);
-    bool updateCategoryFile(CategoriesMap::iterator &categoryIterator);
-    static Category* getCategory_(const CategoriesMap::iterator &categoryIterator)
-        {return (*(CategoriesMap::iterator)categoryIterator).second;}
-    static Entry* getEntry_(const EntriesMap::iterator &entryIterator)
-        {return (*(EntriesMap::iterator)entryIterator).second;}
+    bool updateEntryFile(CategoriesMap::const_iterator &categoryIterator,EntriesMap::const_iterator &entryIterator);
+    bool updateCategoryFile(CategoriesMap::const_iterator &categoryIterator);
+    static Category* getCategory_(const CategoriesMap::const_iterator &categoryIterator)
+        {return (*(CategoriesMap::const_iterator)categoryIterator).second;}
+    static Entry* getEntry_(const EntriesMap::const_iterator &entryIterator)
+        {return (*(EntriesMap::const_iterator)entryIterator).second;}
 };
 
+class CategoryListModel: public QAbstractListModel
+{
+    Q_OBJECT
+    friend class NotesInternals;
+public:
+    CategoryListModel(QObject *parent):QAbstractListModel(parent){}
+private:
 
+};
 #endif // NOTESINTERNALS_H
