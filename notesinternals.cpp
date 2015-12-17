@@ -1,6 +1,6 @@
 #include "notesinternals.h"
 
-NotesInternals::NotesInternals(QObject *parent) : QObject(parent),hashFunction_("sha256"),encryptionEnabled_(false)
+NotesInternals::NotesInternals(QObject *parent) : QObject(parent),hashFunction_("sha256"),encryptionEnabled_(false),categoryModel_(this),entryModel_(this)
 {
     QCA::init();
     loadUnencryptedCategories();
@@ -14,6 +14,7 @@ const CategoryPair NotesInternals::addCategory(QString categoryName)
     category->encrypted_=encryptionEnabled_;
     category->folderName_="";
     updateCategoryFile(ret);
+    emit categoryListChanged();
     return ret;
 }
 
@@ -25,6 +26,9 @@ bool NotesInternals::removeCategory(CategoryPair &categoryPair)
     dir.removeRecursively();
     delete getCategory(categoryPair);
     categoriesMap_.erase(categoryPair);
+    emit categoryListChanged();
+    if(currentCategoryPair_==categoryPair)
+        selectCategory(invalidCategoryPair());
     return true;
 }
 
@@ -40,6 +44,9 @@ const CategoryPair NotesInternals::renameCategory(CategoryPair &categoryPair, QS
     CategoryPair ret=CategoryPair(NameDate(newCategoryName,QDateTime::currentDateTime()),category);
     categoriesMap_.insert(ret);
     updateCategoryFile(ret);
+    emit categoryListChanged();
+    if(currentCategoryPair_==categoryPair)
+        selectCategory(ret);
     return ret;
 }
 
@@ -52,6 +59,8 @@ const EntryPair NotesInternals::addEntry(CategoryPair &categoryPair, QString ent
     getCategory_(categoryPair)->entriesMap_.insert(ret);
     entry->fileName_="";
     updateEntryFile(categoryPair,ret);
+    if(currentCategoryPair_==categoryPair)
+        emit categoryChanged();
     return ret;
 }
 
@@ -63,6 +72,12 @@ bool NotesInternals::removeEntry(CategoryPair &categoryPair, EntryPair &entryPai
     file.remove();
     delete getEntry_(entryPair);
     getCategory_(categoryPair)->entriesMap_.erase(entryPair);
+    if(currentCategoryPair_==categoryPair)
+    {
+        emit categoryChanged();
+        if(currentEntryPair_==entryPair)
+            selectEntry(invalidEntryPair());
+    }
     return true;
 }
 
@@ -80,6 +95,12 @@ const EntryPair NotesInternals::renameEntry(CategoryPair &categoryPair, EntryPai
     EntryPair ret=EntryPair(NameDate(newEntryName,QDateTime::currentDateTime()),entry);
     category->entriesMap_.insert(ret);
     updateEntryFile(categoryPair,ret);
+    if(currentCategoryPair_==categoryPair)
+    {
+        emit categoryChanged();
+        if(currentEntryPair_==entryPair)
+            selectEntry(ret);
+    }
     return ret;
 }
 
@@ -92,6 +113,12 @@ const EntryPair NotesInternals::moveEntry(CategoryPair &oldCategoryPair, EntryPa
     QDir("./").rename(getCategoryFolderName(oldCategoryPair)+getEntry_(entryPair)->fileName_,getCategoryFolderName(newCategoryPair)+getEntry_(entryPair)->fileName_+".tmp");
     getEntry_(entryPair)->fileName_=getEntry_(entryPair)->fileName_+".tmp";
     updateEntryFile(newCategoryPair,entryPair);
+    if(currentCategoryPair_==oldCategoryPair || currentCategoryPair_==newCategoryPair)
+    {
+        emit categoryChanged();
+        if(currentCategoryPair_==oldCategoryPair && currentEntryPair_==entryPair)
+            selectEntry(invalidEntryPair());
+    }
     return entryPair;
 }
 
@@ -101,6 +128,8 @@ const EntryPair NotesInternals::modifyEntryText(CategoryPair &categoryPair, Entr
         return invalidEntryPair();
     getEntry_(entryPair)->entryText_=newEntryText;
     updateEntryFile(categoryPair,entryPair);
+    if(currentCategoryPair_==categoryPair && currentEntryPair_==entryPair)
+        emit entryChanged();
     return entryPair;
 }
 
@@ -117,6 +146,47 @@ void NotesInternals::disableEncryption()
 {
     removeEncryptedCategories();
     encryptionEnabled_=false;
+}
+
+void NotesInternals::selectCategory(const CategoryPair &categoryPair)
+{
+    if(!isValid(categoryPair))
+    {
+        currentCategoryPair_=invalidCategoryPair();
+        currentEntryPair_=invalidEntryPair();
+        emit categoryChanged();
+        emit entryChanged();
+    }
+    else
+    {
+        if(currentCategoryPair_!=categoryPair)
+        {
+            currentCategoryPair_=categoryPair;
+            emit categoryChanged();
+            if(!isValid(currentCategoryPair_,currentEntryPair_))
+            {
+                currentEntryPair_=invalidEntryPair();
+                emit entryChanged();
+            }
+        }
+    }
+}
+
+void NotesInternals::selectEntry(const EntryPair &entryPair)
+{
+    if(!isValid(currentCategoryPair_,entryPair))
+    {
+        currentEntryPair_=invalidEntryPair();
+        emit entryChanged();
+    }
+    else
+    {
+        if(currentEntryPair_!=entryPair)
+        {
+            currentEntryPair_=entryPair;
+            emit entryChanged();
+        }
+    }
 }
 
 void NotesInternals::loadCategories(bool encrypted)
@@ -457,4 +527,24 @@ Category::~Category()
 {
     for(EntriesMap::iterator i=entriesMap_.begin();i!=entriesMap_.end();++i)
         delete NotesInternals::getEntry(*i);
+}
+
+QVariant CategoryListModel::data(const QModelIndex &index, int role) const {
+    if(index.row()<0 || index.row()>=categoryPairs_.size())
+        return QVariant();
+    if(role==Qt::UserRole)
+        return QVariant::fromValue(categoryPairs_[index.row()]);
+    else if(role==Qt::DisplayRole)
+        return NotesInternals::getCategoryName(categoryPairs_[index.row()]);
+    return QVariant();
+}
+
+QVariant EntryListModel::data(const QModelIndex &index, int role) const {
+    if(index.row()<0 || index.row()>=entryPairs_.size())
+        return QVariant();
+    if(role==Qt::UserRole)
+        return QVariant::fromValue(entryPairs_[index.row()]);
+    else if(role==Qt::DisplayRole)
+        return QVariant::fromValue(NotesInternals::getEntryName(entryPairs_[index.row()]));
+    return QVariant();
 }

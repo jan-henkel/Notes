@@ -13,9 +13,14 @@ class NotizenMainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    enum UpdateTags {
+        CategoryListChanged=1<<0,
+        EntryListChanged=1<<1,
+        EntryTextChanged=1<<2
+    };
+
     explicit NotizenMainWindow(QWidget *parent = 0);
     ~NotizenMainWindow();
-
     void addCategory(QString categoryName);
     void addEntry(QString entryName);
     void saveEntry();
@@ -45,16 +50,15 @@ private slots:
     void on_entriesListWidget_pressed(const QModelIndex &index);
 
     void on_encryptionPushButton_clicked();
-
 private:
     Ui::NotizenMainWindow *ui;
     NotesInternals notesInternals;
     bool edited;
+    qint16 updateTags;
+    QString filterString;
 
     CategoryPair currentCategoryPair;
     EntryPair currentEntryPair;
-    const Category* currentCategory;
-    const Entry* currentEntry;
 
     std::vector<CategoryPair> categoryPairList;
     std::vector<EntryPair> entryPairList;
@@ -66,6 +70,11 @@ private:
     void updateEntryListAndUI();
     void updateEntryTextUI();
     void updateListsAndUI();
+    void syncModelAndUI();
+private slots:
+    void categoryListChanged() {updateTags|=CategoryListChanged;}
+    void categoryChanged() {updateTags|=EntryListChanged;}
+    void entryChanged() {updateTags|=EntryTextChanged;}
 };
 
 #endif // NOTIZENMAINWINDOW_H
