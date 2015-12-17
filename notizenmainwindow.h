@@ -51,16 +51,16 @@ private:
     NotesInternals notesInternals;
     bool edited;
 
-    CategoriesMap::const_iterator currentCategoryIterator;
-    EntriesMap::const_iterator currentEntryIterator;
+    CategoryPair currentCategoryPair;
+    EntryPair currentEntryPair;
     const Category* currentCategory;
     const Entry* currentEntry;
 
-    std::vector<CategoriesMap::const_iterator> categoryIteratorList;
-    std::vector<EntriesMap::const_iterator> entryIteratorList;
+    std::vector<CategoryPair> categoryPairList;
+    std::vector<EntryPair> entryPairList;
 
-    void selectCategoryIterator(CategoriesMap::const_iterator newCategoryIterator, bool resetEntry);
-    void selectEntryIterator(EntriesMap::const_iterator newEntryIterator);
+    void selectCategoryPair(CategoryPair newCategoryPair, bool resetEntry);
+    void selectEntryPair(EntryPair newEntryPair);
 
     void updateCategoryListAndUI();
     void updateEntryListAndUI();
