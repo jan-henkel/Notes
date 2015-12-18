@@ -142,6 +142,8 @@ public:
         {return removeCategory(currentCategoryPair_);}
     const CategoryPair renameCurrentCategory(QString newCategoryName)
         {return renameCategory(currentCategoryPair_,newCategoryName);}
+    const EntryPair addEntryToCurrentCategory(QString entryName)
+        {return addEntry(currentCategoryPair_,entryName);}
     bool removeCurrentEntry()
         {return removeEntry(currentCategoryPair_,currentEntryPair_);}
     const EntryPair renameCurrentEntry(QString newEntryName)
@@ -152,8 +154,10 @@ public:
         {return modifyEntryText(currentCategoryPair_,currentEntryPair_,newEntryText);}
 signals:
     void categoryListChanged();
-    void categoryChanged();
-    void entryChanged();
+    void categorySelectionChanged();
+    void categoryContentChanged();
+    void entrySelectionChanged();
+    void entryContentChanged();
 private:
     CryptoBuffer cryptoBuffer_;
     QCA::Hash hashFunction_;

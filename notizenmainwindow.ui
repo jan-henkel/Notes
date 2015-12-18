@@ -367,7 +367,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="printPushButton">
+       <widget class="QPushButton" name="savePushButton">
         <property name="enabled">
          <bool>true</bool>
         </property>

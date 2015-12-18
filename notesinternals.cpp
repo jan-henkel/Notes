@@ -1,6 +1,6 @@
 #include "notesinternals.h"
 
-NotesInternals::NotesInternals(QObject *parent) : QObject(parent),hashFunction_("sha256"),encryptionEnabled_(false),categoryModel_(this),entryModel_(this)
+NotesInternals::NotesInternals(QObject *parent) : QObject(parent),hashFunction_("sha256"),encryptionEnabled_(false),categoryModel_(this),entryModel_(this),currentCategoryPair_(invalidCategoryPair()),currentEntryPair_(invalidEntryPair())
 {
     QCA::init();
     loadUnencryptedCategories();
@@ -60,7 +60,7 @@ const EntryPair NotesInternals::addEntry(CategoryPair &categoryPair, QString ent
     entry->fileName_="";
     updateEntryFile(categoryPair,ret);
     if(currentCategoryPair_==categoryPair)
-        emit categoryChanged();
+        emit categoryContentChanged();
     return ret;
 }
 
@@ -74,7 +74,7 @@ bool NotesInternals::removeEntry(CategoryPair &categoryPair, EntryPair &entryPai
     getCategory_(categoryPair)->entriesMap_.erase(entryPair);
     if(currentCategoryPair_==categoryPair)
     {
-        emit categoryChanged();
+        emit categoryContentChanged();
         if(currentEntryPair_==entryPair)
             selectEntry(invalidEntryPair());
     }
@@ -97,7 +97,7 @@ const EntryPair NotesInternals::renameEntry(CategoryPair &categoryPair, EntryPai
     updateEntryFile(categoryPair,ret);
     if(currentCategoryPair_==categoryPair)
     {
-        emit categoryChanged();
+        emit categoryContentChanged();
         if(currentEntryPair_==entryPair)
             selectEntry(ret);
     }
@@ -115,7 +115,7 @@ const EntryPair NotesInternals::moveEntry(CategoryPair &oldCategoryPair, EntryPa
     updateEntryFile(newCategoryPair,entryPair);
     if(currentCategoryPair_==oldCategoryPair || currentCategoryPair_==newCategoryPair)
     {
-        emit categoryChanged();
+        emit categoryContentChanged();
         if(currentCategoryPair_==oldCategoryPair && currentEntryPair_==entryPair)
             selectEntry(invalidEntryPair());
     }
@@ -129,7 +129,7 @@ const EntryPair NotesInternals::modifyEntryText(CategoryPair &categoryPair, Entr
     getEntry_(entryPair)->entryText_=newEntryText;
     updateEntryFile(categoryPair,entryPair);
     if(currentCategoryPair_==categoryPair && currentEntryPair_==entryPair)
-        emit entryChanged();
+        emit entryContentChanged();
     return entryPair;
 }
 
@@ -154,19 +154,19 @@ void NotesInternals::selectCategory(const CategoryPair &categoryPair)
     {
         currentCategoryPair_=invalidCategoryPair();
         currentEntryPair_=invalidEntryPair();
-        emit categoryChanged();
-        emit entryChanged();
+        emit categorySelectionChanged();
+        emit entrySelectionChanged();
     }
     else
     {
         if(currentCategoryPair_!=categoryPair)
         {
             currentCategoryPair_=categoryPair;
-            emit categoryChanged();
+            emit categorySelectionChanged();
             if(!isValid(currentCategoryPair_,currentEntryPair_))
             {
                 currentEntryPair_=invalidEntryPair();
-                emit entryChanged();
+                emit entrySelectionChanged();
             }
         }
     }
@@ -177,14 +177,14 @@ void NotesInternals::selectEntry(const EntryPair &entryPair)
     if(!isValid(currentCategoryPair_,entryPair))
     {
         currentEntryPair_=invalidEntryPair();
-        emit entryChanged();
+        emit entrySelectionChanged();
     }
     else
     {
         if(currentEntryPair_!=entryPair)
         {
             currentEntryPair_=entryPair;
-            emit entryChanged();
+            emit entrySelectionChanged();
         }
     }
 }

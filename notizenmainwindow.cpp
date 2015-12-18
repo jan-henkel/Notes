@@ -8,11 +8,14 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     notesInternals(this)
 {
     ui->setupUi(this);
-    updateListsAndUI();
+    updateTags|=(CategoryListChanged|EntryListContentChanged|EntrySelectionChanged);
+    syncModelAndUI();
 
     QObject::connect(&(this->notesInternals),SIGNAL(categoryListChanged()),this,SLOT(categoryListChanged()),Qt::DirectConnection);
-    QObject::connect(&(this->notesInternals),SIGNAL(categoryChanged()),this,SLOT(categoryChanged()),Qt::DirectConnection);
-    QObject::connect(&(this->notesInternals),SIGNAL(entryChanged()),this,SLOT(entryChanged()),Qt::DirectConnection);
+    QObject::connect(&(this->notesInternals),SIGNAL(categorySelectionChanged()),this,SLOT(categorySelectionChanged()),Qt::DirectConnection);
+    QObject::connect(&(this->notesInternals),SIGNAL(categoryContentChanged()),this,SLOT(categoryContentChanged()),Qt::DirectConnection);
+    QObject::connect(&(this->notesInternals),SIGNAL(entrySelectionChanged()),this,SLOT(entrySelectionChanged()),Qt::DirectConnection);
+    QObject::connect(&(this->notesInternals),SIGNAL(entryContentChanged()),this,SLOT(entryContentChanged()),Qt::DirectConnection);
 }
 
 NotizenMainWindow::~NotizenMainWindow()
@@ -23,107 +26,25 @@ NotizenMainWindow::~NotizenMainWindow()
 void NotizenMainWindow::addCategory()
 {
     notesInternals.selectCategory(notesInternals.addCategory(ui->categoriesComboBox->currentText()));
-    selectCategoryPair(notesInternals.addCategory(categoryName),true);
-    updateListsAndUI();
+    syncModelAndUI();
 }
 
-void NotizenMainWindow::addEntry(QString entryName)
+void NotizenMainWindow::addEntry()
 {
-    if(NotesInternals::getCategory(currentCategoryPair))
-        selectEntryPair(notesInternals.addEntry(currentCategoryPair,entryName));
-    updateEntryListAndUI();
-    updateEntryTextUI();
+    notesInternals.selectEntry(notesInternals.addEntryToCurrentCategory(ui->entryFilterLineEdit->text()));
+    syncModelAndUI();
 }
 
 void NotizenMainWindow::saveEntry()
 {
-    if(NotesInternals::getCategory(currentCategoryPair) && NotesInternals::getEntry(currentEntryPair))
-    {
-        notesInternals.modifyEntryText(currentCategoryPair,currentEntryPair,ui->entryTextEdit->toPlainText());
-    }
+    notesInternals.modifyCurrentEntryText(ui->entryTextEdit->toPlainText());
+    syncModelAndUI();
 }
 
-void NotizenMainWindow::selectCategoryPair(CategoryPair newCategoryPair, bool resetEntry)
+void NotizenMainWindow::removeEntry()
 {
-    currentCategoryPair=newCategoryPair;
-    if(resetEntry)
-    {
-        currentEntryPair=NotesInternals::invalidEntryPair();
-    }
-}
-
-void NotizenMainWindow::selectEntryPair(EntryPair newEntryPair)
-{
-    currentEntryPair=newEntryPair;
-}
-
-void NotizenMainWindow::updateCategoryListAndUI()
-{
-    categoryPairList.clear();
-    for(CategoriesMap::const_iterator i=notesInternals.categoriesMap()->begin();i!=notesInternals.categoriesMap()->end();++i)
-        categoryPairList.push_back(*i);
-    ui->categoriesComboBox->clear();
-    int j=-1;
-    for(unsigned int i=0;i<categoryPairList.size();++i)
-    {
-        ui->categoriesComboBox->addItem(NotesInternals::getCategoryEncrypted(categoryPairList[i])?QIcon("/icons/lock_add.png"):QIcon(),
-                                        NotesInternals::getCategoryName(categoryPairList[i]));
-        if(NotesInternals::getCategory(currentCategoryPair)==NotesInternals::getCategory(categoryPairList[i]))
-            j=i;
-    }
-    if(j==-1)
-    {
-        currentCategoryPair=NotesInternals::invalidCategoryPair();
-    }
-    ui->categoriesComboBox->setCurrentIndex(j);
-}
-
-void NotizenMainWindow::updateEntryListAndUI()
-{
-    entryPairList.clear();
-    ui->entriesListWidget->clear();
-    if(NotesInternals::getCategory(currentCategoryPair))
-    {
-        int j=-1;
-        for(EntriesMap::const_iterator i=NotesInternals::getCategory(currentCategoryPair)->entriesMap()->cbegin();i!=NotesInternals::getCategory(currentCategoryPair)->entriesMap()->cend();++i)
-        {
-            if(NotesInternals::getEntryName(*i).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
-                entryPairList.push_back(*i);
-        }
-        for(EntriesMap::const_iterator i=NotesInternals::getCategory(currentCategoryPair)->entriesMap()->cbegin();i!=NotesInternals::getCategory(currentCategoryPair)->entriesMap()->cend();++i)
-        {
-            if(!NotesInternals::getEntryName(*i).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive) && NotesInternals::getEntryName(*i).contains(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
-                entryPairList.push_back(*i);
-        }
-        for(unsigned int i=0;i<entryPairList.size();++i)
-        {
-            ui->entriesListWidget->addItem(NotesInternals::getEntryName(entryPairList[i]));
-            if(NotesInternals::getEntry(currentEntryPair)==NotesInternals::getEntry(entryPairList[i]))
-                j=i;
-        }
-        if(j==-1)
-        {
-            currentEntryPair=NotesInternals::invalidEntryPair();
-            updateEntryTextUI();
-        }
-        ui->entriesListWidget->setCurrentRow(j);
-    }
-}
-
-void NotizenMainWindow::updateEntryTextUI()
-{
-    ui->entryTextEdit->clear();
-    if(NotesInternals::getCategory(currentCategoryPair) && NotesInternals::getEntry(currentEntryPair))
-    {
-        ui->entryTextEdit->setText(NotesInternals::getEntryText(currentEntryPair));
-    }
-}
-
-void NotizenMainWindow::updateListsAndUI()
-{
-    updateCategoryListAndUI();
-    updateEntryListAndUI();
-    updateEntryTextUI();
+    notesInternals.removeCurrentEntry();
+    syncModelAndUI();
 }
 
 void NotizenMainWindow::syncModelAndUI()
@@ -142,12 +63,12 @@ void NotizenMainWindow::syncModelAndUI()
                 j=i;
         }
         ui->categoriesComboBox->setCurrentIndex(j);
-        updateTags &= !CategoryListChanged;
+        updateTags &= ~CategoryListChanged;
     }
-    if(updateTags & EntryListChanged)
+    if(updateTags & (CategorySelectionChanged|EntryListContentChanged))
     {
         entryPairList.clear();
-        ui->categoriesComboBox->clear();
+        ui->entriesListWidget->clear();
         if(notesInternals.isValid(notesInternals.currentCategoryPair()))
         {
             for(EntriesMap::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entriesMap()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entriesMap()->cend();++i)
@@ -160,55 +81,49 @@ void NotizenMainWindow::syncModelAndUI()
                 if(!NotesInternals::getEntryName(*i).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive) && NotesInternals::getEntryName(*i).contains(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
                     entryPairList.push_back(*i);
             }
-            int j=-1;
             for(int i=0;i<(int)entryPairList.size();++i)
-            {
                 ui->entriesListWidget->addItem(NotesInternals::getEntryName(entryPairList[i]));
-                if(notesInternals.currentEntryPair()==entryPairList[i])
-                    j=i;
-            }
-            ui->entriesListWidget->setCurrentRow(j);
-            if(j==-1)
-                notesInternals.selectEntry(NotesInternals::invalidEntryPair());
-            updateTags &= !EntryListChanged;
         }
     }
-    if(updateTags & EntryTextChanged)
+    if(updateTags & (CategorySelectionChanged|EntryListContentChanged|EntrySelectionChanged))
+    {
+        int j=-1;
+        for(int i=0;i<(int)entryPairList.size();++i)
+        {
+            if(notesInternals.currentEntryPair()==entryPairList[i])
+                j=i;
+        }
+        ui->entriesListWidget->setCurrentRow(j);
+        if(j==-1)
+            notesInternals.selectEntry(NotesInternals::invalidEntryPair());
+        updateTags &= ~(CategorySelectionChanged|EntryListContentChanged);
+    }
+    if(updateTags & (EntrySelectionChanged|EntryContentChanged))
     {
         ui->entryTextEdit->setText(notesInternals.getEntryText(notesInternals.currentEntryPair()));
+        updateTags &= ~(EntrySelectionChanged|EntryContentChanged);
     }
 }
 
 void NotizenMainWindow::on_addCategoryPushButton_clicked()
 {
-    addCategory(ui->categoriesComboBox->currentText());
+    addCategory();
 }
 
 void NotizenMainWindow::on_addEntryPushButton_clicked()
 {
-    addEntry(ui->entryFilterLineEdit->text());
+    addEntry();
 }
 
 void NotizenMainWindow::on_categoriesComboBox_activated(int index)
 {
-    selectCategoryPair(categoryPairList[index],true);
-    updateListsAndUI();
-}
-
-void NotizenMainWindow::on_entriesListWidget_activated(const QModelIndex &index)
-{
-
-}
-
-void NotizenMainWindow::on_printPushButton_clicked()
-{
-    saveEntry();
-}
-
-
-void NotizenMainWindow::on_entriesListWidget_entered(const QModelIndex &index)
-{
-
+    if(index>=0 && index<categoryPairList.size())
+    {
+        updateTags|=EntryListContentChanged;
+        ui->entryFilterLineEdit->setText("");
+        notesInternals.selectCategory(categoryPairList[index]);
+        syncModelAndUI();
+    }
 }
 
 void NotizenMainWindow::on_entriesListWidget_currentRowChanged(int currentRow)
@@ -216,37 +131,34 @@ void NotizenMainWindow::on_entriesListWidget_currentRowChanged(int currentRow)
 
 }
 
-void NotizenMainWindow::on_entryFilterLineEdit_textChanged(const QString &arg1)
-{
-
-}
-
 void NotizenMainWindow::on_entryFilterLineEdit_textEdited(const QString &arg1)
 {
-    updateEntryListAndUI();
+    updateTags|=EntryListContentChanged;
+    notesInternals.selectEntry(NotesInternals::invalidEntryPair()); //optional, depending on search behavior
+    syncModelAndUI();
+    if(!entryPairList.empty())
+    {
+        notesInternals.selectEntry(entryPairList[0]);
+        syncModelAndUI();
+    }
 }
 
-void NotizenMainWindow::on_entriesListWidget_clicked(const QModelIndex &index)
+void NotizenMainWindow::on_savePushButton_clicked()
 {
-
-}
-
-void NotizenMainWindow::on_entriesListWidget_itemSelectionChanged()
-{
-
+    saveEntry();
 }
 
 void NotizenMainWindow::on_entriesListWidget_pressed(const QModelIndex &index)
 {
     int i=ui->entriesListWidget->currentIndex().row();
-    if(i>=0 && i<entryPairList.size())
+    if(i>=0 && i<(int)entryPairList.size())
     {
-        selectEntryPair(entryPairList[i]);
-        updateEntryTextUI();
+        notesInternals.selectEntry(entryPairList[i]);
+        syncModelAndUI();
     }
 }
 
-void NotizenMainWindow::on_encryptionPushButton_clicked()
+void NotizenMainWindow::on_removeEntryPushButton_clicked()
 {
-
+    removeEntry();
 }
