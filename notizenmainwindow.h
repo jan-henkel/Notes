@@ -3,7 +3,19 @@
 
 #include <QMainWindow>
 #include <QIcon>
+#include <QtPrintSupport/QtPrintSupport>
+#include <QtPrintSupport/QPrintDialog>
+#include <QtPrintSupport/QPrinter>
+#include <QtPrintSupport/QPrintEngine>
+#include <QTextDocument>
 #include "notesinternals.h"
+#include <QMessageBox>
+#include <QDesktopServices>
+#include <QUrl>
+#include <QTextCharFormat>
+#include <QTextBlockFormat>
+#include <QFontDialog>
+
 namespace Ui {
 class NotizenMainWindow;
 }
@@ -27,6 +39,9 @@ public:
     void addEntry();
     void saveEntry();
     void removeEntry();
+    void removeCategory();
+    void printEntry();
+    void printCategory();
 private slots:
     void on_addCategoryPushButton_clicked();
 
@@ -57,6 +72,23 @@ private slots:
     void on_savePushButton_clicked();
     void on_entriesListWidget_pressed(const QModelIndex &index);
     void on_removeEntryPushButton_clicked();
+    void on_printEntryPushButton_clicked();
+    void on_removeCategoryPushButton_clicked();
+    void on_entryTextEdit_anchorClicked(const QUrl &arg1);
+    void on_entryTextEdit_cursorPositionChanged();
+    void on_makeLinkPushButton_clicked();
+    void on_entryTextEdit_textChanged();
+    void on_entryTextEdit_currentCharFormatChanged(const QTextCharFormat &format);
+    void on_printCategoryPushButton_clicked();
+    void on_fontComboBox_activated(const QString &arg1);
+    void on_makeLinkCheckBox_clicked(bool checked);
+    void on_colorPushButton_clicked();
+    void on_fontSizeSpinBox_valueChanged(int arg1);
+    void on_fontSizeSpinBox_editingFinished();
+    void on_italicToolButton_clicked(bool checked);
+    void on_underlineToolButton_clicked(bool checked);
+    void on_boldToolButton_clicked(bool checked);
+    void on_entriesListWidget_customContextMenuRequested(const QPoint &pos);
 };
 
 #endif // NOTIZENMAINWINDOW_H

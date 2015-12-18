@@ -36,10 +36,10 @@ const CategoryPair NotesInternals::renameCategory(CategoryPair &categoryPair, QS
 {
     if(!isValid(categoryPair))
         return invalidCategoryPair();
-    QString oldFolderName=getCategoryFolderName(categoryPair);
+    //QString oldFolderName=getCategoryFolderName(categoryPair);
     Category* category=getCategory_(categoryPair);
-    if(!QDir("./").rename(oldFolderName,oldFolderName+".bak"))
-        return invalidCategoryPair();
+    //if(!QDir("./").rename(oldFolderName,oldFolderName+".bak"))
+    //    return invalidCategoryPair();
     categoriesMap_.erase(categoryPair);
     CategoryPair ret=CategoryPair(NameDate(newCategoryName,QDateTime::currentDateTime()),category);
     categoriesMap_.insert(ret);
@@ -85,12 +85,12 @@ const EntryPair NotesInternals::renameEntry(CategoryPair &categoryPair, EntryPai
 {
     if(!isValid(categoryPair,entryPair))
         return invalidEntryPair();
-    QString oldFileName=getCategoryFolderName(categoryPair)+getEntryFileName(entryPair);
+    //QString oldFileName=getCategoryFolderName(categoryPair)+getEntryFileName(entryPair);
     Entry* entry=getEntry_(entryPair);
     Category* category=getCategory_(categoryPair);
-    QFile file(oldFileName);
-    if(!file.rename(oldFileName+".bak"))
-        return invalidEntryPair();
+    //QFile file(oldFileName);
+    //if(!file.rename(oldFileName+".bak"))
+    //    return invalidEntryPair();
     category->entriesMap_.erase(entryPair);
     EntryPair ret=EntryPair(NameDate(newEntryName,QDateTime::currentDateTime()),entry);
     category->entriesMap_.insert(ret);
@@ -425,7 +425,7 @@ bool NotesInternals::updateEntryFile(CategoryPair &categoryPair, EntryPair &entr
     if(previousFileName!="")
     {
         file.setFileName(getCategoryFolderName(categoryPair)+previousFileName);
-        file.rename(previousFileName+".bak");
+        file.rename(getCategoryFolderName(categoryPair)+previousFileName+".bak");
     }
 
     //use hash of content as new filename (with failsafe in case of collision)
@@ -452,7 +452,7 @@ bool NotesInternals::updateEntryFile(CategoryPair &categoryPair, EntryPair &entr
     //delete backup
     if(previousFileName!="")
     {
-        file.setFileName(getCategoryFolderName(categoryPair)+previousFileName);
+        file.setFileName(getCategoryFolderName(categoryPair)+previousFileName+".bak");
         file.remove();
     }
     return true;

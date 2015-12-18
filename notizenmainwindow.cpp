@@ -10,7 +10,6 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     ui->setupUi(this);
     updateTags|=(CategoryListChanged|EntryListContentChanged|EntrySelectionChanged);
     syncModelAndUI();
-
     QObject::connect(&(this->notesInternals),SIGNAL(categoryListChanged()),this,SLOT(categoryListChanged()),Qt::DirectConnection);
     QObject::connect(&(this->notesInternals),SIGNAL(categorySelectionChanged()),this,SLOT(categorySelectionChanged()),Qt::DirectConnection);
     QObject::connect(&(this->notesInternals),SIGNAL(categoryContentChanged()),this,SLOT(categoryContentChanged()),Qt::DirectConnection);
@@ -37,7 +36,7 @@ void NotizenMainWindow::addEntry()
 
 void NotizenMainWindow::saveEntry()
 {
-    notesInternals.modifyCurrentEntryText(ui->entryTextEdit->toPlainText());
+    notesInternals.modifyCurrentEntryText(ui->entryTextEdit->toHtml());
     syncModelAndUI();
 }
 
@@ -45,6 +44,87 @@ void NotizenMainWindow::removeEntry()
 {
     notesInternals.removeCurrentEntry();
     syncModelAndUI();
+}
+
+void NotizenMainWindow::removeCategory()
+{
+    notesInternals.removeCurrentCategory();
+    syncModelAndUI();
+}
+
+void NotizenMainWindow::printEntry()
+{
+    if(QPrinterInfo::availablePrinters().empty())
+    {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Error");
+        msgBox.setText(tr("No printers found"));
+        msgBox.exec();
+    }
+    else
+    {
+        QPrinter printer;
+        QPrintDialog *printDialog=new QPrintDialog(&printer,this);
+        QTextEdit textEdit;
+        if(printDialog->exec() == QDialog::Accepted)
+        {
+            textEdit.setCurrentFont(QFont("Trebuchet MS",16,QFont::Normal,false));
+            textEdit.setFontUnderline(true);
+            textEdit.insertPlainText(NotesInternals::getEntryName(notesInternals.currentEntryPair())+QString("\n\n"));
+
+            textEdit.setCurrentFont(QFont("Trebuchet MS",14,QFont::Normal,false));
+            textEdit.setFontUnderline(false);
+            textEdit.insertHtml(NotesInternals::getEntryText(notesInternals.currentEntryPair()));
+
+            textEdit.print(&printer);
+        }
+    }
+}
+
+void NotizenMainWindow::printCategory()
+{
+    if(QPrinterInfo::availablePrinters().empty())
+    {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Error");
+        msgBox.setText(tr("No printers found"));
+        msgBox.exec();
+    }
+    else
+    {
+        QPrinter printer;
+        QPrintDialog *printDialog=new QPrintDialog(&printer,this);
+        QTextEdit textEdit;
+        if(printDialog->exec() == QDialog::Accepted && notesInternals.isValid(notesInternals.currentCategoryPair()))
+        {
+            textEdit.moveCursor(QTextCursor::End);
+            QTextBlockFormat f;
+            f.setAlignment(Qt::AlignCenter);
+            textEdit.setCurrentFont(QFont("Trebuchet MS",16,QFont::Bold,false));
+            textEdit.setFontUnderline(true);
+            textEdit.textCursor().insertBlock(f);
+            textEdit.textCursor().insertText(NotesInternals::getCategoryName(notesInternals.currentCategoryPair()));
+            //textEdit.insertPlainText(NotesInternals::getCategoryName(notesInternals.currentCategoryPair()));
+            f.setAlignment(Qt::AlignLeft);
+            textEdit.textCursor().insertBlock(f);
+            for(EntriesMap::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entriesMap()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entriesMap()->cend();++i)
+            {
+                textEdit.setCurrentFont(QFont("Trebuchet MS",14,QFont::Normal,false));
+                textEdit.setFontUnderline(true);
+                QTextCharFormat f=textEdit.currentCharFormat();
+                f.setForeground(Qt::black);
+                textEdit.setCurrentCharFormat(f);
+                textEdit.insertPlainText(QString("\n\n"));
+                textEdit.insertPlainText(NotesInternals::getEntryName(*i)+QString("\n\n"));
+
+                textEdit.setCurrentFont(QFont("Trebuchet MS",12,QFont::Normal,false));
+                textEdit.setFontUnderline(false);
+                textEdit.insertHtml(NotesInternals::getEntryText(*i));
+            }
+
+            textEdit.print(&printer);
+        }
+    }
 }
 
 void NotizenMainWindow::syncModelAndUI()
@@ -100,7 +180,7 @@ void NotizenMainWindow::syncModelAndUI()
     }
     if(updateTags & (EntrySelectionChanged|EntryContentChanged))
     {
-        ui->entryTextEdit->setText(notesInternals.getEntryText(notesInternals.currentEntryPair()));
+        ui->entryTextEdit->setHtml(notesInternals.getEntryText(notesInternals.currentEntryPair()));
         updateTags &= ~(EntrySelectionChanged|EntryContentChanged);
     }
 }
@@ -161,4 +241,146 @@ void NotizenMainWindow::on_entriesListWidget_pressed(const QModelIndex &index)
 void NotizenMainWindow::on_removeEntryPushButton_clicked()
 {
     removeEntry();
+}
+
+void NotizenMainWindow::on_printEntryPushButton_clicked()
+{
+    printEntry();
+}
+
+void NotizenMainWindow::on_removeCategoryPushButton_clicked()
+{
+    removeCategory();
+}
+
+void NotizenMainWindow::on_entryTextEdit_anchorClicked(const QUrl &arg1)
+{
+    QDesktopServices::openUrl(arg1);
+}
+
+void NotizenMainWindow::on_entryTextEdit_cursorPositionChanged()
+{
+    //QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
+    //f.setAnchor(false);
+    //f.setAnchorHref("");
+    //ui->entryTextEdit->textCursor().setCharFormat(f);
+    //ui->entryTextEdit->textCursor().setBlockCharFormat(f);
+    QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
+    ui->fontComboBox->setCurrentText(f.fontFamily());
+    if(f.anchorHref()!="" || f.anchorName()!="" || f.isAnchor())
+        ui->makeLinkCheckBox->setChecked(true);
+    else
+        ui->makeLinkCheckBox->setChecked(false);
+    ui->colorPushButton->setStyleSheet("background-color: "+f.foreground().color().name());
+    ui->fontSizeSpinBox->setValue(f.font().pointSize());
+    ui->italicToolButton->setChecked(f.font().italic());
+    ui->boldToolButton->setChecked(f.font().bold());
+    ui->underlineToolButton->setChecked(f.font().underline());
+}
+
+void NotizenMainWindow::on_makeLinkPushButton_clicked()
+{
+    /*QString tmp=ui->entryTextEdit->textCursor().selectedText().toHtmlEscaped();
+    ui->entryTextEdit->textCursor().insertHtml(QString("<a href='")+tmp+QString("'>")+tmp+QString("</a>"));*/
+
+}
+
+void NotizenMainWindow::on_entryTextEdit_textChanged()
+{
+    /*QTextCharFormat f=ui->entryTextEdit->currentCharFormat();
+    f.setAnchor(false);
+    f.setAnchorName("");
+    f.setAnchorHref("");
+    f.setFontUnderline(false);
+    f.clearForeground();
+    ui->entryTextEdit->setCurrentCharFormat(f);*/
+    /*QTextCursor textCursor=QTextCursor(ui->entryTextEdit->textCursor());
+    if(!textCursor.atStart() && textCursor.charFormat()!=f)
+    {
+        textCursor.setPosition(ui->entryTextEdit->textCursor().position()-1);
+        textCursor.movePosition(QTextCursor::Right,QTextCursor::KeepAnchor);
+        textCursor.setCharFormat(f);
+    }*/
+
+}
+
+void NotizenMainWindow::on_entryTextEdit_currentCharFormatChanged(const QTextCharFormat &format)
+{
+
+}
+
+void NotizenMainWindow::on_printCategoryPushButton_clicked()
+{
+    printCategory();
+}
+
+void NotizenMainWindow::on_fontComboBox_activated(const QString &arg1)
+{
+    QTextCharFormat f=ui->entryTextEdit->currentCharFormat();
+    f.setFontFamily(arg1);
+    ui->entryTextEdit->setCurrentCharFormat(f);
+}
+
+void NotizenMainWindow::on_makeLinkCheckBox_clicked(bool checked)
+{
+    QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
+    if(f.anchorHref()!="" || f.anchorName()!="" || f.isAnchor())
+    {
+        f.setAnchor(false);
+        f.setAnchorName("");
+        f.setAnchorHref("");
+        f.setFontUnderline(false);
+        ui->entryTextEdit->textCursor().setCharFormat(f);
+    }
+    else
+    {
+        f.setAnchor(true);
+        f.setAnchorName(ui->entryTextEdit->textCursor().selectedText());
+        f.setAnchorHref(ui->entryTextEdit->textCursor().selectedText());
+        f.setFontUnderline(true);
+        f.setForeground(Qt::blue);
+        ui->entryTextEdit->textCursor().setCharFormat(f);
+    }
+    ui->entryTextEdit->setFocus();
+    ui->entryTextEdit->setCurrentCharFormat(f);
+}
+
+void NotizenMainWindow::on_colorPushButton_clicked()
+{
+    QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
+    QColorDialog dialog;
+    QColor col=dialog.getColor(f.foreground().color());
+    f.setForeground(QBrush(col));
+    ui->entryTextEdit->textCursor().setCharFormat(f);
+    ui->entryTextEdit->setCurrentCharFormat(f);
+    ui->entryTextEdit->setFocus();
+}
+
+void NotizenMainWindow::on_fontSizeSpinBox_valueChanged(int arg1)
+{
+}
+
+void NotizenMainWindow::on_fontSizeSpinBox_editingFinished()
+{
+    ui->entryTextEdit->setFontPointSize(ui->fontSizeSpinBox->value());
+}
+
+void NotizenMainWindow::on_italicToolButton_clicked(bool checked)
+{
+    ui->entryTextEdit->setFontItalic(checked);
+}
+
+void NotizenMainWindow::on_underlineToolButton_clicked(bool checked)
+{
+    ui->entryTextEdit->setFontUnderline(checked);
+}
+
+void NotizenMainWindow::on_boldToolButton_clicked(bool checked)
+{
+    ui->entryTextEdit->setFontWeight(checked?QFont::Bold:QFont::Normal);
+}
+
+void NotizenMainWindow::on_entriesListWidget_customContextMenuRequested(const QPoint &pos)
+{
+
 }
