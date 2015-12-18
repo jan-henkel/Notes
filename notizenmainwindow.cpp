@@ -127,6 +127,22 @@ void NotizenMainWindow::printCategory()
     }
 }
 
+void NotizenMainWindow::toggleEncryption()
+{
+    if(!notesInternals.encryptionEnabled())
+    {
+        QString pw=QInputDialog::getText(this,"PW","PW");
+        if(!notesInternals.enableEncryption(QCA::SecureArray(pw.toUtf8())))
+        {
+            QMessageBox msg;
+            msg.setText("Wrong pw");
+            msg.exec();
+        }
+        else
+            syncModelAndUI();
+    }
+}
+
 void NotizenMainWindow::syncModelAndUI()
 {
     if(updateTags & CategoryListChanged)
@@ -278,12 +294,11 @@ void NotizenMainWindow::on_entryTextEdit_cursorPositionChanged()
     ui->underlineToolButton->setChecked(f.font().underline());
 }
 
-void NotizenMainWindow::on_makeLinkPushButton_clicked()
-{
+
     /*QString tmp=ui->entryTextEdit->textCursor().selectedText().toHtmlEscaped();
     ui->entryTextEdit->textCursor().insertHtml(QString("<a href='")+tmp+QString("'>")+tmp+QString("</a>"));*/
 
-}
+
 
 void NotizenMainWindow::on_entryTextEdit_textChanged()
 {
@@ -383,4 +398,9 @@ void NotizenMainWindow::on_boldToolButton_clicked(bool checked)
 void NotizenMainWindow::on_entriesListWidget_customContextMenuRequested(const QPoint &pos)
 {
 
+}
+
+void NotizenMainWindow::on_encryptionPushButton_clicked()
+{
+    toggleEncryption();
 }

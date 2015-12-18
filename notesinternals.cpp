@@ -4,6 +4,8 @@ NotesInternals::NotesInternals(QObject *parent) : QObject(parent),hashFunction_(
 {
     QCA::init();
     loadUnencryptedCategories();
+    //cryptoBuffer_.setRandomKeyIV();
+    //cryptoBuffer_.writeKeyIV(QCA::SecureArray(QString("testpasswort").toUtf8()),QString("./enc/pw"));
 }
 
 const CategoryPair NotesInternals::addCategory(QString categoryName)
@@ -135,7 +137,7 @@ const EntryPair NotesInternals::modifyEntryText(CategoryPair &categoryPair, Entr
 
 bool NotesInternals::enableEncryption(const QCA::SecureArray &password)
 {
-    if(!cryptoBuffer_.readKeyIV(password,QString("./enc/pw")))
+    if(cryptoBuffer_.readKeyIV(password,QString("./enc/pw"))!=CryptoBuffer::SUCCESS)
         return false;
     encryptionEnabled_=true;
     loadEncryptedCategories();
@@ -225,7 +227,7 @@ void NotesInternals::loadCategories(bool encrypted)
                 //create new category from current folder
                 category=new Category();
                 category->folderName_=folderName+QString("/");
-                category->encrypted_=false;
+                category->encrypted_=encrypted;
 
                 categoriesMap_.insert(CategoryPair(NameDate(categoryName,QDateTime::currentDateTime()),category));
 
@@ -259,6 +261,7 @@ void NotesInternals::loadCategories(bool encrypted)
             }
         }
     }
+    emit categoryListChanged();
 }
 
 void NotesInternals::loadUnencryptedCategories()

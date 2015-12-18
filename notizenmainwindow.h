@@ -15,6 +15,7 @@
 #include <QTextCharFormat>
 #include <QTextBlockFormat>
 #include <QFontDialog>
+#include <QInputDialog>
 
 namespace Ui {
 class NotizenMainWindow;
@@ -42,6 +43,7 @@ public:
     void removeCategory();
     void printEntry();
     void printCategory();
+    void toggleEncryption();
 private slots:
     void on_addCategoryPushButton_clicked();
 
@@ -76,7 +78,6 @@ private slots:
     void on_removeCategoryPushButton_clicked();
     void on_entryTextEdit_anchorClicked(const QUrl &arg1);
     void on_entryTextEdit_cursorPositionChanged();
-    void on_makeLinkPushButton_clicked();
     void on_entryTextEdit_textChanged();
     void on_entryTextEdit_currentCharFormatChanged(const QTextCharFormat &format);
     void on_printCategoryPushButton_clicked();
@@ -89,6 +90,7 @@ private slots:
     void on_underlineToolButton_clicked(bool checked);
     void on_boldToolButton_clicked(bool checked);
     void on_entriesListWidget_customContextMenuRequested(const QPoint &pos);
+    void on_encryptionPushButton_clicked();
 };
 
 #endif // NOTIZENMAINWINDOW_H

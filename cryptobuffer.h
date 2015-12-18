@@ -30,6 +30,7 @@ signals:
 
 public slots:
 private:
+    QCA::Initializer initializer_;
     QCA::SymmetricKey key_;
     QCA::InitializationVector iv_;
     bool keyIVSet_;
