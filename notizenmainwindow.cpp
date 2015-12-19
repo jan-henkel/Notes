@@ -157,12 +157,22 @@ void NotizenMainWindow::syncModelAndUI()
     if(updateTags & CategoryListChanged)
     {
         categoryPairList.clear();
-        std::copy(notesInternals.categoriesMap()->cbegin(),notesInternals.categoriesMap()->cend(),std::back_inserter(categoryPairList));
+        //std::copy(notesInternals.categoriesMap()->cbegin(),notesInternals.categoriesMap()->cend(),std::back_inserter(categoryPairList));
+        for(CategoriesMap::const_iterator i=notesInternals.categoriesMap()->cbegin();i!=notesInternals.categoriesMap()->cend();++i)
+        {
+            if(NotesInternals::getCategoryEncrypted(*i))
+                categoryPairList.push_back(*i);
+        }
+        for(CategoriesMap::const_iterator i=notesInternals.categoriesMap()->cbegin();i!=notesInternals.categoriesMap()->cend();++i)
+        {
+            if(!NotesInternals::getCategoryEncrypted(*i))
+                categoryPairList.push_back(*i);
+        }
         ui->categoriesComboBox->clear();
         int j=-1;
         for(int i=0;i<(int)categoryPairList.size();++i)
         {
-            ui->categoriesComboBox->addItem(NotesInternals::getCategoryEncrypted(categoryPairList[i])?QIcon(":/icons/lock_add.png"):QIcon(":/icons/note.png"),
+            ui->categoriesComboBox->addItem(NotesInternals::getCategoryEncrypted(categoryPairList[i])?QIcon(":/icons/lock_add.png"):QIcon(""),
                                             NotesInternals::getCategoryName(categoryPairList[i]));
             if(notesInternals.currentCategoryPair()==categoryPairList[i])
                 j=i;
