@@ -9,7 +9,7 @@ void NotizenTextEdit::keyPressEvent(QKeyEvent *ev)
 {
     if(isHyperlink(this->currentCharFormat()))
     {
-        if(ev->text()==" " || ev->text()=="\n")
+        if(ev->text()==" " || ev->text()=="\r" || ev->text()=="\n")
             this->setCurrentCharFormat(previousTextCharFormat);
     }
     QTextBrowser::keyPressEvent(ev);
@@ -17,7 +17,7 @@ void NotizenTextEdit::keyPressEvent(QKeyEvent *ev)
 
 bool NotizenTextEdit::isHyperlink(const QTextCharFormat &format)
 {
-    return (format.anchorHref()!="" || format.anchorName()!="" && format.isAnchor()==true);
+    return (format.anchorHref()!="" || format.anchorName()!="" || format.isAnchor()==true);
 }
 
 void NotizenTextEdit::textCharFormatChanged(QTextCharFormat newFormat)

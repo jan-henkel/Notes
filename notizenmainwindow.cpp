@@ -15,6 +15,9 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     QObject::connect(&(this->notesInternals),SIGNAL(categoryContentChanged()),this,SLOT(categoryContentChanged()),Qt::DirectConnection);
     QObject::connect(&(this->notesInternals),SIGNAL(entrySelectionChanged()),this,SLOT(entrySelectionChanged()),Qt::DirectConnection);
     QObject::connect(&(this->notesInternals),SIGNAL(entryContentChanged()),this,SLOT(entryContentChanged()),Qt::DirectConnection);
+    defaultTextCharFormat=ui->entryTextEdit->currentCharFormat();
+    defaultTextCharFormat.setFont(QFont("Trebuchet MS",10,QFont::Normal,false));
+    defaultTextCharFormat.setForeground(QBrush(Qt::black));
 }
 
 NotizenMainWindow::~NotizenMainWindow()
@@ -216,6 +219,7 @@ void NotizenMainWindow::syncModelAndUI()
     if(updateTags & (EntrySelectionChanged|EntryContentChanged))
     {
         ui->entryTextEdit->setHtml(notesInternals.getEntryText(notesInternals.currentEntryPair()));
+        ui->entryTextEdit->setCurrentCharFormat(defaultTextCharFormat);
         updateTags &= ~(EntrySelectionChanged|EntryContentChanged);
     }
 }
