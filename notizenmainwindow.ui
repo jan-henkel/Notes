@@ -315,6 +315,10 @@
           <property name="text">
            <string/>
           </property>
+          <property name="icon">
+           <iconset resource="icons.qrc">
+            <normaloff>:/icons/printer.png</normaloff>:/icons/printer.png</iconset>
+          </property>
          </widget>
         </item>
         <item row="0" column="7">
@@ -340,6 +344,10 @@
           <property name="text">
            <string/>
           </property>
+          <property name="icon">
+           <iconset resource="icons.qrc">
+            <normaloff>:/icons/printer.png</normaloff>:/icons/printer.png</iconset>
+          </property>
           <property name="flat">
            <bool>false</bool>
           </property>
@@ -363,6 +371,10 @@
         </property>
         <property name="text">
          <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="icons.qrc">
+          <normaloff>:/icons/lock_add.png</normaloff>:/icons/lock_add.png</iconset>
         </property>
        </widget>
       </item>

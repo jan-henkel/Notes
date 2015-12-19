@@ -60,6 +60,8 @@ private:
     bool edited;
     qint16 updateTags;
     QString filterString;
+    QTextBlockFormat defaultTextBlockFormat;
+    QTextCharFormat defaultTextCharFormat;
 
     std::vector<CategoryPair> categoryPairList;
     std::vector<EntryPair> entryPairList;

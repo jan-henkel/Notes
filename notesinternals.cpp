@@ -399,12 +399,15 @@ void NotesInternals::removeEncryptedCategories()
     {
         if(getCategoryEncrypted(*i))
         {
+            if(currentCategoryPair_==*i)
+                selectCategory(invalidCategoryPair());
             delete getCategory(*i);
             i=categoriesMap_.erase(i);
         }
         else
             ++i;
     }
+    emit categoryListChanged();
 }
 
 bool NotesInternals::updateEntryFile(CategoryPair &categoryPair, EntryPair &entryPair)

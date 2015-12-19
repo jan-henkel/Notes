@@ -2,5 +2,8 @@
     <qresource prefix="/icons">
         <file>save.ico</file>
         <file>lock_add.png</file>
+        <file>printer.png</file>
+        <file>note.png</file>
+        <file>lock_delete.png</file>
     </qresource>
 </RCC>

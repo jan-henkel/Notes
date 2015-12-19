@@ -131,7 +131,7 @@ void NotizenMainWindow::toggleEncryption()
 {
     if(!notesInternals.encryptionEnabled())
     {
-        QString pw=QInputDialog::getText(this,"PW","PW");
+        QString pw=QInputDialog::getText(this,"PW","PW",QLineEdit::Password);
         if(!notesInternals.enableEncryption(QCA::SecureArray(pw.toUtf8())))
         {
             QMessageBox msg;
@@ -139,7 +139,16 @@ void NotizenMainWindow::toggleEncryption()
             msg.exec();
         }
         else
+        {
             syncModelAndUI();
+            ui->encryptionPushButton->setIcon(QIcon(":/icons/lock_delete.png"));
+        }
+    }
+    else
+    {
+        notesInternals.disableEncryption();
+        syncModelAndUI();
+        ui->encryptionPushButton->setIcon(QIcon(":/icons/lock_add.png"));
     }
 }
 
@@ -153,7 +162,7 @@ void NotizenMainWindow::syncModelAndUI()
         int j=-1;
         for(int i=0;i<(int)categoryPairList.size();++i)
         {
-            ui->categoriesComboBox->addItem(NotesInternals::getCategoryEncrypted(categoryPairList[i])?QIcon("/icons/lock_add.png"):QIcon(),
+            ui->categoriesComboBox->addItem(NotesInternals::getCategoryEncrypted(categoryPairList[i])?QIcon(":/icons/lock_add.png"):QIcon(":/icons/note.png"),
                                             NotesInternals::getCategoryName(categoryPairList[i]));
             if(notesInternals.currentCategoryPair()==categoryPairList[i])
                 j=i;
