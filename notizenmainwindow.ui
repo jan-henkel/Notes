@@ -446,7 +446,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QTextBrowser" name="entryTextEdit">
+     <widget class="NotizenTextEdit" name="entryTextEdit">
       <property name="enabled">
        <bool>true</bool>
       </property>
@@ -466,6 +466,9 @@
       </property>
       <property name="autoFormatting">
        <set>QTextEdit::AutoNone</set>
+      </property>
+      <property name="undoRedoEnabled">
+       <bool>true</bool>
       </property>
       <property name="readOnly">
        <bool>false</bool>
@@ -667,6 +670,13 @@
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>NotizenTextEdit</class>
+   <extends>QTextBrowser</extends>
+   <header>notizentextedit.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="icons.qrc"/>
  </resources>

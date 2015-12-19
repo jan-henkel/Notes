@@ -81,7 +81,6 @@ private slots:
     void on_entryTextEdit_anchorClicked(const QUrl &arg1);
     void on_entryTextEdit_cursorPositionChanged();
     void on_entryTextEdit_textChanged();
-    void on_entryTextEdit_currentCharFormatChanged(const QTextCharFormat &format);
     void on_printCategoryPushButton_clicked();
     void on_fontComboBox_activated(const QString &arg1);
     void on_makeLinkCheckBox_clicked(bool checked);

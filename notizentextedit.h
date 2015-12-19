@@ -14,8 +14,12 @@ class NotizenTextEdit : public QTextBrowser
 public:
     NotizenTextEdit(QWidget *parent);
 protected:
-    void mouseMoveEvent(QMouseEvent * event);
-    void mousePressEvent(QMouseEvent * event);
+    void keyPressEvent(QKeyEvent *ev);
+private:
+    QTextCharFormat previousTextCharFormat;
+    bool isHyperlink(const QTextCharFormat &format);
+private slots:
+    void textCharFormatChanged(QTextCharFormat newFormat);
 };
 
 #endif // NOTIZENTEXTEDIT_H

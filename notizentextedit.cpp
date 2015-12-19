@@ -2,26 +2,27 @@
 
 NotizenTextEdit::NotizenTextEdit(QWidget *parent):QTextBrowser(parent)
 {
-this->setMouseTracking(true);
+    QObject::connect((QTextEdit*)this,SIGNAL(currentCharFormatChanged(QTextCharFormat)),this,SLOT(textCharFormatChanged(QTextCharFormat)));
 }
 
-void NotizenTextEdit::mouseMoveEvent(QMouseEvent *event)
+void NotizenTextEdit::keyPressEvent(QKeyEvent *ev)
 {
-    QTextCursor cursor=cursorForPosition(event->pos());
-    cursor.select(QTextCursor::WordUnderCursor);
-    if(!QUrl(cursor.selectedText()).isValid())
-        this->viewport()->setCursor(Qt::PointingHandCursor);
-    else
-        this->viewport()->setCursor(Qt::IBeamCursor);
-
-
+    if(isHyperlink(this->currentCharFormat()))
+    {
+        if(ev->text()==" " || ev->text()=="\n")
+            this->setCurrentCharFormat(previousTextCharFormat);
+    }
+    QTextBrowser::keyPressEvent(ev);
 }
 
-void NotizenTextEdit::mousePressEvent(QMouseEvent *event)
+bool NotizenTextEdit::isHyperlink(const QTextCharFormat &format)
 {
-    QTextCursor cursor=cursorForPosition(event->pos());
-    cursor.select(QTextCursor::BlockUnderCursor);
-    this->setHtml(cursor.selectedText());
-    QTextEdit::mousePressEvent(event);
+    return (format.anchorHref()!="" || format.anchorName()!="" && format.isAnchor()==true);
 }
 
+void NotizenTextEdit::textCharFormatChanged(QTextCharFormat newFormat)
+{
+    //save non hyperlink formatting
+    if(!isHyperlink(newFormat))
+        previousTextCharFormat=newFormat;
+}

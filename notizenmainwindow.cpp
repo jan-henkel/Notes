@@ -338,11 +338,6 @@ void NotizenMainWindow::on_entryTextEdit_textChanged()
 
 }
 
-void NotizenMainWindow::on_entryTextEdit_currentCharFormatChanged(const QTextCharFormat &format)
-{
-
-}
-
 void NotizenMainWindow::on_printCategoryPushButton_clicked()
 {
     printCategory();
@@ -385,6 +380,7 @@ void NotizenMainWindow::on_colorPushButton_clicked()
     QColorDialog dialog;
     QColor col=dialog.getColor(f.foreground().color());
     f.setForeground(QBrush(col));
+    ui->colorPushButton->setStyleSheet(QString("background-color: %1").arg(col.name()));
     ui->entryTextEdit->textCursor().setCharFormat(f);
     ui->entryTextEdit->setCurrentCharFormat(f);
     ui->entryTextEdit->setFocus();
