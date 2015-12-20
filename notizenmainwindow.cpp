@@ -387,13 +387,16 @@ void NotizenMainWindow::on_makeLinkCheckBox_clicked(bool checked)
 
 void NotizenMainWindow::on_colorPushButton_clicked()
 {
-    QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
-    QColorDialog dialog;
-    QColor col=dialog.getColor(f.foreground().color());
-    f.setForeground(QBrush(col));
+    //QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
+    //QColorDialog dialog;
+    //dialog.setWindowFlags(dialog.windowFlags()|Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint);
+    //QColor col=dialog.getColor(f.foreground().color());
+    QColor col=QColorDialog::getColor(ui->entryTextEdit->textColor());
+    //f.setForeground(QBrush(col));
     ui->colorPushButton->setStyleSheet(QString("background-color: %1").arg(col.name()));
-    ui->entryTextEdit->textCursor().setCharFormat(f);
-    ui->entryTextEdit->setCurrentCharFormat(f);
+    ui->entryTextEdit->setTextColor(col);
+    //ui->entryTextEdit->textCursor().setCharFormat(f);
+    //ui->entryTextEdit->setCurrentCharFormat(f);
     ui->entryTextEdit->setFocus();
 }
 
