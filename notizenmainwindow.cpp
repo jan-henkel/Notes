@@ -110,7 +110,7 @@ void NotizenMainWindow::printCategory()
             //textEdit.insertPlainText(NotesInternals::getCategoryName(notesInternals.currentCategoryPair()));
             f.setAlignment(Qt::AlignLeft);
             textEdit.textCursor().insertBlock(f);
-            for(EntriesMap::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entriesMap()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entriesMap()->cend();++i)
+            for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
             {
                 textEdit.setCurrentFont(QFont("Trebuchet MS",14,QFont::Normal,false));
                 textEdit.setFontUnderline(true);
@@ -161,12 +161,12 @@ void NotizenMainWindow::syncModelAndUI()
     {
         categoryPairList.clear();
         //std::copy(notesInternals.categoriesMap()->cbegin(),notesInternals.categoriesMap()->cend(),std::back_inserter(categoryPairList));
-        for(CategoriesMap::const_iterator i=notesInternals.categoriesMap()->cbegin();i!=notesInternals.categoriesMap()->cend();++i)
+        for(CategorySet::const_iterator i=notesInternals.categorySet()->cbegin();i!=notesInternals.categorySet()->cend();++i)
         {
             if(NotesInternals::getCategoryEncrypted(*i))
                 categoryPairList.push_back(*i);
         }
-        for(CategoriesMap::const_iterator i=notesInternals.categoriesMap()->cbegin();i!=notesInternals.categoriesMap()->cend();++i)
+        for(CategorySet::const_iterator i=notesInternals.categorySet()->cbegin();i!=notesInternals.categorySet()->cend();++i)
         {
             if(!NotesInternals::getCategoryEncrypted(*i))
                 categoryPairList.push_back(*i);
@@ -189,12 +189,12 @@ void NotizenMainWindow::syncModelAndUI()
         ui->entriesListWidget->clear();
         if(notesInternals.isValid(notesInternals.currentCategoryPair()))
         {
-            for(EntriesMap::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entriesMap()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entriesMap()->cend();++i)
+            for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
             {
                 if(NotesInternals::getEntryName(*i).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
                     entryPairList.push_back(*i);
             }
-            for(EntriesMap::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entriesMap()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entriesMap()->cend();++i)
+            for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
             {
                 if(!NotesInternals::getEntryName(*i).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive) && NotesInternals::getEntryName(*i).contains(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
                     entryPairList.push_back(*i);
@@ -236,7 +236,7 @@ void NotizenMainWindow::on_addEntryPushButton_clicked()
 
 void NotizenMainWindow::on_categoriesComboBox_activated(int index)
 {
-    if(index>=0 && index<categoryPairList.size())
+    if(index>=0 && index<(int)categoryPairList.size())
     {
         updateTags|=EntryListContentChanged;
         ui->entryFilterLineEdit->setText("");

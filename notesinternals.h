@@ -19,90 +19,83 @@
 
 class Entry;
 class Category;
-class CategoryListModel;
-class EntryListModel;
 
+//categories and entries are sorted by name and creation date
 typedef std::pair<QString,QDateTime> NameDate;
+//pair types store both name and date, as well as a pointer to the content
 typedef std::pair<NameDate,Entry*> EntryPair;
 typedef std::pair<NameDate,Category*> CategoryPair;
-typedef std::set<EntryPair> EntriesMap;
-typedef std::set<CategoryPair> CategoriesMap;
+//set types store pairs
+typedef std::set<EntryPair> EntrySet;
+typedef std::set<CategoryPair> CategorySet;
 
-Q_DECLARE_METATYPE(CategoryPair)
-Q_DECLARE_METATYPE(EntryPair)
-
-
+//Entry class
 class Entry
 {
     friend class NotesInternals;
     friend class Category;
 private:
-    QString entryText_;
-    QString fileName_;
+    QString entryText_; //unencrypted text of the entry
+    QString fileName_;  //file name without path associated with the entry
 };
 
+//Category class contains information about whether the category is
 class Category
 {
     friend class NotesInternals;
 public:
     Category();
     ~Category();
-    const EntriesMap* entriesMap() const{return &entriesMap_;}
+    const EntrySet* entrySet() const{return &entrySet_;} //return constant entry set, so other classes can iterate over entries
 private:
-    bool encrypted_;
-    QString folderName_;
-    EntriesMap entriesMap_;
+    bool encrypted_;        //category encrypted
+    QString folderName_;    //folder path associated with the category, relative to application path
+    EntrySet entrySet_;     //set of entry pairs belonging to category
 };
-
-class CategoryListModel: public QAbstractListModel
-{
-    Q_OBJECT
-    friend class NotesInternals;
-public:
-    CategoryListModel(QObject *parent):QAbstractListModel(parent){}
-private:
-    void categoriesFromMap(CategoriesMap* map,CategoryPair &keep);
-    void categoriesFromMap(CategoriesMap* map);
-    int rowCount(const QModelIndex &parent) const {return categoryPairs_.size();}
-    QVariant data(const QModelIndex &index, int role) const;
-    std::vector<CategoryPair> categoryPairs_;
-};
-
-class EntryListModel: public QAbstractListModel
-{
-    Q_OBJECT
-    friend class NotesInternals;
-public:
-    EntryListModel(QObject *parent):QAbstractListModel(parent){}
-private:
-    void entriesFromMap(EntriesMap* map,QString filter,CategoryPair &keep);
-    void entriesFromMap(EntriesMap* map,QString filter);
-    int rowCount(const QModelIndex &parent) const {return entryPairs_.size();}
-    QVariant data(const QModelIndex &index, int role) const;
-    std::vector<EntryPair> entryPairs_;
-};
-
 
 class NotesInternals : public QObject
 {
     Q_OBJECT
 public:
     NotesInternals(QObject *parent);
+
+    //functions to manipulate categories and entries. selected pairs and associated files get updated accordingly
+
+    //add new category with name categoryName
     const CategoryPair addCategory(QString categoryName);
+    //remove category specidied by pair. returns false if passed category pair is invalid
     bool removeCategory(CategoryPair &categoryPair);
+    //rename category specified by pair to newCategoryName. returns updated category pair if successful, invalid pair otherwise
     const CategoryPair renameCategory(CategoryPair &categoryPair,QString newCategoryName);
+    //add entry of name entryName to category specified by pair. returns newly generated entry pair if successful, invalid pair otherwise
+    //(e.g. if passed category pair is invalid)
     const EntryPair addEntry(CategoryPair &categoryPair,QString entryName);
+    //remove entry corresponding to entryPair from category specified by categoryPair. returns true on success,
+    //false if either of the pairs passed is invalid
     bool removeEntry(CategoryPair &categoryPair,EntryPair &entryPair);
+    //rename entry corresponding to (categoryPair,entryPair) to newEntryName. return updated entry pair,
+    //invalid pair if any of the pairs passed is invalid
     const EntryPair renameEntry(CategoryPair &categoryPair,EntryPair &entryPair,QString newEntryName);
+    //move entry specified by (oldCategoryPair,entryPair) to category determined by newCategoryPair.
+    //return updated entry pair if successful, invalid pair otherwise
     const EntryPair moveEntry(CategoryPair &oldCategoryPair,EntryPair &entryPair,CategoryPair &newCategoryPair);
+    //change entry text of entry specified by (categoryPair,entryPair) to newEntryText.
+    //return entry pair if successful, invalid pair otherwise
     const EntryPair modifyEntryText(CategoryPair &categoryPair,EntryPair &entryPair,QString newEntryText);
 
+    //enable encryption, add encrypted categories. returns false if password is wrong or not set
     bool enableEncryption(const QCA::SecureArray & password);
+    //disable encryption, remove encrypted categories
     void disableEncryption();
+
     bool encryptionEnabled() {return encryptionEnabled_;}
 
-    const CategoriesMap* categoriesMap(){return &categoriesMap_;}
+    //return constant category set so other classes can iterate over categories
+    const CategorySet* categorySet(){return &categorySet_;}
 
+    //auxiliary functions to extract information from category pairs and entry pairs
+    //for invalid pairs and string return type, return empty string
+    //returned pointers are const
     static QString getCategoryName(const CategoryPair &categoryPair)
         {return categoryPair.first.first;}
     static QString getCategoryDate(const CategoryPair &categoryPair)
@@ -124,20 +117,28 @@ public:
     static const Entry* getEntry(const EntryPair &entryPair)
         {return entryPair.second;}
 
+    //return invalid category pair and entry pair prototypes
     static CategoryPair invalidCategoryPair() {return CategoryPair(NameDate(QString(""),QDateTime::fromMSecsSinceEpoch(0)),0);}
     static EntryPair invalidEntryPair() {return EntryPair(NameDate(QString(""),QDateTime::fromMSecsSinceEpoch(0)),0);}
 
+    //functions to check whether pairs are valid
+    //for categories: check if category pair is in categorySet_
     bool isValid(const CategoryPair &categoryPair)
-        {return (categoriesMap_.find(categoryPair)!=categoriesMap_.end());}
+        {return (categorySet_.find(categoryPair)!=categorySet_.end());}
+    //for entries: check if category pair is valid, if so check whether entry pair is in entrySet_ of the category
     bool isValid(const CategoryPair &categoryPair,const EntryPair &entryPair)
-        {return (isValid(categoryPair) && (getCategory(categoryPair)->entriesMap_.find(entryPair)!=getCategory(categoryPair)->entriesMap_.end()));}
+        {return (isValid(categoryPair) && (getCategory(categoryPair)->entrySet_.find(entryPair)!=getCategory(categoryPair)->entrySet_.end()));}
 
-    CategoryPair currentCategoryPair(){return currentCategoryPair_;}
-    EntryPair currentEntryPair(){return currentEntryPair_;}
-
+    //functions to select new pairs to track (important for GUIs)
+    //selected pairs are updated according to any changes made, e.g. set to invalid pairs if the corresponding pair is deleted
     void selectCategory(const CategoryPair& categoryPair);
     void selectEntry(const EntryPair& entryPair);
 
+    //functions to return the currently selected (tracked) pairs
+    CategoryPair currentCategoryPair(){return currentCategoryPair_;}
+    EntryPair currentEntryPair(){return currentEntryPair_;}
+
+    //functions to manipulate currently selected pairs
     bool removeCurrentCategory()
         {return removeCategory(currentCategoryPair_);}
     const CategoryPair renameCurrentCategory(QString newCategoryName)
@@ -153,31 +154,42 @@ public:
     const EntryPair modifyCurrentEntryText(QString newEntryText)
         {return modifyEntryText(currentCategoryPair_,currentEntryPair_,newEntryText);}
 signals:
+    //signals to keep track of changes in category set, selected pairs
+    //meant to notify GUI
     void categoryListChanged();
     void categorySelectionChanged();
     void categoryContentChanged();
     void entrySelectionChanged();
     void entryContentChanged();
 private:
-    CryptoBuffer cryptoBuffer_;
+    //crypto interface to take care of encrypted files
+    CryptoInterface cryptoInterface_;
+    //hash function used in naming files and folders
     QCA::Hash hashFunction_;
-    CategoriesMap categoriesMap_;
 
+    //set of categories
+    CategorySet categorySet_;
+
+    //currently selected (tracked) pairs
     CategoryPair currentCategoryPair_;
     EntryPair currentEntryPair_;
 
-    CategoryListModel categoryModel_;
-    EntryListModel entryModel_;
-
+    //enryption currently enabled
     bool encryptionEnabled_;
 
+    //load all encrypted or all unencrypted categories and entries from files
     void loadCategories(bool encrypted);
     void loadUnencryptedCategories();
     void loadEncryptedCategories();
+    //remove all encrypted categories
     void removeEncryptedCategories();
 
+    //function to update entry file. creates file if it doesn't exist yet (useful for creating new entries)
     bool updateEntryFile(CategoryPair &categoryPair,EntryPair &entryPair);
+    //function to update category file and folder. creates file and folder if it doesn't exist yet (useful for new categories)
     bool updateCategoryFile(CategoryPair &categoryPair);
+
+    //functions to extract pointers to non-constant category or entry associated with pair
     static Category* getCategory_(const CategoryPair &categoryPair)
         {return categoryPair.second;}
     static Entry* getEntry_(const EntryPair &entryPair)
