@@ -23,6 +23,9 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     defaultTextCharFormat=ui->entryTextEdit->currentCharFormat();
     defaultTextCharFormat.setFont(QFont("Trebuchet MS",10,QFont::Normal,false));
     defaultTextCharFormat.setForeground(QBrush(Qt::black));
+
+    //ui->categoriesComboBox->view()->installEventFilter(this);
+    //ui->categoriesComboBox->installEventFilter(this);
 }
 
 NotizenMainWindow::~NotizenMainWindow()
@@ -231,6 +234,21 @@ void NotizenMainWindow::syncModelAndUI()
     }
 }
 
+/*bool NotizenMainWindow::eventFilter(QObject *target, QEvent *e)
+{
+    if(target==this->ui->categoriesComboBox->view() || target==this->ui->categoriesComboBox)
+    {
+        if(e->type()==QEvent::ContextMenu)
+        {
+            //e->ignore();
+            e->accept();
+            return true;
+        }
+    }
+    e->accept();
+    return false;
+}*/
+
 void NotizenMainWindow::on_addCategoryPushButton_clicked()
 {
     addCategory();
@@ -390,8 +408,12 @@ void NotizenMainWindow::on_colorPushButton_clicked()
     //QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
     //QColorDialog dialog;
     //dialog.setWindowFlags(dialog.windowFlags()|Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint);
+    this->setWindowFlags(this->windowFlags() ^ (Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint));
+    this->show();
     //QColor col=dialog.getColor(f.foreground().color());
     QColor col=QColorDialog::getColor(ui->entryTextEdit->textColor());
+    this->setWindowFlags(this->windowFlags() ^ (Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint));
+    this->show();
     //f.setForeground(QBrush(col));
     ui->colorPushButton->setStyleSheet(QString("background-color: %1").arg(col.name()));
     ui->entryTextEdit->setTextColor(col);

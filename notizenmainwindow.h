@@ -67,6 +67,7 @@ private:
     std::vector<EntryPair> entryPairList;
 
     void syncModelAndUI();
+    //bool eventFilter(QObject *target, QEvent *e);
 private slots:
     void categoryListChanged() {updateFlags|=CategoryListChanged;}
     void categorySelectionChanged() {updateFlags|=CategorySelectionChanged;}
