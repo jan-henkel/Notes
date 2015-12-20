@@ -147,8 +147,9 @@ void NotizenMainWindow::toggleEncryption()
         QString pw=QInputDialog::getText(this,"PW","PW",QLineEdit::Password);
         if(!notesInternals.enableEncryption(QCA::SecureArray(pw.toUtf8())))
         {
-            QMessageBox msg;
+            QMessageBox msg(this);
             msg.setText("Wrong pw");
+            msg.setModal(true);
             msg.exec();
         }
         else
@@ -329,7 +330,7 @@ void NotizenMainWindow::on_entryTextEdit_cursorPositionChanged()
     //f.setAnchorHref("");
     //ui->entryTextEdit->textCursor().setCharFormat(f);
     //ui->entryTextEdit->textCursor().setBlockCharFormat(f);
-    QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
+    /*QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
     ui->fontComboBox->setCurrentText(f.fontFamily());
     if(f.anchorHref()!="" || f.anchorName()!="" || f.isAnchor())
         ui->makeLinkCheckBox->setChecked(true);
@@ -339,7 +340,7 @@ void NotizenMainWindow::on_entryTextEdit_cursorPositionChanged()
     ui->fontSizeSpinBox->setValue(f.font().pointSize());
     ui->italicToolButton->setChecked(f.font().italic());
     ui->boldToolButton->setChecked(f.font().bold());
-    ui->underlineToolButton->setChecked(f.font().underline());
+    ui->underlineToolButton->setChecked(f.font().underline());*/
 }
 
 
@@ -405,20 +406,13 @@ void NotizenMainWindow::on_makeLinkCheckBox_clicked(bool checked)
 
 void NotizenMainWindow::on_colorPushButton_clicked()
 {
-    //QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
-    //QColorDialog dialog;
-    //dialog.setWindowFlags(dialog.windowFlags()|Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint);
-    this->setWindowFlags(this->windowFlags() ^ (Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint));
-    this->show();
-    //QColor col=dialog.getColor(f.foreground().color());
-    QColor col=QColorDialog::getColor(ui->entryTextEdit->textColor());
-    this->setWindowFlags(this->windowFlags() ^ (Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint));
-    this->show();
-    //f.setForeground(QBrush(col));
+    QColorDialog dialog(this);
+    dialog.setModal(true);
+    dialog.setCurrentColor(ui->entryTextEdit->textColor());
+    dialog.exec();
+    QColor col=dialog.currentColor();
     ui->colorPushButton->setStyleSheet(QString("background-color: %1").arg(col.name()));
     ui->entryTextEdit->setTextColor(col);
-    //ui->entryTextEdit->textCursor().setCharFormat(f);
-    //ui->entryTextEdit->setCurrentCharFormat(f);
     ui->entryTextEdit->setFocus();
 }
 
@@ -454,4 +448,18 @@ void NotizenMainWindow::on_entriesListWidget_customContextMenuRequested(const QP
 void NotizenMainWindow::on_encryptionPushButton_clicked()
 {
     toggleEncryption();
+}
+
+void NotizenMainWindow::on_entryTextEdit_currentCharFormatChanged(const QTextCharFormat &f)
+{
+    ui->fontComboBox->setCurrentText(f.fontFamily());
+    if(f.anchorHref()!="" || f.anchorName()!="" || f.isAnchor())
+        ui->makeLinkCheckBox->setChecked(true);
+    else
+        ui->makeLinkCheckBox->setChecked(false);
+    ui->colorPushButton->setStyleSheet("background-color: "+f.foreground().color().name());
+    ui->fontSizeSpinBox->setValue(f.font().pointSize());
+    ui->italicToolButton->setChecked(f.font().italic());
+    ui->boldToolButton->setChecked(f.font().bold());
+    ui->underlineToolButton->setChecked(f.font().underline());
 }

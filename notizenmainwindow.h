@@ -93,6 +93,7 @@ private slots:
     void on_boldToolButton_clicked(bool checked);
     void on_entriesListWidget_customContextMenuRequested(const QPoint &pos);
     void on_encryptionPushButton_clicked();
+    void on_entryTextEdit_currentCharFormatChanged(const QTextCharFormat &format);
 };
 
 #endif // NOTIZENMAINWINDOW_H
