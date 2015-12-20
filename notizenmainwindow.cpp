@@ -8,13 +8,18 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     notesInternals(this)
 {
     ui->setupUi(this);
-    updateTags|=(CategoryListChanged|EntryListContentChanged|EntrySelectionChanged);
+    //update UI
+    updateFlags|=(CategoryListChanged|EntryListContentChanged|EntrySelectionChanged);
     syncModelAndUI();
+
+    //connect notification signals from notesInternals, to set update flags accordingly
     QObject::connect(&(this->notesInternals),SIGNAL(categoryListChanged()),this,SLOT(categoryListChanged()),Qt::DirectConnection);
     QObject::connect(&(this->notesInternals),SIGNAL(categorySelectionChanged()),this,SLOT(categorySelectionChanged()),Qt::DirectConnection);
     QObject::connect(&(this->notesInternals),SIGNAL(categoryContentChanged()),this,SLOT(categoryContentChanged()),Qt::DirectConnection);
     QObject::connect(&(this->notesInternals),SIGNAL(entrySelectionChanged()),this,SLOT(entrySelectionChanged()),Qt::DirectConnection);
     QObject::connect(&(this->notesInternals),SIGNAL(entryContentChanged()),this,SLOT(entryContentChanged()),Qt::DirectConnection);
+
+    //set default char format. to do: read this from a config file instead of hardcoding
     defaultTextCharFormat=ui->entryTextEdit->currentCharFormat();
     defaultTextCharFormat.setFont(QFont("Trebuchet MS",10,QFont::Normal,false));
     defaultTextCharFormat.setForeground(QBrush(Qt::black));
@@ -24,6 +29,9 @@ NotizenMainWindow::~NotizenMainWindow()
 {
     delete ui;
 }
+
+//functions for adding, removing and saving entries and categories
+//corresponding members of notesInternals are called and the UI subsequently updated according to update flags set by the operation
 
 void NotizenMainWindow::addCategory()
 {
@@ -107,7 +115,6 @@ void NotizenMainWindow::printCategory()
             textEdit.setFontUnderline(true);
             textEdit.textCursor().insertBlock(f);
             textEdit.textCursor().insertText(NotesInternals::getCategoryName(notesInternals.currentCategoryPair()));
-            //textEdit.insertPlainText(NotesInternals::getCategoryName(notesInternals.currentCategoryPair()));
             f.setAlignment(Qt::AlignLeft);
             textEdit.textCursor().insertBlock(f);
             for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
@@ -157,7 +164,7 @@ void NotizenMainWindow::toggleEncryption()
 
 void NotizenMainWindow::syncModelAndUI()
 {
-    if(updateTags & CategoryListChanged)
+    if(updateFlags & CategoryListChanged)
     {
         categoryPairList.clear();
         //std::copy(notesInternals.categoriesMap()->cbegin(),notesInternals.categoriesMap()->cend(),std::back_inserter(categoryPairList));
@@ -181,9 +188,9 @@ void NotizenMainWindow::syncModelAndUI()
                 j=i;
         }
         ui->categoriesComboBox->setCurrentIndex(j);
-        updateTags &= ~CategoryListChanged;
+        updateFlags &= ~CategoryListChanged;
     }
-    if(updateTags & (CategorySelectionChanged|EntryListContentChanged))
+    if(updateFlags & (CategorySelectionChanged|EntryListContentChanged))
     {
         entryPairList.clear();
         ui->entriesListWidget->clear();
@@ -203,7 +210,7 @@ void NotizenMainWindow::syncModelAndUI()
                 ui->entriesListWidget->addItem(NotesInternals::getEntryName(entryPairList[i]));
         }
     }
-    if(updateTags & (CategorySelectionChanged|EntryListContentChanged|EntrySelectionChanged))
+    if(updateFlags & (CategorySelectionChanged|EntryListContentChanged|EntrySelectionChanged))
     {
         int j=-1;
         for(int i=0;i<(int)entryPairList.size();++i)
@@ -214,13 +221,13 @@ void NotizenMainWindow::syncModelAndUI()
         ui->entriesListWidget->setCurrentRow(j);
         if(j==-1)
             notesInternals.selectEntry(NotesInternals::invalidEntryPair());
-        updateTags &= ~(CategorySelectionChanged|EntryListContentChanged);
+        updateFlags &= ~(CategorySelectionChanged|EntryListContentChanged);
     }
-    if(updateTags & (EntrySelectionChanged|EntryContentChanged))
+    if(updateFlags & (EntrySelectionChanged|EntryContentChanged))
     {
         ui->entryTextEdit->setHtml(notesInternals.getEntryText(notesInternals.currentEntryPair()));
         ui->entryTextEdit->setCurrentCharFormat(defaultTextCharFormat);
-        updateTags &= ~(EntrySelectionChanged|EntryContentChanged);
+        updateFlags &= ~(EntrySelectionChanged|EntryContentChanged);
     }
 }
 
@@ -238,7 +245,7 @@ void NotizenMainWindow::on_categoriesComboBox_activated(int index)
 {
     if(index>=0 && index<(int)categoryPairList.size())
     {
-        updateTags|=EntryListContentChanged;
+        updateFlags|=EntryListContentChanged;
         ui->entryFilterLineEdit->setText("");
         notesInternals.selectCategory(categoryPairList[index]);
         syncModelAndUI();
@@ -252,7 +259,7 @@ void NotizenMainWindow::on_entriesListWidget_currentRowChanged(int currentRow)
 
 void NotizenMainWindow::on_entryFilterLineEdit_textEdited(const QString &arg1)
 {
-    updateTags|=EntryListContentChanged;
+    updateFlags|=EntryListContentChanged;
     notesInternals.selectEntry(NotesInternals::invalidEntryPair()); //optional, depending on search behavior
     syncModelAndUI();
     if(!entryPairList.empty())

@@ -98,8 +98,8 @@ public:
     //returned pointers are const
     static QString getCategoryName(const CategoryPair &categoryPair)
         {return categoryPair.first.first;}
-    static QString getCategoryDate(const CategoryPair &categoryPair)
-        {return categoryPair.first.second.toString();}
+    static QDateTime getCategoryDate(const CategoryPair &categoryPair)
+        {return categoryPair.first.second;}
     static bool getCategoryEncrypted(const CategoryPair &categoryPair)
         {return categoryPair.second?categoryPair.second->encrypted_:false;}
     static QString getCategoryFolderName(const CategoryPair &categoryPair)
@@ -108,8 +108,8 @@ public:
         {return categoryPair.second;}
     static QString getEntryName(const EntryPair &entryPair)
         {return entryPair.first.first;}
-    static QString getEntryDate(const EntryPair &entryPair)
-        {return entryPair.first.second.toString();}
+    static QDateTime getEntryDate(const EntryPair &entryPair)
+        {return entryPair.first.second;}
     static QString getEntryText(const EntryPair &entryPair)
         {return entryPair.second?entryPair.second->entryText_:QString("");}
     static QString getEntryFileName(const EntryPair &entryPair)

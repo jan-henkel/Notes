@@ -58,7 +58,7 @@ private:
     Ui::NotizenMainWindow *ui;
     NotesInternals notesInternals;
     bool edited;
-    qint16 updateTags;
+    qint16 updateFlags;
     QString filterString;
     QTextBlockFormat defaultTextBlockFormat;
     QTextCharFormat defaultTextCharFormat;
@@ -68,11 +68,11 @@ private:
 
     void syncModelAndUI();
 private slots:
-    void categoryListChanged() {updateTags|=CategoryListChanged;}
-    void categorySelectionChanged() {updateTags|=CategorySelectionChanged;}
-    void categoryContentChanged() {updateTags|=EntryListContentChanged;}
-    void entrySelectionChanged() {updateTags|=EntrySelectionChanged;}
-    void entryContentChanged() {updateTags|=EntryContentChanged;}
+    void categoryListChanged() {updateFlags|=CategoryListChanged;}
+    void categorySelectionChanged() {updateFlags|=CategorySelectionChanged;}
+    void categoryContentChanged() {updateFlags|=EntryListContentChanged;}
+    void entrySelectionChanged() {updateFlags|=EntrySelectionChanged;}
+    void entryContentChanged() {updateFlags|=EntryContentChanged;}
     void on_savePushButton_clicked();
     void on_entriesListWidget_pressed(const QModelIndex &index);
     void on_removeEntryPushButton_clicked();
