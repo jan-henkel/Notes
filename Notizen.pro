@@ -17,13 +17,13 @@ QT += printsupport
 SOURCES += main.cpp\
         notizenmainwindow.cpp \
     notesinternals.cpp \
-    cryptobuffer.cpp \
-    notizentextedit.cpp
+    notizentextedit.cpp \
+    cryptointerface.cpp
 
 HEADERS  += notizenmainwindow.h \
     notesinternals.h \
-    cryptobuffer.h \
-    notizentextedit.h
+    notizentextedit.h \
+    cryptointerface.h
 FORMS    += notizenmainwindow.ui
 
 RESOURCES += \

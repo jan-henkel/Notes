@@ -1,6 +1,6 @@
-#include "cryptobuffer.h"
+#include "cryptointerface.h"
 
-CryptoInterface::CryptoInterface(QObject *parent) : QObject(parent), pbkdf2iterations_(DEFAULT_PBKDF2_ITERATIONS), keyIVSet_(false)
+CryptoInterface::CryptoInterface(QObject *parent) : QObject(parent), pbkdf2iterations_(DEFAULT_PBKDF2_ITERATIONS), masterKeySet_(false)
 {
     QCA::init();
 }
@@ -52,7 +52,7 @@ void CryptoInterface::encryptData(const QCA::SecureArray &k1, const QCA::SecureA
     rCiphertext=QCA::SecureArray(cipher.process(plaintext));
 }
 
-CryptoInterface::Result CryptoInterface::readKeyIV(const QCA::SecureArray &password, QString fileName)
+CryptoInterface::Result CryptoInterface::readMasterKey(const QCA::SecureArray &password, QString fileName)
 {
     //open file, return error on failure
     QFile file(fileName);
@@ -76,12 +76,9 @@ CryptoInterface::Result CryptoInterface::readKeyIV(const QCA::SecureArray &passw
     if(!file.read(k2.data(),32))
         return WRONG_FILE_FORMAT;
 
-    //read encrypted master key and encrypted default initialization vector. 48 bytes each due to padding.
+    //read encrypted master key. 48 bytes due to padding.
     QCA::SecureArray encryptedKey(48);
     if(!file.read(encryptedKey.data(),48))
-        return WRONG_FILE_FORMAT;
-    QCA::SecureArray encryptedIV(48);
-    if(!file.read(encryptedIV.data(),48))
         return WRONG_FILE_FORMAT;
     if(!file.atEnd())
         return WRONG_FILE_FORMAT;
@@ -93,14 +90,13 @@ CryptoInterface::Result CryptoInterface::readKeyIV(const QCA::SecureArray &passw
     //verify password by comparing the second half of k to k2
     if(!verifyK2AndTruncateK(k2,k))
         return WRONG_PASSWORD;
-    //if password is correct, decrypt the master key and default initialization vector
+    //if password is correct, decrypt the master key
     decryptData(k,iv,encryptedKey,masterkey_);
-    decryptData(k,iv,encryptedIV,defaultiv_);
-    keyIVSet_=true;
+    masterKeySet_=true;
     return SUCCESS;
 }
 
-CryptoInterface::Result CryptoInterface::writeKeyIV(const QCA::SecureArray &password, QString fileName)
+CryptoInterface::Result CryptoInterface::saveMasterKey(const QCA::SecureArray &password, QString fileName)
 {
     //open file, return error on failure
     QFile file(fileName);
@@ -120,35 +116,30 @@ CryptoInterface::Result CryptoInterface::writeKeyIV(const QCA::SecureArray &pass
     //write latter half of k to file unencrypted
     file.write(&k[32],32);
 
-    //encrypt master key and default iv with first half of k and above iv
+    //encrypt master key with first half of k and initialization vector
     k.resize(32);
     QCA::SymmetricKey encryptedKey;
     encryptData(k,iv,encryptedKey,masterkey_);
     file.write(encryptedKey.data(),48);
-    QCA::SecureArray encryptedIV;
-    encryptData(k,iv,encryptedIV,defaultiv_);
-    file.write(encryptedIV.data(),48);
     file.close();
     return SUCCESS;
 }
 
-void CryptoInterface::setKeyIV(const QCA::SymmetricKey &key, const QCA::SymmetricKey &iv)
+void CryptoInterface::setMasterKey(const QCA::SymmetricKey &key)
 {
     masterkey_=key;
-    defaultiv_=iv;
-    keyIVSet_=true;
+    masterKeySet_=true;
 }
 
-void CryptoInterface::setRandomKeyIV()
+void CryptoInterface::setRandomMasterKey()
 {
     masterkey_=QCA::InitializationVector(32);
-    defaultiv_=QCA::InitializationVector(32);
-    keyIVSet_=true;
+    masterKeySet_=true;
 }
 
 CryptoInterface::Result CryptoInterface::encrypt(QCA::SecureArray &rCipher,const QCA::SecureArray &plain,const QCA::InitializationVector &iv)
 {
-    if(!keyIVSet_)
+    if(!masterKeySet_)
         return KEY_NOT_SET;
     encryptData(masterkey_,iv,rCipher,plain);
     return SUCCESS;
@@ -156,7 +147,7 @@ CryptoInterface::Result CryptoInterface::encrypt(QCA::SecureArray &rCipher,const
 
 CryptoInterface::Result CryptoInterface::decrypt(const QCA::SecureArray &cipher, QCA::SecureArray &rPlain,const QCA::InitializationVector &iv)
 {
-    if(!keyIVSet_)
+    if(!masterKeySet_)
         return KEY_NOT_SET;
     decryptData(masterkey_,iv,cipher,rPlain);
     return SUCCESS;
@@ -169,31 +160,11 @@ QCA::SecureArray CryptoInterface::encrypt(const QCA::SecureArray &plain, const Q
     return ret;
 }
 
-QCA::SecureArray CryptoInterface::encrypt(const QCA::SecureArray &plain)
-{
-    return encrypt(plain,defaultiv_);
-}
-
 QCA::SecureArray CryptoInterface::decrypt(const QCA::SecureArray &cipher, const QCA::InitializationVector &iv)
 {
     QCA::SecureArray ret;
     decrypt(cipher,ret,iv);
     return ret;
-}
-
-QCA::SecureArray CryptoInterface::decrypt(const QCA::SecureArray &cipher)
-{
-    return decrypt(cipher,defaultiv_);
-}
-
-CryptoInterface::Result CryptoInterface::encrypt(QCA::SecureArray &rCipher,const QCA::SecureArray &plain)
-{
-    return encrypt(rCipher,plain,defaultiv_);
-}
-
-CryptoInterface::Result CryptoInterface::decrypt(const QCA::SecureArray &cipher, QCA::SecureArray &rPlain)
-{
-    return decrypt(cipher,rPlain,defaultiv_);
 }
 
 void CryptoInterface::scrambleMemory(QCA::SecureArray &memory, quint64 size)

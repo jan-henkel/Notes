@@ -216,7 +216,7 @@ const EntryPair NotesInternals::modifyEntryText(CategoryPair &categoryPair, Entr
 bool NotesInternals::enableEncryption(const QCA::SecureArray &password)
 {
     //attempt to read master key from file using password. return false if password is wrong or not set
-    if(cryptoInterface_.readKeyIV(password,QString("./enc/pw"))!=CryptoInterface::SUCCESS)
+    if(cryptoInterface_.readMasterKey(password,QString("./enc/pw"))!=CryptoInterface::SUCCESS)
         return false;
 
     //if successful set encryption boolean to true, load encrypted categories

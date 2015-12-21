@@ -15,7 +15,7 @@
 #include <Qca-qt5/QtCrypto/QtCrypto>
 #include <QAbstractListModel>
 #include <QMetaType>
-#include "cryptobuffer.h"
+#include "cryptointerface.h"
 
 class Entry;
 class Category;

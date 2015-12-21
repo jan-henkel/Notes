@@ -17,47 +17,48 @@ public:
     explicit CryptoInterface(QObject *parent = 0);
 
     //<--
-    //read and decrypt master key and default initialization vector from file, using password
-    Result readKeyIV(const QCA::SecureArray &password, QString fileName);
-    //encrypt master key and default initialization vector with a key generated from password
-    //write encrypted master key and default initialization vector to file
-    Result writeKeyIV(const QCA::SecureArray &password, QString fileName);
+    //read and decrypt master key from file, using password
+    Result readMasterKey(const QCA::SecureArray &password, QString fileName);
+    //encrypt master key with a key generated from password
+    //write encrypted master key to file
+    Result saveMasterKey(const QCA::SecureArray &password, QString fileName);
 
     //in both cases return SUCCESS or error code
-    //random initialization vectors and salt are used to encrypt / decrypt the master key and default IV
+    //a password, random initialization vector and salt are used to encrypt / decrypt the master key
+
+    //file format specification:
+
+    //>     [ciphers]
+    //>     cipher1,cipher2,...
+
+    //comma separated list of names of ciphers, to be applied in order cipher1, cipher2, ... for encryption (obviously the other way around for decryption)
+
+    //>     [keyderivation]
+
     //these are also saved to or read from the file (unencrypted) respectively
     //-->
 
 
-    //set master key and default initialization vector
-    void setKeyIV(const QCA::SymmetricKey &key,const QCA::SymmetricKey &iv);
+    //set master key
+    void setMasterKey(const QCA::SymmetricKey &key);
 
-    //set master key and default iv using QCAs pseudorandom number generator
-    void setRandomKeyIV();
+    //set master key using QCAs pseudorandom number generator
+    void setRandomMasterKey();
 
-    //encrypt and decrypt using master key and default iv, return SUCCESS or error code
-    //both ciphertext and plaintext variable are passed as source or target respectively
-    Result encrypt(QCA::SecureArray &rCipher, const QCA::SecureArray &plain);
-    Result decrypt(const QCA::SecureArray &cipher,QCA::SecureArray &rPlain);
-
-    //encrypt and decrypt using master key and custom initialization vector, return SUCCESS or error code
+    //encrypt and decrypt using master key and initialization vector iv, return SUCCESS or error code
     //both ciphertext and plaintext variable are passed as source or target respectively
     Result encrypt(QCA::SecureArray &rCipher, const QCA::SecureArray &plain,const QCA::InitializationVector &iv);
     Result decrypt(const QCA::SecureArray &cipher,QCA::SecureArray &rPlain,const QCA::InitializationVector &iv);
-
-    //encrypt and decrypt using master key and default iv, return encrypted / decrypted array
-    QCA::SecureArray encrypt(const QCA::SecureArray &plain);
-    QCA::SecureArray decrypt(const QCA::SecureArray &cipher);
 
     //encrypt and decrypt using master key and custom iv, return encrypted / decrypted array
     QCA::SecureArray encrypt(const QCA::SecureArray &plain,const QCA::InitializationVector &iv);
     QCA::SecureArray decrypt(const QCA::SecureArray &cipher,const QCA::InitializationVector &iv);
 
-    //remove master key and default iv
-    void unsetKeyIV();
+    //discard master key
+    void unsetMasterKey();
 
-    //return whether master key and default iv are set
-    bool keyIVSet() {return keyIVSet_;}
+    //return whether master key is set
+    bool masterKeySet() {return masterKeySet_;}
 
     //sanitize memory to prevent future readout of confidential data
     void scrambleMemory(QCA::SecureArray &memory,quint64 size);
@@ -72,11 +73,9 @@ private:
 
     //master key
     QCA::SymmetricKey masterkey_;
-    //default iv, may not be used at all, if user specifies an iv for each case (preferred).
-    QCA::InitializationVector defaultiv_;
 
-    //bool inidicating whether master key and default iv are set
-    bool keyIVSet_;
+    //bool inidicating whether master key is set
+    bool masterKeySet_;
 
     //encryption / decryption subroutines without failsafes
     //inputs are key and initialization vector to use as well as ciphertext and plaintext variables as source or target respectively
