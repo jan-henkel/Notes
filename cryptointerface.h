@@ -13,10 +13,11 @@ class CryptoInterface : public QObject
 public:
     //enum listing various error codes
     enum Result {SUCCESS,WRONG_PASSWORD,NO_FILE,WRONG_FILE_FORMAT,KEY_NOT_SET};
+    //just to help future compatibility with crypto++ and different encryption schemes
+    enum EncryptionScheme {PBKDF2_SHA1_AES256=0};
 
     explicit CryptoInterface(QObject *parent = 0);
 
-    //<--
     //read and decrypt master key from file, using password
     Result readMasterKey(const QCA::SecureArray &password, QString fileName);
     //encrypt master key with a key generated from password
@@ -26,21 +27,14 @@ public:
     //in both cases return SUCCESS or error code
     //a password, random initialization vector and salt are used to encrypt / decrypt the master key
 
-    //file format specification:
-
-    //>     [ciphers]
-    //>     cipher1,cipher2,...
-
-    //comma separated list of names of ciphers, to be applied in order cipher1, cipher2, ... for encryption (obviously the other way around for decryption)
-
-    //>     [keyderivation]
-
-    //these are also saved to or read from the file (unencrypted) respectively
-    //-->
-
-
     //set master key
     void setMasterKey(const QCA::SymmetricKey &key);
+
+    //set iterations
+    void setIterations(qint32 iterations) {pbkdf2iterations_=iterations;}
+
+    //set encryption scheme (effectively a dummy, since only 1 value is available)
+    void setEncryptionScheme(EncryptionScheme scheme) {encryptionScheme_=scheme;}
 
     //set master key using QCAs pseudorandom number generator
     void setRandomMasterKey();
@@ -66,7 +60,8 @@ signals:
 
 public slots:
 private:
-    const int pbkdf2iterations_;
+    qint32 pbkdf2iterations_;
+    EncryptionScheme encryptionScheme_;
 
     //QCA initializer object
     QCA::Initializer initializer_;
@@ -84,11 +79,11 @@ private:
 
     //auxiliary functions
     //decrypt master key and save it to rKey. for that, do the following: password and salt yield intermediate "long" key K, calculated with calcK.
-    //in verifyK2andTruncateK the known array k2 is compared to second half of K for password verification, upon success the 2nd half of K is cut off.
+    //in verifyK2 the known array hk2 is compared to the sha1-hash of the second half of K for password verification
     //the remaining half of K is used to decrypt the master key, using known initialization vector iv.
-    bool verifyPasswordAndDecryptMasterKey(const QCA::SecureArray &password, const QCA::SecureArray &salt, const QCA::SecureArray &iv, const QCA::SecureArray &k2, const QCA::SecureArray &encryptedKey, QCA::SecureArray &rKey);
-    void calcK(const QCA::SecureArray &password, const QCA::SecureArray &salt, QCA::SecureArray &rK);
-    bool verifyK2AndTruncateK(const QCA::SecureArray &k2,QCA::SecureArray &k);
+    bool verifyPasswordAndDecryptMasterKey(const QCA::SecureArray &password, const QCA::SecureArray &salt, const QCA::SecureArray &iv, const QCA::SecureArray &hk2, const QCA::SecureArray &encryptedKey, QCA::SecureArray &rK);
+    void calcK(const QCA::SecureArray &password, const QCA::SecureArray &salt, QCA::SecureArray &rK1, QCA::SecureArray &rK2);
+    bool verifyK2(const QCA::SecureArray &hk2, QCA::SecureArray &k2);
 
 };
 

@@ -5,37 +5,36 @@ CryptoInterface::CryptoInterface(QObject *parent) : QObject(parent), pbkdf2itera
     QCA::init();
 }
 
-bool CryptoInterface::verifyPasswordAndDecryptMasterKey(const QCA::SecureArray &password, const QCA::SecureArray &salt, const QCA::SecureArray &iv, const QCA::SecureArray &k2, const QCA::SecureArray &encryptedKey, QCA::SecureArray &rKey)
+bool CryptoInterface::verifyPasswordAndDecryptMasterKey(const QCA::SecureArray &password, const QCA::SecureArray &salt, const QCA::SecureArray &iv, const QCA::SecureArray &hk2, const QCA::SecureArray &encryptedKey, QCA::SecureArray &rK)
 {
-    QCA::SymmetricKey k;
-    //intermediate long key k from password and salt
-    calcK(password,salt,k);
+    QCA::SecureArray k1,k2;
+    //intermediate long key k=(k1,k2) from password and salt
+    calcK(password,salt,k1,k2);
     //verify password, remove latter half of k if successful
-    if(!verifyK2AndTruncateK(k2,k))
+    if(!verifyK2(hk2,k2))
         return false;
-    //decrypt master key using remaining half of k
-    decryptData(k,iv,encryptedKey,rKey);
+    //decrypt master key using k1
+    decryptData(k1,iv,encryptedKey,rK);
     return true;
 }
 
-void CryptoInterface::calcK(const QCA::SecureArray &password, const QCA::SecureArray &salt, QCA::SecureArray &rK)
+void CryptoInterface::calcK(const QCA::SecureArray &password, const QCA::SecureArray &salt, QCA::SecureArray &rK1, QCA::SecureArray &rK2)
 {
     //derive long key K using pbkdf2(password,salt). second half of K is used as password verification, first half to encrypt / decrypt master key.
     QCA::PBKDF2 keyDerivationAlgorithm("sha1");
-    rK=keyDerivationAlgorithm.makeKey(password,salt,64,10000); //length = 64 bytes = 512 bits
+    QCA::SecureArray k=keyDerivationAlgorithm.makeKey(password,salt,64,10000); //length = 64 bytes = 512 bits
+    rK1.resize(32);
+    rK2.resize(32);
+    for(int i=0;i<32;++i)
+        {rK1[i]=k[i]; rK2[i]=k[i+32];}
 }
 
-bool CryptoInterface::verifyK2AndTruncateK(const QCA::SecureArray &k2, QCA::SecureArray &k)
+bool CryptoInterface::verifyK2(const QCA::SecureArray &hk2, QCA::SecureArray &k2)
 {
-    //compare k2 to latter half of k for password verification (long key k is derived from password, the latter half remains is known)
-    for(int i=32;i<64;++i)
-    {
-        if(k[i]!=k2[i-32])
-            return false; //no match
-    }
-    //truncate
-    k.resize(32);
-    return true;
+    if(hk2==QCA::Hash("sha1").hash(QCA::SecureArray(k2)))
+        return true;
+    else
+        return false;
 }
 
 void CryptoInterface::decryptData(const QCA::SecureArray &k1, const QCA::SecureArray &iv, const QCA::SecureArray &ciphertext, QCA::SecureArray &rPlaintext)
@@ -60,9 +59,12 @@ CryptoInterface::Result CryptoInterface::readMasterKey(const QCA::SecureArray &p
         return NO_FILE;
     file.open(QFile::ReadOnly);
 
+    //read encryption scheme
+    file.read((char*)&this->encryptionScheme_,sizeof(EncryptionScheme));
+
     //read initialization vector (unencrypted)
-    QCA::SecureArray iv(32);
-    if(!file.read(iv.data(),32))
+    QCA::SecureArray iv(16); //blocksize of AES is 128 bit regardless of keylength
+    if(!file.read(iv.data(),16))
         return WRONG_FILE_FORMAT;
 
     //read salt (unencrypted)
@@ -70,10 +72,10 @@ CryptoInterface::Result CryptoInterface::readMasterKey(const QCA::SecureArray &p
     if(!file.read(salt.data(),32))
         return WRONG_FILE_FORMAT;
 
-    //read known latter half k2 of derived intermediate key
-    //k2 is to be used for password verification
-    QCA::SecureArray k2(32);
-    if(!file.read(k2.data(),32))
+    //read sha1 hash of latter half k2 of derived intermediate key
+    //to be used for password verification
+    QCA::SecureArray hk2(20);
+    if(!file.read(hk2.data(),20))
         return WRONG_FILE_FORMAT;
 
     //read encrypted master key. 48 bytes due to padding.
@@ -84,14 +86,16 @@ CryptoInterface::Result CryptoInterface::readMasterKey(const QCA::SecureArray &p
         return WRONG_FILE_FORMAT;
     file.close();
 
-    QCA::SymmetricKey k;
-    //generate long intermediate key k from password, using salt
-    calcK(password,salt,k);
+    //generate long intermediate key k=(k1,k2) from password, using salt
+    QCA::SecureArray k1;
+    QCA::SecureArray k2;
+    calcK(password,salt,k1,k2);
+
     //verify password by comparing the second half of k to k2
-    if(!verifyK2AndTruncateK(k2,k))
+    if(!verifyK2(hk2,k2))
         return WRONG_PASSWORD;
     //if password is correct, decrypt the master key
-    decryptData(k,iv,encryptedKey,masterkey_);
+    decryptData(k1,iv,encryptedKey,masterkey_);
     masterKeySet_=true;
     return SUCCESS;
 }
@@ -102,24 +106,30 @@ CryptoInterface::Result CryptoInterface::saveMasterKey(const QCA::SecureArray &p
     QFile file(fileName);
     file.open(QFile::WriteOnly);
 
+    //write encryption scheme
+    file.write((char*)this->encryptionScheme_,sizeof(EncryptionScheme));
+
     //write random iv (doesn't require lots of entropy since it remains public and doesn't need to be guessed by an attacker)
-    QCA::InitializationVector iv(32);
-    file.write(iv.data(),32);
+    QCA::InitializationVector iv(16);
+    iv=QCA::Random::randomArray(16);
+    file.write(iv.data(),16);
 
     //write random salt (doesn't require lots of entropy since it remains public and doesn't need to be guessed by an attacker)
     QCA::InitializationVector salt(32);
+    salt=QCA::Random::randomArray(32);
     file.write(salt.data(),32);
 
     //derive long intermediate key k using password and salt
-    QCA::SymmetricKey k;
-    calcK(password,salt,k);
+    QCA::SecureArray k1;
+    QCA::SecureArray k2;
+    calcK(password,salt,k1,k2);
+
     //write latter half of k to file unencrypted
-    file.write(&k[32],32);
+    file.write(QCA::Hash("sha1").hash(k2).toByteArray());
 
     //encrypt master key with first half of k and initialization vector
-    k.resize(32);
     QCA::SymmetricKey encryptedKey;
-    encryptData(k,iv,encryptedKey,masterkey_);
+    encryptData(k1,iv,encryptedKey,masterkey_);
     file.write(encryptedKey.data(),48);
     file.close();
     return SUCCESS;
@@ -133,7 +143,7 @@ void CryptoInterface::setMasterKey(const QCA::SymmetricKey &key)
 
 void CryptoInterface::setRandomMasterKey()
 {
-    masterkey_=QCA::InitializationVector(32);
+    masterkey_=QCA::SymmetricKey(32);
     masterKeySet_=true;
 }
 
