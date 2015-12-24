@@ -25,7 +25,7 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     defaultTextCharFormat.setForeground(QBrush(Qt::black));
 
     //ui->categoriesComboBox->view()->installEventFilter(this);
-    //ui->categoriesComboBox->installEventFilter(this);
+    ui->categoriesComboBox->installEventFilter(this);
     ui->entriesListWidget->installEventFilter(this);
 }
 
@@ -39,6 +39,8 @@ NotizenMainWindow::~NotizenMainWindow()
 
 void NotizenMainWindow::addCategory()
 {
+    if(ui->categoriesComboBox->currentText()=="")
+        return;
     notesInternals.selectCategory(notesInternals.addCategory(ui->categoriesComboBox->currentText()));
     syncModelAndUI();
 }
@@ -349,6 +351,14 @@ bool NotizenMainWindow::eventFilter(QObject *target, QEvent *e)
         if(e->type()==QEvent::KeyRelease)
         {
             on_entriesListWidget_pressed(QModelIndex());
+        }
+    }
+    if(target==ui->categoriesComboBox)
+    {
+        if(e->type()==QEvent::KeyRelease)
+        {
+            if(((QKeyEvent*)e)->text()=="\n" || ((QKeyEvent*)e)->text()=="\r")
+                addCategory();
         }
     }
     e->accept();
