@@ -12,19 +12,23 @@ TARGET = Notizen
 TEMPLATE = app
 CONFIG += crypto
 CONFIG += c++11
+
 QT += printsupport
 
 SOURCES += main.cpp\
         notizenmainwindow.cpp \
     notesinternals.cpp \
     notizentextedit.cpp \
-    cryptointerface.cpp
+    cryptointerface.cpp \
+    passworddialog.cpp
 
 HEADERS  += notizenmainwindow.h \
     notesinternals.h \
     notizentextedit.h \
-    cryptointerface.h
-FORMS    += notizenmainwindow.ui
+    cryptointerface.h \
+    passworddialog.h
+FORMS    += notizenmainwindow.ui \
+    passworddialog.ui
 
 RESOURCES += \
     icons.qrc

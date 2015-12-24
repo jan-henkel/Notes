@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>NotizenMainWindow</class>
  <widget class="QMainWindow" name="NotizenMainWindow">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
   <property name="enabled">
    <bool>true</bool>
   </property>
@@ -18,6 +21,12 @@
   </property>
   <property name="styleSheet">
    <string notr="true"/>
+  </property>
+  <property name="toolButtonStyle">
+   <enum>Qt::ToolButtonIconOnly</enum>
+  </property>
+  <property name="documentMode">
+   <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -46,8 +55,20 @@
         <property name="spacing">
          <number>2</number>
         </property>
-        <item row="0" column="0">
-         <widget class="QLabel" name="tagsLabel">
+        <item row="1" column="8">
+         <widget class="QLineEdit" name="entryFilterLineEdit">
+          <property name="font">
+           <font>
+            <family>Trebuchet MS</family>
+            <pointsize>10</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="entryLabel">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
             <horstretch>0</horstretch>
@@ -65,7 +86,6 @@
             <family>Trebuchet MS</family>
             <pointsize>12</pointsize>
             <weight>50</weight>
-            <italic>false</italic>
             <bold>false</bold>
             <stylestrategy>PreferAntialias</stylestrategy>
            </font>
@@ -74,7 +94,7 @@
            <bool>false</bool>
           </property>
           <property name="styleSheet">
-           <string notr="true">background-color: rgba(255, 151, 91, 255);</string>
+           <string notr="true">background-color: rgba(160, 189, 255, 100);</string>
           </property>
           <property name="frameShape">
            <enum>QFrame::Panel</enum>
@@ -86,19 +106,41 @@
            <number>1</number>
           </property>
           <property name="text">
-           <string>Category</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=&quot;:/icons/page_white.png&quot;/&gt; Entry&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::RichText</enum>
           </property>
          </widget>
         </item>
-        <item row="1" column="8">
-         <widget class="QLineEdit" name="entryFilterLineEdit">
+        <item row="1" column="6">
+         <widget class="QPushButton" name="removeEntryPushButton">
+          <property name="minimumSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <family>Trebuchet MS</family>
-            <pointsize>10</pointsize>
+            <pointsize>12</pointsize>
             <weight>75</weight>
             <bold>true</bold>
            </font>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="icons.qrc">
+            <normaloff>:/icons/delete.png</normaloff>:/icons/delete.png</iconset>
           </property>
          </widget>
         </item>
@@ -131,7 +173,7 @@
            </font>
           </property>
           <property name="contextMenuPolicy">
-           <enum>Qt::ActionsContextMenu</enum>
+           <enum>Qt::CustomContextMenu</enum>
           </property>
           <property name="editable">
            <bool>true</bool>
@@ -141,57 +183,8 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="entryLabel">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>64</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Trebuchet MS</family>
-            <pointsize>12</pointsize>
-            <weight>50</weight>
-            <bold>false</bold>
-            <stylestrategy>PreferAntialias</stylestrategy>
-           </font>
-          </property>
-          <property name="autoFillBackground">
-           <bool>false</bool>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background-color: rgba(160, 189, 255, 255);</string>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::Panel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Plain</enum>
-          </property>
-          <property name="lineWidth">
-           <number>1</number>
-          </property>
-          <property name="text">
-           <string>Entry</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="6">
-         <widget class="QPushButton" name="removeEntryPushButton">
-          <property name="minimumSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
+        <item row="1" column="5">
+         <widget class="QPushButton" name="addEntryPushButton">
           <property name="maximumSize">
            <size>
             <width>24</width>
@@ -207,7 +200,11 @@
            </font>
           </property>
           <property name="text">
-           <string>-</string>
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="icons.qrc">
+            <normaloff>:/icons/add.png</normaloff>:/icons/add.png</iconset>
           </property>
          </widget>
         </item>
@@ -237,28 +234,34 @@
            <string notr="true"/>
           </property>
           <property name="text">
-           <string>-</string>
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="icons.qrc">
+            <normaloff>:/icons/delete.png</normaloff>:/icons/delete.png</iconset>
           </property>
          </widget>
         </item>
-        <item row="1" column="5">
-         <widget class="QPushButton" name="addEntryPushButton">
+        <item row="1" column="7">
+         <widget class="QPushButton" name="printEntryPushButton">
+          <property name="minimumSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
           <property name="maximumSize">
            <size>
             <width>24</width>
             <height>24</height>
            </size>
           </property>
-          <property name="font">
-           <font>
-            <family>Trebuchet MS</family>
-            <pointsize>12</pointsize>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
           <property name="text">
-           <string>+</string>
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="icons.qrc">
+            <normaloff>:/icons/printer.png</normaloff>:/icons/printer.png</iconset>
           </property>
          </widget>
         </item>
@@ -291,36 +294,17 @@
            <string notr="true"/>
           </property>
           <property name="text">
-           <string>+</string>
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="icons.qrc">
+            <normaloff>:/icons/add.png</normaloff>:/icons/add.png</iconset>
           </property>
           <property name="default">
            <bool>false</bool>
           </property>
           <property name="flat">
            <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="7">
-         <widget class="QPushButton" name="printEntryPushButton">
-          <property name="minimumSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="icon">
-           <iconset resource="icons.qrc">
-            <normaloff>:/icons/printer.png</normaloff>:/icons/printer.png</iconset>
           </property>
          </widget>
         </item>
@@ -356,80 +340,185 @@
           </property>
          </widget>
         </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="tagsLabel">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>64</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Trebuchet MS</family>
+            <pointsize>12</pointsize>
+            <weight>50</weight>
+            <italic>false</italic>
+            <bold>false</bold>
+            <stylestrategy>PreferAntialias</stylestrategy>
+           </font>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: rgba(255, 151, 91, 100);</string>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::Panel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Plain</enum>
+          </property>
+          <property name="lineWidth">
+           <number>1</number>
+          </property>
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=&quot;:/icons/folder.png&quot;/&gt; Category&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::RichText</enum>
+          </property>
+          <property name="pixmap">
+           <pixmap resource="icons.qrc">:/icons/accept.png</pixmap>
+          </property>
+          <property name="scaledContents">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="9">
+         <widget class="QPushButton" name="savePushButton">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>24</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="baseSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="icons.qrc">
+            <normaloff>:/icons/disk.png</normaloff>:/icons/disk.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>16</width>
+            <height>16</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="9">
+         <widget class="QPushButton" name="encryptionPushButton">
+          <property name="minimumSize">
+           <size>
+            <width>24</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="icons.qrc">
+            <normaloff>:/icons/lock_add.png</normaloff>:/icons/lock_add.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="10">
+         <widget class="QPushButton" name="settingsPushButton">
+          <property name="minimumSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="icons.qrc">
+            <normaloff>:/icons/cog.png</normaloff>:/icons/cog.png</iconset>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="10">
+         <widget class="QToolButton" name="stayOnTopToolButton">
+          <property name="minimumSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="icons.qrc">
+            <normaloff>:/icons/arrow_up.png</normaloff>:/icons/arrow_up.png</iconset>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
        </layout>
-      </item>
-      <item>
-       <widget class="QPushButton" name="encryptionPushButton">
-        <property name="minimumSize">
-         <size>
-          <width>24</width>
-          <height>48</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>24</width>
-          <height>100</height>
-         </size>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset resource="icons.qrc">
-          <normaloff>:/icons/lock_add.png</normaloff>:/icons/lock_add.png</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>24</width>
-          <height>24</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="savePushButton">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>24</width>
-          <height>48</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>24</width>
-          <height>100</height>
-         </size>
-        </property>
-        <property name="baseSize">
-         <size>
-          <width>0</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset resource="icons.qrc">
-          <normaloff>:/icons/save.ico</normaloff>:/icons/save.ico</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>16</width>
-          <height>16</height>
-         </size>
-        </property>
-       </widget>
       </item>
      </layout>
     </item>
@@ -455,8 +544,14 @@
         <bold>false</bold>
        </font>
       </property>
+      <property name="contextMenuPolicy">
+       <enum>Qt::CustomContextMenu</enum>
+      </property>
       <property name="editTriggers">
        <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
+      </property>
+      <property name="selectionMode">
+       <enum>QAbstractItemView::SingleSelection</enum>
       </property>
       <property name="selectionBehavior">
        <enum>QAbstractItemView::SelectItems</enum>
@@ -481,6 +576,12 @@
         <weight>50</weight>
         <bold>false</bold>
        </font>
+      </property>
+      <property name="contextMenuPolicy">
+       <enum>Qt::CustomContextMenu</enum>
+      </property>
+      <property name="inputMethodHints">
+       <set>Qt::ImhMultiLine|Qt::ImhSensitiveData</set>
       </property>
       <property name="autoFormatting">
        <set>QTextEdit::AutoNone</set>
@@ -540,6 +641,10 @@
         <property name="text">
          <string/>
         </property>
+        <property name="icon">
+         <iconset resource="icons.qrc">
+          <normaloff>:/icons/color_wheel.png</normaloff>:/icons/color_wheel.png</iconset>
+        </property>
         <property name="flat">
          <bool>false</bool>
         </property>
@@ -581,7 +686,11 @@
          </font>
         </property>
         <property name="text">
-         <string>i</string>
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="icons.qrc">
+          <normaloff>:/icons/text_italic.png</normaloff>:/icons/text_italic.png</iconset>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -603,7 +712,11 @@
          </size>
         </property>
         <property name="text">
-         <string>_</string>
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="icons.qrc">
+          <normaloff>:/icons/text_underline.png</normaloff>:/icons/text_underline.png</iconset>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -633,7 +746,11 @@
          </font>
         </property>
         <property name="text">
-         <string>b</string>
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="icons.qrc">
+          <normaloff>:/icons/text_bold.png</normaloff>:/icons/text_bold.png</iconset>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -670,6 +787,10 @@
         <property name="text">
          <string>Link</string>
         </property>
+        <property name="icon">
+         <iconset resource="icons.qrc">
+          <normaloff>:/icons/link.png</normaloff>:/icons/link.png</iconset>
+        </property>
        </widget>
       </item>
      </layout>
@@ -682,13 +803,26 @@
      <x>0</x>
      <y>0</y>
      <width>599</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
   <action name="actionRenameCategory">
    <property name="text">
-    <string>tr(&quot;Rename category&quot;)</string>
+    <string>Rename category</string>
+   </property>
+  </action>
+  <action name="actionRenameEntry">
+   <property name="text">
+    <string>Rename entry</string>
+   </property>
+   <property name="toolTip">
+    <string>Rename entry</string>
+   </property>
+  </action>
+  <action name="actionEditURL">
+   <property name="text">
+    <string>Edit URL</string>
    </property>
   </action>
  </widget>

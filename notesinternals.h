@@ -35,7 +35,7 @@ class Entry
     friend class NotesInternals;
     friend class Category;
 private:
-    QString entryText_; //unencrypted text of the entry
+    QCA::SecureArray entryText_; //unencrypted text of the entry
     QString fileName_;  //file name without path associated with the entry
 };
 
@@ -81,12 +81,18 @@ public:
     const EntryPair moveEntry(CategoryPair &oldCategoryPair,EntryPair &entryPair,CategoryPair &newCategoryPair);
     //change entry text of entry specified by (categoryPair,entryPair) to newEntryText.
     //return entry pair if successful, invalid pair otherwise
-    const EntryPair modifyEntryText(CategoryPair &categoryPair,EntryPair &entryPair,QString newEntryText);
+    const EntryPair modifyEntryText(CategoryPair &categoryPair,EntryPair &entryPair,QCA::SecureArray newEntryText);
 
     //enable encryption, add encrypted categories. returns false if password is wrong or not set
     bool enableEncryption(const QCA::SecureArray & password);
     //disable encryption, remove encrypted categories
     void disableEncryption();
+
+    //create new password and master key
+    bool createNewMasterKey(const QCA::SecureArray & newPassword);
+    bool createNewPassword(const QCA::SecureArray & newPassword);
+    bool masterKeyExists()
+        {return QFile("./enc/masterkey").exists();}
 
     bool encryptionEnabled() {return encryptionEnabled_;}
 
@@ -110,8 +116,8 @@ public:
         {return entryPair.first.first;}
     static QDateTime getEntryDate(const EntryPair &entryPair)
         {return entryPair.first.second;}
-    static QString getEntryText(const EntryPair &entryPair)
-        {return entryPair.second?entryPair.second->entryText_:QString("");}
+    static QCA::SecureArray getEntryText(const EntryPair &entryPair)
+        {return entryPair.second?entryPair.second->entryText_:QCA::SecureArray(0,0);}
     static QString getEntryFileName(const EntryPair &entryPair)
         {return entryPair.second?entryPair.second->fileName_:QString("");}
     static const Entry* getEntry(const EntryPair &entryPair)
@@ -151,7 +157,7 @@ public:
         {return renameEntry(currentCategoryPair_,currentEntryPair_,newEntryName);}
     const EntryPair moveCurrentEntry(CategoryPair &newCategoryPair)
         {return moveEntry(currentCategoryPair_,currentEntryPair_,newCategoryPair);}
-    const EntryPair modifyCurrentEntryText(QString newEntryText)
+    const EntryPair modifyCurrentEntryText(QCA::SecureArray newEntryText)
         {return modifyEntryText(currentCategoryPair_,currentEntryPair_,newEntryText);}
 signals:
     //signals to keep track of changes in category set, selected pairs
@@ -185,7 +191,7 @@ private:
     void removeEncryptedCategories();
 
     //function to update entry file. creates file if it doesn't exist yet (useful for creating new entries)
-    bool updateEntryFile(CategoryPair &categoryPair,EntryPair &entryPair);
+    bool updateEntryFile(CategoryPair categoryPair,EntryPair entryPair);
     //function to update category file and folder. creates file and folder if it doesn't exist yet (useful for new categories)
     bool updateCategoryFile(CategoryPair &categoryPair);
 

@@ -26,6 +26,7 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
 
     //ui->categoriesComboBox->view()->installEventFilter(this);
     //ui->categoriesComboBox->installEventFilter(this);
+    ui->entriesListWidget->installEventFilter(this);
 }
 
 NotizenMainWindow::~NotizenMainWindow()
@@ -79,7 +80,7 @@ void NotizenMainWindow::printEntry()
     {
         QPrinter printer;
         QPrintDialog *printDialog=new QPrintDialog(&printer,this);
-        QTextEdit textEdit;
+        NotizenTextEdit textEdit(this);
         if(printDialog->exec() == QDialog::Accepted)
         {
             textEdit.setCurrentFont(QFont("Trebuchet MS",16,QFont::Normal,false));
@@ -108,7 +109,7 @@ void NotizenMainWindow::printCategory()
     {
         QPrinter printer;
         QPrintDialog *printDialog=new QPrintDialog(&printer,this);
-        QTextEdit textEdit;
+        NotizenTextEdit textEdit(this);
         if(printDialog->exec() == QDialog::Accepted && notesInternals.isValid(notesInternals.currentCategoryPair()))
         {
             textEdit.moveCursor(QTextCursor::End);
@@ -144,18 +145,26 @@ void NotizenMainWindow::toggleEncryption()
 {
     if(!notesInternals.encryptionEnabled())
     {
-        QString pw=QInputDialog::getText(this,"PW","PW",QLineEdit::Password);
-        if(!notesInternals.enableEncryption(QCA::SecureArray(pw.toUtf8())))
+        PasswordDialog dlg(this);
+        dlg.setModal(true);
+        QObject::connect(&dlg,SIGNAL(newPasswordSet(QCA::SecureArray,bool)),this,SLOT(createNewPassword(QCA::SecureArray,bool)));
+        QObject::connect(&dlg,SIGNAL(passwordEntered(QCA::SecureArray)),this,SLOT(passwordEntered(QCA::SecureArray)));
+        QObject::connect(&dlg,SIGNAL(passwordMismatch()),this,SLOT(passwordMismatch()));
+        if(!notesInternals.masterKeyExists())
         {
             QMessageBox msg(this);
-            msg.setText("Wrong pw");
             msg.setModal(true);
+            msg.setText("No master key set. Do you wish to create a new one?");
+            msg.setWindowTitle(tr("Master key not set"));
+            msg.setIcon(QMessageBox::Question);
+            msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
             msg.exec();
+            if(msg.result()==QMessageBox::Yes)
+                dlg.showWithMode(PasswordDialog::CreateMasterKey);
         }
         else
         {
-            syncModelAndUI();
-            ui->encryptionPushButton->setIcon(QIcon(":/icons/lock_delete.png"));
+            dlg.showWithMode(PasswordDialog::AskPassword);
         }
     }
     else
@@ -164,6 +173,99 @@ void NotizenMainWindow::toggleEncryption()
         syncModelAndUI();
         ui->encryptionPushButton->setIcon(QIcon(":/icons/lock_add.png"));
     }
+}
+
+void NotizenMainWindow::renameCategory()
+{
+    QInputDialog renameDialog(this);
+    renameDialog.setInputMode(QInputDialog::TextInput);
+    renameDialog.setWindowFlags(renameDialog.windowFlags()& ~Qt::WindowContextHelpButtonHint);
+    renameDialog.setWindowTitle(tr("Choose new title"));
+    renameDialog.setLabelText(tr("Enter a new name for category '")+notesInternals.getCategoryName(notesInternals.currentCategoryPair())+QString("'"));
+    renameDialog.setTextValue(notesInternals.getCategoryName(notesInternals.currentCategoryPair()));
+    renameDialog.setModal(true);
+    renameDialog.setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
+    renameDialog.adjustSize();
+    renameDialog.exec();
+    if(renameDialog.result()==QInputDialog::Accepted && renameDialog.textValue()!="")
+    {
+        notesInternals.renameCurrentCategory(renameDialog.textValue());
+        syncModelAndUI();
+    }
+}
+
+void NotizenMainWindow::renameEntry()
+{
+    QInputDialog renameDialog(this);
+    renameDialog.setInputMode(QInputDialog::TextInput);
+    renameDialog.setWindowFlags(renameDialog.windowFlags()& ~Qt::WindowContextHelpButtonHint);
+    renameDialog.setWindowTitle(tr("Choose new title"));
+    renameDialog.setLabelText(tr("Enter a new name for entry '")+notesInternals.getEntryName(notesInternals.currentEntryPair())+QString("'"));
+    renameDialog.setTextValue(notesInternals.getEntryName(notesInternals.currentEntryPair()));
+    renameDialog.setModal(true);
+    renameDialog.setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
+    renameDialog.adjustSize();
+    renameDialog.exec();
+    if(renameDialog.result()==QInputDialog::Accepted && renameDialog.textValue()!="")
+    {
+        notesInternals.renameCurrentEntry(renameDialog.textValue());
+        syncModelAndUI();
+    }
+}
+
+void NotizenMainWindow::toggleStayOnTop(bool stayOnTop)
+{
+    if(stayOnTop)
+    {
+        this->hide();
+        this->setWindowFlags(this->windowFlags()|Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint);
+        this->show();
+    }
+    else
+    {
+        this->hide();
+        this->setWindowFlags(this->windowFlags()&(~(Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint|Qt::WindowStaysOnBottomHint)));
+        this->show();
+    }
+}
+
+void NotizenMainWindow::editEntryTextURL()
+{
+    QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
+
+    QInputDialog changeURLDialog(this);
+    changeURLDialog.setInputMode(QInputDialog::TextInput);
+    changeURLDialog.setWindowFlags(changeURLDialog.windowFlags()& ~Qt::WindowContextHelpButtonHint);
+    changeURLDialog.setWindowTitle(tr("Edit URL"));
+    changeURLDialog.setLabelText(tr("Set a new URL for the current selection:"));
+    changeURLDialog.setTextValue(ui->entryTextEdit->textCursor().charFormat().anchorHref());
+    changeURLDialog.setModal(true);
+    changeURLDialog.setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
+    changeURLDialog.adjustSize();
+    changeURLDialog.exec();
+
+    if(changeURLDialog.result()!=QInputDialog::Accepted)
+    {
+        return;
+    }
+
+    if(changeURLDialog.textValue()=="")
+    {
+        f.setAnchor(false);
+        f.setAnchorName("");
+        f.setAnchorHref("");
+        ui->entryTextEdit->textCursor().setCharFormat(f);
+    }
+    else
+    {
+        f.setAnchor(true);
+        f.setAnchorName(ui->entryTextEdit->textCursor().selectedText());
+        f.setAnchorHref(changeURLDialog.textValue());
+        //f.setFontUnderline(true);
+        //f.setForeground(Qt::blue);
+        ui->entryTextEdit->textCursor().setCharFormat(f);
+    }
+    ui->entryTextEdit->setCurrentCharFormat(f);
 }
 
 void NotizenMainWindow::syncModelAndUI()
@@ -182,11 +284,16 @@ void NotizenMainWindow::syncModelAndUI()
             if(!NotesInternals::getCategoryEncrypted(*i))
                 categoryPairList.push_back(*i);
         }
+        //std::function<bool(CategoryPair)> fObject1(NotesInternals::getCategoryEncrypted);
+        //std::function<bool(CategoryPair)> fObject2(std::not1(fObject1));
+        //std::copy_if(notesInternals.categorySet()->cbegin(),notesInternals.categorySet()->cend(),categoryPairList.begin(),NotesInternals::getCategoryEncrypted);
+        //std::copy_if(notesInternals.categorySet()->cbegin(),notesInternals.categorySet()->cend(),categoryPairList.begin(),fObject2);
+
         ui->categoriesComboBox->clear();
         int j=-1;
         for(int i=0;i<(int)categoryPairList.size();++i)
         {
-            ui->categoriesComboBox->addItem(NotesInternals::getCategoryEncrypted(categoryPairList[i])?QIcon(":/icons/lock_add.png"):QIcon(""),
+            ui->categoriesComboBox->addItem(NotesInternals::getCategoryEncrypted(categoryPairList[i])?QIcon(":/icons/lock.png"):QIcon(""),
                                             NotesInternals::getCategoryName(categoryPairList[i]));
             if(notesInternals.currentCategoryPair()==categoryPairList[i])
                 j=i;
@@ -222,9 +329,9 @@ void NotizenMainWindow::syncModelAndUI()
             if(notesInternals.currentEntryPair()==entryPairList[i])
                 j=i;
         }
-        ui->entriesListWidget->setCurrentRow(j);
         if(j==-1)
             notesInternals.selectEntry(NotesInternals::invalidEntryPair());
+        ui->entriesListWidget->setCurrentRow(j);
         updateFlags &= ~(CategorySelectionChanged|EntryListContentChanged);
     }
     if(updateFlags & (EntrySelectionChanged|EntryContentChanged))
@@ -235,20 +342,18 @@ void NotizenMainWindow::syncModelAndUI()
     }
 }
 
-/*bool NotizenMainWindow::eventFilter(QObject *target, QEvent *e)
+bool NotizenMainWindow::eventFilter(QObject *target, QEvent *e)
 {
-    if(target==this->ui->categoriesComboBox->view() || target==this->ui->categoriesComboBox)
+    if(target==ui->entriesListWidget)
     {
-        if(e->type()==QEvent::ContextMenu)
+        if(e->type()==QEvent::KeyRelease)
         {
-            //e->ignore();
-            e->accept();
-            return true;
+            on_entriesListWidget_pressed(QModelIndex());
         }
     }
     e->accept();
     return false;
-}*/
+}
 
 void NotizenMainWindow::on_addCategoryPushButton_clicked()
 {
@@ -288,6 +393,44 @@ void NotizenMainWindow::on_entryFilterLineEdit_textEdited(const QString &arg1)
     }
 }
 
+void NotizenMainWindow::createNewPassword(QCA::SecureArray password, bool createMasterKey)
+{
+    if(createMasterKey)
+    {
+        notesInternals.createNewMasterKey(password);
+        if(!notesInternals.enableEncryption(password))
+        {
+            QMessageBox(QMessageBox::Warning,tr("Error"),tr("An error occured while setting up encryption."),QMessageBox::Ok,this).exec();
+            return;
+        }
+        syncModelAndUI();
+        ui->encryptionPushButton->setIcon(QIcon(":/icons/lock_delete.png"));
+    }
+}
+
+void NotizenMainWindow::passwordEntered(QCA::SecureArray password)
+{
+    if(!notesInternals.enableEncryption(password))
+    {
+        QMessageBox(QMessageBox::Warning,tr("Wrong password"),tr("The password you entered is incorrect."),QMessageBox::Ok,this).exec();
+        return;
+    }
+    syncModelAndUI();
+    ui->encryptionPushButton->setIcon(QIcon(":/icons/lock_delete.png"));
+}
+
+void NotizenMainWindow::passwordMismatch()
+{
+    QMessageBox(QMessageBox::Warning,tr("Inputs don't match"),tr("The passwords you entered do not match."),QMessageBox::Ok,this).exec();
+    return;
+}
+
+void NotizenMainWindow::moveEntryMenu(QAction *action)
+{
+    notesInternals.moveCurrentEntry(categoryPairList[action->data().toInt()]);
+    syncModelAndUI();
+}
+
 void NotizenMainWindow::on_savePushButton_clicked()
 {
     saveEntry();
@@ -321,51 +464,6 @@ void NotizenMainWindow::on_removeCategoryPushButton_clicked()
 void NotizenMainWindow::on_entryTextEdit_anchorClicked(const QUrl &arg1)
 {
     QDesktopServices::openUrl(arg1);
-}
-
-void NotizenMainWindow::on_entryTextEdit_cursorPositionChanged()
-{
-    //QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
-    //f.setAnchor(false);
-    //f.setAnchorHref("");
-    //ui->entryTextEdit->textCursor().setCharFormat(f);
-    //ui->entryTextEdit->textCursor().setBlockCharFormat(f);
-    /*QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
-    ui->fontComboBox->setCurrentText(f.fontFamily());
-    if(f.anchorHref()!="" || f.anchorName()!="" || f.isAnchor())
-        ui->makeLinkCheckBox->setChecked(true);
-    else
-        ui->makeLinkCheckBox->setChecked(false);
-    ui->colorPushButton->setStyleSheet("background-color: "+f.foreground().color().name());
-    ui->fontSizeSpinBox->setValue(f.font().pointSize());
-    ui->italicToolButton->setChecked(f.font().italic());
-    ui->boldToolButton->setChecked(f.font().bold());
-    ui->underlineToolButton->setChecked(f.font().underline());*/
-}
-
-
-    /*QString tmp=ui->entryTextEdit->textCursor().selectedText().toHtmlEscaped();
-    ui->entryTextEdit->textCursor().insertHtml(QString("<a href='")+tmp+QString("'>")+tmp+QString("</a>"));*/
-
-
-
-void NotizenMainWindow::on_entryTextEdit_textChanged()
-{
-    /*QTextCharFormat f=ui->entryTextEdit->currentCharFormat();
-    f.setAnchor(false);
-    f.setAnchorName("");
-    f.setAnchorHref("");
-    f.setFontUnderline(false);
-    f.clearForeground();
-    ui->entryTextEdit->setCurrentCharFormat(f);*/
-    /*QTextCursor textCursor=QTextCursor(ui->entryTextEdit->textCursor());
-    if(!textCursor.atStart() && textCursor.charFormat()!=f)
-    {
-        textCursor.setPosition(ui->entryTextEdit->textCursor().position()-1);
-        textCursor.movePosition(QTextCursor::Right,QTextCursor::KeepAnchor);
-        textCursor.setCharFormat(f);
-    }*/
-
 }
 
 void NotizenMainWindow::on_printCategoryPushButton_clicked()
@@ -416,10 +514,6 @@ void NotizenMainWindow::on_colorPushButton_clicked()
     ui->entryTextEdit->setFocus();
 }
 
-void NotizenMainWindow::on_fontSizeSpinBox_valueChanged(int arg1)
-{
-}
-
 void NotizenMainWindow::on_fontSizeSpinBox_editingFinished()
 {
     ui->entryTextEdit->setFontPointSize(ui->fontSizeSpinBox->value());
@@ -442,7 +536,18 @@ void NotizenMainWindow::on_boldToolButton_clicked(bool checked)
 
 void NotizenMainWindow::on_entriesListWidget_customContextMenuRequested(const QPoint &pos)
 {
-
+    if(notesInternals.isValid(notesInternals.currentCategoryPair(),notesInternals.currentEntryPair()))
+    {
+        QMenu entriesContextMenu(this);
+        QMenu moveMenu(this);
+        moveMenu.setTitle(tr("Move entry"));
+        for(int i=0;i<categoryPairList.size();++i)
+            moveMenu.addAction(notesInternals.getCategoryName(categoryPairList[i]))->setData(i);
+        QObject::connect(&moveMenu,SIGNAL(triggered(QAction*)),this,SLOT(moveEntryMenu(QAction*)));
+        entriesContextMenu.addMenu(&moveMenu);
+        entriesContextMenu.addAction(this->ui->actionRenameEntry);
+        entriesContextMenu.exec(QCursor::pos());
+    }
 }
 
 void NotizenMainWindow::on_encryptionPushButton_clicked()
@@ -462,4 +567,50 @@ void NotizenMainWindow::on_entryTextEdit_currentCharFormatChanged(const QTextCha
     ui->italicToolButton->setChecked(f.font().italic());
     ui->boldToolButton->setChecked(f.font().bold());
     ui->underlineToolButton->setChecked(f.font().underline());
+}
+
+void NotizenMainWindow::on_categoriesComboBox_customContextMenuRequested(const QPoint &pos)
+{
+    QMenu *categoriesContextMenu=ui->categoriesComboBox->lineEdit()->createStandardContextMenu();
+    categoriesContextMenu->removeAction(categoriesContextMenu->actions()[0]);
+    categoriesContextMenu->removeAction(categoriesContextMenu->actions()[0]);
+    if(notesInternals.isValid(notesInternals.currentCategoryPair()))
+        categoriesContextMenu->insertAction(categoriesContextMenu->actions()[0],ui->actionRenameCategory);
+    categoriesContextMenu->exec(QCursor::pos());
+    delete categoriesContextMenu;
+}
+
+void NotizenMainWindow::on_actionRenameCategory_triggered()
+{
+    renameCategory();
+}
+
+void NotizenMainWindow::on_entryFilterLineEdit_returnPressed()
+{
+    addEntry();
+}
+
+void NotizenMainWindow::on_stayOnTopToolButton_clicked(bool checked)
+{
+
+   toggleStayOnTop(checked);
+}
+
+void NotizenMainWindow::on_actionRenameEntry_triggered()
+{
+    renameEntry();
+}
+
+void NotizenMainWindow::on_entryTextEdit_customContextMenuRequested(const QPoint &pos)
+{
+    QMenu *entryTextContextMenu=ui->entryTextEdit->createStandardContextMenu();
+    if(!ui->entryTextEdit->textCursor().selection().isEmpty())
+        entryTextContextMenu->addAction(ui->actionEditURL);
+    entryTextContextMenu->exec(QCursor::pos());
+    delete entryTextContextMenu;
+}
+
+void NotizenMainWindow::on_actionEditURL_triggered()
+{
+    editEntryTextURL();
 }

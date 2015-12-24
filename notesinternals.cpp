@@ -5,7 +5,7 @@ NotesInternals::NotesInternals(QObject *parent) : QObject(parent),hashFunction_(
     QCA::init();
     loadUnencryptedCategories();
     //cryptoBuffer_.setRandomKeyIV();
-    //cryptoBuffer_.writeKeyIV(QCA::SecureArray(QString("testpasswort").toUtf8()),QString("./enc/pw"));
+    //cryptoBuffer_.writeKeyIV(QCA::SecureArray(QString("testpasswort").toUtf8()),QString("./enc/masterkey"));
 }
 
 const CategoryPair NotesInternals::addCategory(QString categoryName)
@@ -193,7 +193,7 @@ const EntryPair NotesInternals::moveEntry(CategoryPair &oldCategoryPair, EntryPa
     return entryPair;
 }
 
-const EntryPair NotesInternals::modifyEntryText(CategoryPair &categoryPair, EntryPair &entryPair, QString newEntryText)
+const EntryPair NotesInternals::modifyEntryText(CategoryPair &categoryPair, EntryPair &entryPair, QCA::SecureArray newEntryText)
 {
     //return invalid entry pair in case (categoryPair,entryPair) does not represent a valid entry
     if(!isValid(categoryPair,entryPair))
@@ -215,8 +215,10 @@ const EntryPair NotesInternals::modifyEntryText(CategoryPair &categoryPair, Entr
 
 bool NotesInternals::enableEncryption(const QCA::SecureArray &password)
 {
+    if(encryptionEnabled_)
+        return true;
     //attempt to read master key from file using password. return false if password is wrong or not set
-    if(cryptoInterface_.readMasterKey(password,QString("./enc/pw"))!=CryptoInterface::SUCCESS)
+    if(cryptoInterface_.readMasterKey(password,QString("./enc/masterkey"))!=CryptoInterface::SUCCESS)
         return false;
 
     //if successful set encryption boolean to true, load encrypted categories
@@ -230,6 +232,36 @@ void NotesInternals::disableEncryption()
     //remove encrypted categories and set encryption boolean to false
     removeEncryptedCategories();
     encryptionEnabled_=false;
+}
+
+bool NotesInternals::createNewMasterKey(const QCA::SecureArray &newPassword)
+{
+    //create new master key and save it with newPassword
+    cryptoInterface_.setRandomMasterKey();
+    if(cryptoInterface_.saveMasterKey(newPassword,"./enc/masterkey")!=CryptoInterface::SUCCESS)
+        return false;
+
+    //if encryption is enabled, save all files with new master key and delete the old ones
+    if(encryptionEnabled_)
+    {
+        for(CategorySet::iterator i=categorySet_.begin();i!=categorySet_.end();++i)
+        {
+            for(EntrySet::iterator j=getCategory(*i)->entrySet_.begin();j!=getCategory(*i)->entrySet_.end();++j)
+                updateEntryFile(*i,*j);
+        }
+    }
+
+    return true;
+}
+
+bool NotesInternals::createNewPassword(const QCA::SecureArray &newPassword)
+{
+    //save existing master key with newPassword
+    if(cryptoInterface_.masterKeySet()==false)
+        return false;
+    if(cryptoInterface_.saveMasterKey(newPassword,"./enc/masterkey")!=CryptoInterface::SUCCESS)
+        return false;
+    return true;
 }
 
 //category and entry selection routines notify UI of changes if either a tracked pair is or becomes invalid
@@ -293,6 +325,7 @@ void NotesInternals::loadCategories(bool encrypted)
 
 
     QByteArray content;
+    QCA::SecureArray securecontent;
 
     //folderName holds name of category folders, filePath holds full path (relative to application path) of entries
     QString folderName,filePath;
@@ -302,7 +335,7 @@ void NotesInternals::loadCategories(bool encrypted)
     QString categoryDateTime;
     QString entryName;
     QString entryDateTime;
-    QString entryText;
+    QCA::SecureArray entryText;
 
     //category and entry pointers to create and temporarily point to new objects
     Category *category;
@@ -337,7 +370,10 @@ void NotesInternals::loadCategories(bool encrypted)
 
                 //decrypt content if necessary
                 if(encrypted)
-                    content=cryptoInterface_.decrypt(QCA::SecureArray(content),iv).toByteArray();
+                {
+                    securecontent=cryptoInterface_.decrypt(QCA::SecureArray(content),iv);
+                    content=QByteArray(securecontent.constData(),securecontent.size());
+                }
 
                 //find line break, set categoryName to first line
                 i=content.indexOf('\n');
@@ -373,15 +409,21 @@ void NotesInternals::loadCategories(bool encrypted)
 
                     //decrypt if necessary
                     if(encrypted)
-                        content=cryptoInterface_.decrypt(QCA::SecureArray(content),iv).toByteArray();
+                    {
+                        securecontent=cryptoInterface_.decrypt(QCA::SecureArray(content),iv);
+                        content=QByteArray(securecontent.constData(),securecontent.size());
+                    }
 
                     //find first and second newline. first line is entry name, second is creation date, everything from the 3rd line on is entry text
+                    QByteArray content1;
+                    QByteArray content2;
                     i=content.indexOf('\n');
                     entryName=content.mid(0,i);
-                    j=content.mid(i+1).indexOf('\n');
-                    entryDateTime=content.mid(i+1,j);
-                    entryText=content.mid(i+j+2);
-
+                    content1=QByteArray(content.constData()+i+1);
+                    j=content1.indexOf('\n');
+                    entryDateTime=content1.mid(0,j);
+                    content2=QByteArray(content1.constData()+j+1);
+                    entryText=QCA::SecureArray(content2);
                     //create new entry object corresponding to current file
                     entry=new Entry();
                     //set content accordingly, remove path of subdirectory from filePath to obtain fileName_
@@ -431,22 +473,26 @@ void NotesInternals::removeEncryptedCategories()
     emit categoryListChanged();
 }
 
-bool NotesInternals::updateEntryFile(CategoryPair &categoryPair, EntryPair &entryPair)
+bool NotesInternals::updateEntryFile(CategoryPair categoryPair, EntryPair entryPair)
 {
     //save previous file name
     QString previousFileName=getEntryFileName(entryPair);
 
     //prepare plaintext content
     QByteArray content;
-    QByteArray plain=(getEntryName(entryPair)+QString("\n")+getEntryDate(entryPair).toString()+QString("\n")+getEntryText(entryPair)).toUtf8();
+    QCA::SecureArray plain=QCA::SecureArray(getEntryName(entryPair).toUtf8())
+                            +=QCA::SecureArray(QString("\n").toUtf8())
+                            +=QCA::SecureArray(getEntryDate(entryPair).toString().toUtf8())
+                            +=QCA::SecureArray(QString("\n").toUtf8())
+                            +=getEntryText(entryPair);
     //encrypt content if category is set to encrypted, otherwise use plaintext
     if(getCategoryEncrypted(categoryPair))
     {
         QCA::InitializationVector iv(32);
-        content=iv.toByteArray()+cryptoInterface_.encrypt(QCA::SecureArray(plain),iv).toByteArray();
+        content=iv.toByteArray()+cryptoInterface_.encrypt(plain,iv).toByteArray();
     }
     else
-        content=plain;
+        content=plain.toByteArray();
 
     //backup previous file if there is one
     QFile file;
@@ -507,7 +553,8 @@ bool NotesInternals::updateCategoryFile(CategoryPair &categoryPair)
     {
         QFile::rename(previousFolderName+"category",previousFolderName+"category.bak");
         //remove '/' in the end of folder name
-        QDir("./").rename(previousFolderName.remove(previousFolderName.size()-1,1),previousFolderName.remove(previousFolderName.size()-1,1)+".tmp");
+        previousFolderName=previousFolderName.remove(previousFolderName.size()-1,1);
+        QDir("./").rename(previousFolderName,previousFolderName+".tmp");
     }
 
     //use hash of content for new folder name, again with failsafe for collisions

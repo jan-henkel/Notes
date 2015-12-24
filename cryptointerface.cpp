@@ -22,7 +22,7 @@ void CryptoInterface::calcK(const QCA::SecureArray &password, const QCA::SecureA
 {
     //derive long key K using pbkdf2(password,salt). second half of K is used as password verification, first half to encrypt / decrypt master key.
     QCA::PBKDF2 keyDerivationAlgorithm("sha1");
-    QCA::SecureArray k=keyDerivationAlgorithm.makeKey(password,salt,64,10000); //length = 64 bytes = 512 bits
+    QCA::SecureArray k=keyDerivationAlgorithm.makeKey(password,salt,64,pbkdf2iterations_); //length = 64 bytes = 512 bits
     rK1.resize(32);
     rK2.resize(32);
     for(int i=0;i<32;++i)
