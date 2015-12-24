@@ -6,6 +6,7 @@ PasswordDialog::PasswordDialog(QWidget *parent) :
     ui(new Ui::PasswordDialog)
 {
     ui->setupUi(this);
+    this->setWindowFlags(this->windowFlags()& ~Qt::WindowContextHelpButtonHint);
 }
 
 void PasswordDialog::setMode(PasswordDialog::Mode mode)
@@ -42,6 +43,16 @@ void PasswordDialog::on_showPassword_clicked(bool checked)
 
 void PasswordDialog::on_buttonBox_accepted()
 {
+    proceed();
+}
+
+void PasswordDialog::on_buttonBox_rejected()
+{
+    QDialog::reject();
+}
+
+void PasswordDialog::proceed()
+{
     QDialog::accept();
     if(mode_==AskPassword)
     {
@@ -64,7 +75,8 @@ void PasswordDialog::on_buttonBox_accepted()
     }
 }
 
-void PasswordDialog::on_buttonBox_rejected()
+void PasswordDialog::keyPressEvent(QKeyEvent *e)
 {
-    QDialog::reject();
+    if(e->text()=="\n" || e->text()=="\r")
+        proceed();
 }

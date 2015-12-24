@@ -88,5 +88,10 @@
         <file>icons/wrench.png</file>
         <file>icons/wrench_orange.png</file>
         <file>icons/zoom.png</file>
+        <file>icons/disk_red.png</file>
+        <file>icons/unpinned.png</file>
+        <file>icons/unpinned2.png</file>
+        <file>icons/pinned2.png</file>
+        <file>icons/pinned2lshift.png</file>
     </qresource>
 </RCC>

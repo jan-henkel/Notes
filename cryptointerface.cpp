@@ -3,6 +3,7 @@
 CryptoInterface::CryptoInterface(QObject *parent) : QObject(parent), pbkdf2iterations_(DEFAULT_PBKDF2_ITERATIONS), masterKeySet_(false)
 {
     QCA::init();
+    setEncryptionScheme(PBKDF2_SHA1_AES256);
 }
 
 bool CryptoInterface::verifyPasswordAndDecryptMasterKey(const QCA::SecureArray &password, const QCA::SecureArray &salt, const QCA::SecureArray &iv, const QCA::SecureArray &hk2, const QCA::SecureArray &encryptedKey, QCA::SecureArray &rK)
@@ -22,7 +23,8 @@ void CryptoInterface::calcK(const QCA::SecureArray &password, const QCA::SecureA
 {
     //derive long key K using pbkdf2(password,salt). second half of K is used as password verification, first half to encrypt / decrypt master key.
     QCA::PBKDF2 keyDerivationAlgorithm("sha1");
-    QCA::SecureArray k=keyDerivationAlgorithm.makeKey(password,salt,64,pbkdf2iterations_); //length = 64 bytes = 512 bits
+    //default padding QCA::SecureArray(1,0) to allow for empty passwords
+    QCA::SecureArray k=keyDerivationAlgorithm.makeKey(password+QCA::SecureArray(1,0),salt,64,pbkdf2iterations_); //length = 64 bytes = 512 bits
     rK1.resize(32);
     rK2.resize(32);
     for(int i=0;i<32;++i)
@@ -107,7 +109,7 @@ CryptoInterface::Result CryptoInterface::saveMasterKey(const QCA::SecureArray &p
     file.open(QFile::WriteOnly);
 
     //write encryption scheme
-    file.write((char*)this->encryptionScheme_,sizeof(EncryptionScheme));
+    file.write((char*)&this->encryptionScheme_,sizeof(EncryptionScheme));
 
     //write random iv (doesn't require lots of entropy since it remains public and doesn't need to be guessed by an attacker)
     QCA::InitializationVector iv(16);

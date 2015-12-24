@@ -12,6 +12,7 @@ TARGET = Notizen
 TEMPLATE = app
 CONFIG += crypto
 CONFIG += c++11
+CONFIG += -no-opengl
 
 QT += printsupport
 

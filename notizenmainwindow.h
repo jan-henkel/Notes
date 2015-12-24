@@ -51,12 +51,17 @@ public:
     void toggleEncryption();
     void renameCategory();
     void renameEntry();
+    void selectEntry();
+    void selectCategory();
     void toggleStayOnTop(bool stayOnTop);
     void editEntryTextURL();
+    void setEdited(bool edited);
+    bool edited() {return edited_;}
+    void saveChanges();
 private:
     Ui::NotizenMainWindow *ui;
     NotesInternals notesInternals;
-    bool edited;
+    bool edited_;
     qint16 updateFlags;
     QString filterString;
     QTextCharFormat defaultTextCharFormat;
@@ -107,6 +112,7 @@ private slots:
     void on_actionRenameEntry_triggered();
     void on_entryTextEdit_customContextMenuRequested(const QPoint &pos);
     void on_actionEditURL_triggered();
+    void on_entryTextEdit_textChanged();
 };
 
 #endif // NOTIZENMAINWINDOW_H

@@ -39,6 +39,7 @@ NotizenMainWindow::~NotizenMainWindow()
 
 void NotizenMainWindow::addCategory()
 {
+    saveChanges();
     if(ui->categoriesComboBox->currentText()=="")
         return;
     notesInternals.selectCategory(notesInternals.addCategory(ui->categoriesComboBox->currentText()));
@@ -47,6 +48,7 @@ void NotizenMainWindow::addCategory()
 
 void NotizenMainWindow::addEntry()
 {
+    saveChanges();
     notesInternals.selectEntry(notesInternals.addEntryToCurrentCategory(ui->entryFilterLineEdit->text()));
     syncModelAndUI();
 }
@@ -59,12 +61,16 @@ void NotizenMainWindow::saveEntry()
 
 void NotizenMainWindow::removeEntry()
 {
+    if(QMessageBox(QMessageBox::Question,tr("Delete entry"),tr("Are you sure?"),QMessageBox::Yes | QMessageBox::No,this).exec()!=QMessageBox::Yes)
+        return;
     notesInternals.removeCurrentEntry();
     syncModelAndUI();
 }
 
 void NotizenMainWindow::removeCategory()
 {
+    if(QMessageBox(QMessageBox::Question,tr("Delete category"),tr("Are you sure?"),QMessageBox::Yes | QMessageBox::No,this).exec()!=QMessageBox::Yes)
+        return;
     notesInternals.removeCurrentCategory();
     syncModelAndUI();
 }
@@ -198,6 +204,7 @@ void NotizenMainWindow::renameCategory()
 
 void NotizenMainWindow::renameEntry()
 {
+    saveChanges();
     QInputDialog renameDialog(this);
     renameDialog.setInputMode(QInputDialog::TextInput);
     renameDialog.setWindowFlags(renameDialog.windowFlags()& ~Qt::WindowContextHelpButtonHint);
@@ -211,6 +218,30 @@ void NotizenMainWindow::renameEntry()
     if(renameDialog.result()==QInputDialog::Accepted && renameDialog.textValue()!="")
     {
         notesInternals.renameCurrentEntry(renameDialog.textValue());
+        syncModelAndUI();
+    }
+}
+
+void NotizenMainWindow::selectEntry()
+{
+    saveChanges();
+    int i=ui->entriesListWidget->currentIndex().row();
+    if(i>=0 && i<(int)entryPairList.size())
+    {
+        notesInternals.selectEntry(entryPairList[i]);
+        syncModelAndUI();
+    }
+}
+
+void NotizenMainWindow::selectCategory()
+{
+    saveChanges();
+    int index=ui->categoriesComboBox->currentIndex();
+    if(index>=0 && index<(int)categoryPairList.size())
+    {
+        updateFlags|=EntryListContentChanged;
+        ui->entryFilterLineEdit->setText("");
+        notesInternals.selectCategory(categoryPairList[index]);
         syncModelAndUI();
     }
 }
@@ -268,6 +299,24 @@ void NotizenMainWindow::editEntryTextURL()
         ui->entryTextEdit->textCursor().setCharFormat(f);
     }
     ui->entryTextEdit->setCurrentCharFormat(f);
+}
+
+void NotizenMainWindow::setEdited(bool edited)
+{
+    edited_=edited;
+    if(edited)
+        ui->savePushButton->setIcon(QIcon(":/icons/disk_red.png"));
+    else
+        ui->savePushButton->setIcon(QIcon(":/icons/disk.png"));
+}
+
+void NotizenMainWindow::saveChanges()
+{
+    if(edited())
+    {
+        if(QMessageBox(QMessageBox::Question,tr("Save changes"),tr("The current entry was edited. Do you wish to save the changes?"),QMessageBox::Yes|QMessageBox::No,this).exec()==QMessageBox::Yes)
+            saveEntry();
+    }
 }
 
 void NotizenMainWindow::syncModelAndUI()
@@ -339,8 +388,13 @@ void NotizenMainWindow::syncModelAndUI()
     if(updateFlags & (EntrySelectionChanged|EntryContentChanged))
     {
         ui->entryTextEdit->setHtml(notesInternals.getEntryText(notesInternals.currentEntryPair()));
+        setEdited(false);
+        updateFlags &= ~EntryContentChanged;
+    }
+    if(updateFlags & EntrySelectionChanged)
+    {
         ui->entryTextEdit->setCurrentCharFormat(defaultTextCharFormat);
-        updateFlags &= ~(EntrySelectionChanged|EntryContentChanged);
+        updateFlags &= ~EntrySelectionChanged;
     }
 }
 
@@ -350,15 +404,9 @@ bool NotizenMainWindow::eventFilter(QObject *target, QEvent *e)
     {
         if(e->type()==QEvent::KeyRelease)
         {
-            on_entriesListWidget_pressed(QModelIndex());
-        }
-    }
-    if(target==ui->categoriesComboBox)
-    {
-        if(e->type()==QEvent::KeyRelease)
-        {
-            if(((QKeyEvent*)e)->text()=="\n" || ((QKeyEvent*)e)->text()=="\r")
-                addCategory();
+            selectEntry();
+            if(((QKeyEvent*)e)->key()==Qt::Key_Delete)
+                removeEntry();
         }
     }
     e->accept();
@@ -377,13 +425,7 @@ void NotizenMainWindow::on_addEntryPushButton_clicked()
 
 void NotizenMainWindow::on_categoriesComboBox_activated(int index)
 {
-    if(index>=0 && index<(int)categoryPairList.size())
-    {
-        updateFlags|=EntryListContentChanged;
-        ui->entryFilterLineEdit->setText("");
-        notesInternals.selectCategory(categoryPairList[index]);
-        syncModelAndUI();
-    }
+    selectCategory();
 }
 
 void NotizenMainWindow::on_entriesListWidget_currentRowChanged(int currentRow)
@@ -448,12 +490,7 @@ void NotizenMainWindow::on_savePushButton_clicked()
 
 void NotizenMainWindow::on_entriesListWidget_pressed(const QModelIndex &index)
 {
-    int i=ui->entriesListWidget->currentIndex().row();
-    if(i>=0 && i<(int)entryPairList.size())
-    {
-        notesInternals.selectEntry(entryPairList[i]);
-        syncModelAndUI();
-    }
+    selectEntry();
 }
 
 void NotizenMainWindow::on_removeEntryPushButton_clicked()
@@ -623,4 +660,10 @@ void NotizenMainWindow::on_entryTextEdit_customContextMenuRequested(const QPoint
 void NotizenMainWindow::on_actionEditURL_triggered()
 {
     editEntryTextURL();
+}
+
+void NotizenMainWindow::on_entryTextEdit_textChanged()
+{
+    if(notesInternals.isValid(notesInternals.currentCategoryPair(),notesInternals.currentEntryPair()))
+        setEdited(true);
 }

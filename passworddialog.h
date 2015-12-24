@@ -3,6 +3,8 @@
 
 #include <QDialog>
 #include <QtCrypto>
+#include <QKeyEvent>
+#include <QEvent>
 namespace Ui {
 class PasswordDialog;
 }
@@ -34,6 +36,8 @@ private:
     bool confirmPW_[3]={true,true,false};
     bool createMasterKeyOption_[3]={true,false,false};
     Ui::PasswordDialog *ui;
+    void proceed();
+    void keyPressEvent(QKeyEvent *e);
 };
 
 #endif // NEWPASSWORDDIALOG_H
