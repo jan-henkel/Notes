@@ -20,6 +20,7 @@
 #include <QStringList>
 #include <functional>
 #include "passworddialog.h"
+#include <QShortcut>
 
 namespace Ui {
 class NotizenMainWindow;
@@ -72,6 +73,9 @@ private:
     qint16 updateFlags;
     //string to store entry name filter, as entered into the entry search field (might not be necessary)
     QString filterString;
+
+    //ctrl+s shortcut to save entry changes
+    //QShortcut saveEntryShortcut;
 
     //variables to later store settings read from settings.cfg
     QTextCharFormat defaultTextCharFormat;
@@ -129,6 +133,9 @@ private slots:
     //action slots for "rename" menu items for categories and entries. taken care of by high level functions
     void on_actionRenameCategory_triggered();
     void on_actionRenameEntry_triggered();
+    //action slots for "delete" menu items for categories and entries. again taken care of by high level functions
+    void on_actionDeleteEntry_triggered();
+    void on_actionDeleteCategory_triggered();
 
     //slots for various UI elements. mostly just call high level functions
 
@@ -169,8 +176,9 @@ private slots:
 
     //slot to handle URL clicked in entry text widget
     void on_actionEditURL_triggered();
-    void on_actionDeleteEntry_triggered();
-    void on_actionDeleteCategory_triggered();
+
+    //slot to be called by save entry shortcut
+    //void saveEntryShortcutTriggered();
 };
 
 #endif // NOTIZENMAINWINDOW_H
