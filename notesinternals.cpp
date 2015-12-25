@@ -4,8 +4,6 @@ NotesInternals::NotesInternals(QObject *parent) : QObject(parent),hashFunction_(
 {
     QCA::init();
     loadUnencryptedCategories();
-    //cryptoBuffer_.setRandomKeyIV();
-    //cryptoBuffer_.writeKeyIV(QCA::SecureArray(QString("testpasswort").toUtf8()),QString("./enc/masterkey"));
 }
 
 const CategoryPair NotesInternals::addCategory(QString categoryName)
