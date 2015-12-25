@@ -81,7 +81,7 @@ public:
     const EntryPair moveEntry(CategoryPair &oldCategoryPair,EntryPair &entryPair,CategoryPair &newCategoryPair);
     //change entry text of entry specified by (categoryPair,entryPair) to newEntryText.
     //return entry pair if successful, invalid pair otherwise
-    const EntryPair modifyEntryText(CategoryPair &categoryPair,EntryPair &entryPair,QCA::SecureArray newEntryText);
+    const EntryPair modifyEntryText(CategoryPair categoryPair, EntryPair entryPair, QCA::SecureArray newEntryText);
 
     //enable encryption, add encrypted categories. returns false if password is wrong or not set
     bool enableEncryption(const QCA::SecureArray & password);
@@ -193,7 +193,7 @@ private:
     //function to update entry file. creates file if it doesn't exist yet (useful for creating new entries)
     bool updateEntryFile(CategoryPair categoryPair,EntryPair entryPair);
     //function to update category file and folder. creates file and folder if it doesn't exist yet (useful for new categories)
-    bool updateCategoryFile(CategoryPair &categoryPair);
+    bool updateCategoryFile(CategoryPair categoryPair);
 
     //functions to extract pointers to non-constant category or entry associated with pair
     static Category* getCategory_(const CategoryPair &categoryPair)

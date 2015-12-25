@@ -5,7 +5,8 @@
 NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::NotizenMainWindow),
-    notesInternals(this)
+    notesInternals(this),
+    settingsDialog(new SettingsDialog(this))
     //saveEntryShortcut(QKeySequence(Qt::CTRL,Qt::Key_S),this,"SLOT(saveEntryShortcutTriggered())")
 {
     ui->setupUi(this);
@@ -22,8 +23,6 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
 
     //set default char format. to do: read this from a config file instead of hardcoding
     defaultTextCharFormat=ui->entryTextEdit->currentCharFormat();
-    defaultTextCharFormat.setFont(QFont("Trebuchet MS",10,QFont::Normal,false));
-    defaultTextCharFormat.setForeground(QBrush(Qt::black));
 
     //set up event filter for category combobox (as of now unnecessary) and entry list
     ui->categoriesComboBox->installEventFilter(this);
@@ -33,6 +32,9 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     //saveEntryShortcut.setKey();
     //saveEntryShortcut.setEnabled(true);
     //QObject::connect(&saveEntryShortcut,SIGNAL(activated()),this,SLOT(saveEntryShortcutTriggered()));
+
+    QObject::connect(settingsDialog,SIGNAL(updateMainWindow()),this,SLOT(settingsDialogApply()));
+    QObject::connect(settingsDialog,SIGNAL(changePassword()),this,SLOT(settingsChangePassword()));
 }
 
 NotizenMainWindow::~NotizenMainWindow()
@@ -93,24 +95,21 @@ void NotizenMainWindow::printCategory()
             textEdit.moveCursor(QTextCursor::End);
             QTextBlockFormat f;
             f.setAlignment(Qt::AlignCenter);
-            textEdit.setCurrentFont(QFont("Trebuchet MS",16,QFont::Bold,false));
-            textEdit.setFontUnderline(true);
+            textEdit.setCurrentFont(printingFontCategory);
             textEdit.textCursor().insertBlock(f);
             textEdit.textCursor().insertText(NotesInternals::getCategoryName(notesInternals.currentCategoryPair()));
             f.setAlignment(Qt::AlignLeft);
             textEdit.textCursor().insertBlock(f);
             for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
             {
-                textEdit.setCurrentFont(QFont("Trebuchet MS",14,QFont::Normal,false));
-                textEdit.setFontUnderline(true);
+                textEdit.setCurrentFont(printingFontEntry);
                 QTextCharFormat f=textEdit.currentCharFormat();
                 f.setForeground(Qt::black);
                 textEdit.setCurrentCharFormat(f);
                 textEdit.insertPlainText(QString("\n\n"));
                 textEdit.insertPlainText(NotesInternals::getEntryName(*i)+QString("\n\n"));
 
-                textEdit.setCurrentFont(QFont("Trebuchet MS",12,QFont::Normal,false));
-                textEdit.setFontUnderline(false);
+                textEdit.setCurrentFont(DefaultValues::entryFont);
                 textEdit.insertHtml(NotesInternals::getEntryText(*i));
             }
 
@@ -130,12 +129,10 @@ void NotizenMainWindow::printEntry()
         NotizenTextEdit textEdit(this);
         if(printDialog->exec() == QDialog::Accepted)
         {
-            textEdit.setCurrentFont(QFont("Trebuchet MS",16,QFont::Normal,false));
-            textEdit.setFontUnderline(true);
+            textEdit.setCurrentFont(printingFontEntry);
             textEdit.insertPlainText(NotesInternals::getEntryName(notesInternals.currentEntryPair())+QString("\n\n"));
 
-            textEdit.setCurrentFont(QFont("Trebuchet MS",14,QFont::Normal,false));
-            textEdit.setFontUnderline(false);
+            textEdit.setCurrentFont(DefaultValues::entryFont);
             textEdit.insertHtml(NotesInternals::getEntryText(notesInternals.currentEntryPair()));
 
             textEdit.print(&printer);
@@ -195,6 +192,13 @@ void NotizenMainWindow::selectCategory()
         notesInternals.selectCategory(categoryPairList[index]);
         syncModelAndUI();
     }
+    else
+    {
+        updateFlags|=EntryListContentChanged;
+        ui->entryFilterLineEdit->setText("");
+        notesInternals.selectCategory(notesInternals.invalidCategoryPair());
+        syncModelAndUI();
+    }
 }
 
 void NotizenMainWindow::selectEntry()
@@ -210,6 +214,7 @@ void NotizenMainWindow::selectEntry()
 
 void NotizenMainWindow::toggleEncryption()
 {
+    saveChanges();
     if(!notesInternals.encryptionEnabled())
     {
         PasswordDialog dlg(this);
@@ -233,6 +238,17 @@ void NotizenMainWindow::toggleEncryption()
         syncModelAndUI();
         ui->encryptionPushButton->setIcon(QIcon(":/icons/lock_add.png"));
     }
+}
+
+void NotizenMainWindow::openSettings()
+{
+    settingsDialog->showSettings(&this->notesInternals);
+}
+
+void NotizenMainWindow::showEvent(QShowEvent *e)
+{
+    QMainWindow::showEvent(e);
+    readSettings();
 }
 
 //big function to handle UI updates as requested in the updateFlags variable
@@ -333,6 +349,83 @@ void NotizenMainWindow::syncModelAndUI()
     }
 }
 
+//read settings from settings.ini and apply them
+void NotizenMainWindow::readSettings()
+{
+    QSettings settings("settings.ini",QSettings::IniFormat,this);
+
+    settings.beginGroup("entry");
+    entryFont=QFont(settings.value("fontfamily",DefaultValues::entryFont.family()).toString(),
+                    settings.value("fontsize",DefaultValues::entryFont.pointSize()).toInt(),
+                    settings.value("fontbold",DefaultValues::entryFont.bold()).toBool()?QFont::Bold:QFont::Normal,
+                    settings.value("fontitalic",DefaultValues::entryFont.italic()).toBool());
+    entryFontColor=QColor(settings.value("fontcolor",DefaultValues::entryFontColor).toString());
+    settings.endGroup();
+    defaultTextCharFormat.setFont(entryFont);
+    defaultTextCharFormat.setForeground(QBrush(entryFontColor));
+    settings.beginGroup("printing");
+    printingFontCategory=QFont(settings.value("category_heading_fontfamily",DefaultValues::printingFontCategory.family()).toString(),
+                               settings.value("category_heading_fontsize",DefaultValues::printingFontCategory.pointSize()).toInt(),
+                               settings.value("category_heading_bold",DefaultValues::printingFontCategory.bold()).toBool()?QFont::Bold:QFont::Normal,
+                               settings.value("category_heading_italic",DefaultValues::printingFontCategory.italic()).toBool());
+    printingFontCategory.setUnderline(settings.value("category_heading_underline",DefaultValues::printingFontCategory.underline()).toBool());
+    printingFontEntry=QFont(settings.value("entry_heading_fontfamily",DefaultValues::printingFontEntry.family()).toString(),
+                            settings.value("entry_heading_fontsize",DefaultValues::printingFontEntry.pointSize()).toInt(),
+                            settings.value("entry_heading_bold",DefaultValues::printingFontEntry.bold()).toBool()?QFont::Bold:QFont::Normal,
+                            settings.value("entry_heading_italic",DefaultValues::printingFontEntry.italic()).toBool());
+    printingFontEntry.setUnderline(settings.value("entry_heading_underline",DefaultValues::printingFontEntry.underline()).toBool());
+    settings.endGroup();
+
+    settings.beginGroup("mainwindow");
+    int screenWidth=QApplication::desktop()->availableGeometry().width();
+    int screenHeight=QApplication::desktop()->availableGeometry().height();
+    int windowWidth=this->frameGeometry().width();
+    int windowHeight=this->frameGeometry().height();
+    switch(settings.value("default_position",DefaultValues::mainWindowPosition).toInt())
+    {
+    case 0:
+        //this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignTop | Qt::AlignLeft,this->size(),QApplication::desktop()->availableGeometry()));
+        move(0,0);
+        break;
+    case 1:
+        //this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignTop | Qt::AlignRight,this->size(),QApplication::desktop()->availableGeometry()));
+        move(screenWidth-windowWidth,0);
+        break;
+    case 2:
+        //this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignBottom | Qt::AlignLeft,this->size(),QApplication::desktop()->availableGeometry()));
+        move(0,screenHeight-windowHeight);
+        break;
+    case 3:
+        //this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignBottom | Qt::AlignRight,this->size(),QApplication::desktop()->availableGeometry()));
+        move(screenWidth-windowWidth,screenHeight-windowHeight);
+        break;
+    case 4:
+        this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignCenter,this->size(),QApplication::desktop()->availableGeometry()));
+        break;
+    }
+
+    ui->categoriesComboBox->setCurrentIndex(settings.value("default_category",DefaultValues::categoryIndex).toInt());
+    selectCategory();
+    ui->categoriesComboBox->setFont(QFont(settings.value("ui_fontfamily",DefaultValues::uiFont.family()).toString(),
+                                    settings.value("ui_fontsize",DefaultValues::uiFont.pointSize()).toInt(),
+                                    settings.value("ui_fontbold",DefaultValues::uiFont.bold()).toBool()?QFont::Bold:QFont::Normal,
+                                    settings.value("ui_fontitalic",DefaultValues::uiFont.italic()).toBool()));
+    ui->entryFilterLineEdit->setFont(ui->categoriesComboBox->font());
+    ui->entriesListWidget->setFont(QFont(settings.value("ui_fontfamily",DefaultValues::uiFont.family()).toString(),
+                                         settings.value("ui_fontsize",DefaultValues::uiFont.pointSize()).toInt(),
+                                         settings.value("entrylist_fontbold",DefaultValues::entryListFontBold).toBool()?QFont::Bold:QFont::Normal,
+                                         settings.value("entrylist_fontitalic",DefaultValues::entryListFontItalic).toBool()));
+    ui->categoryLabel->setFont(QFont(settings.value("label_fontfamily",DefaultValues::labelFont.family()).toString(),
+                                     settings.value("label_fontsize",DefaultValues::labelFont.pointSize()).toInt(),
+                                     settings.value("label_fontbold",DefaultValues::labelFont.bold()).toBool()?QFont::Bold:QFont::Normal,
+                                     settings.value("label_fontitalic",DefaultValues::labelFont.italic()).toBool()));
+    ui->entryLabel->setFont(ui->categoryLabel->font());
+    ui->categoryLabel->setStyleSheet(QString("background-color: %1;\ncolor: %2").arg(settings.value("categorylabel_background",DefaultValues::labelCategoryBackgroundColor.name()).toString(),settings.value("categorylabel_foreground",DefaultValues::labelCategoryFontColor.name()).toString()));
+    ui->entryLabel->setStyleSheet(QString("background-color: %1;\ncolor: %2").arg(settings.value("entrylabel_background",DefaultValues::labelEntryBackgroundColor.name()).toString(),settings.value("entrylabel_foreground",DefaultValues::labelEntryFontColor.name()).toString()));
+    toggleStayOnTop(settings.value("default_window_on_top",DefaultValues::windowAlwaysOnTop).toBool());
+    settings.endGroup();
+}
+
 //various auxiliary functions for specific purposes
 
 void NotizenMainWindow::editEntryTextURL()
@@ -394,13 +487,13 @@ void NotizenMainWindow::toggleStayOnTop(bool stayOnTop)
 {
     if(stayOnTop)
     {
-        this->hide();
+        //this->hide();
         this->setWindowFlags(this->windowFlags()|Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint);
         this->show();
     }
     else
     {
-        this->hide();
+        //this->hide();
         this->setWindowFlags(this->windowFlags()&(~(Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint|Qt::WindowStaysOnBottomHint)));
         this->show();
     }
@@ -492,13 +585,20 @@ void NotizenMainWindow::createNewPassword(QCA::SecureArray password, bool create
     if(createMasterKey)
     {
         notesInternals.createNewMasterKey(password);
-        if(!notesInternals.enableEncryption(password))
+        if(!notesInternals.encryptionEnabled())
         {
-            QMessageBox(QMessageBox::Warning,tr("Error"),tr("An error occured while setting up encryption."),QMessageBox::Ok,this).exec();
-            return;
+            if(!notesInternals.enableEncryption(password))
+            {
+                QMessageBox(QMessageBox::Warning,tr("Error"),tr("An error occured while setting up encryption."),QMessageBox::Ok,this).exec();
+                return;
+            }
+            syncModelAndUI();
+            ui->encryptionPushButton->setIcon(QIcon(":/icons/lock_delete.png"));
         }
-        syncModelAndUI();
-        ui->encryptionPushButton->setIcon(QIcon(":/icons/lock_delete.png"));
+    }
+    else
+    {
+        notesInternals.createNewPassword(password);
     }
 }
 
@@ -517,6 +617,37 @@ void NotizenMainWindow::passwordMismatch()
 {
     QMessageBox(QMessageBox::Warning,tr("Inputs don't match"),tr("The passwords you entered do not match."),QMessageBox::Ok,this).exec();
     return;
+}
+
+void NotizenMainWindow::settingsDialogApply()
+{
+    readSettings();
+    syncModelAndUI();
+}
+
+void NotizenMainWindow::settingsChangePassword()
+{
+    PasswordDialog dlg(this);
+    dlg.setModal(true);
+    QObject::connect(&dlg,SIGNAL(newPasswordSet(QCA::SecureArray,bool)),this,SLOT(createNewPassword(QCA::SecureArray,bool)));
+    QObject::connect(&dlg,SIGNAL(passwordEntered(QCA::SecureArray)),this,SLOT(passwordEntered(QCA::SecureArray)));
+    QObject::connect(&dlg,SIGNAL(passwordMismatch()),this,SLOT(passwordMismatch()));
+    if(!notesInternals.encryptionEnabled())
+    {
+        if(!notesInternals.masterKeyExists())
+        {
+            if(QMessageBox(QMessageBox::Question,tr("Master key not set"),tr("No master key set. Do you wish to create a new one?"),QMessageBox::Yes | QMessageBox::No,this).exec()==QMessageBox::Yes)
+                dlg.showWithMode(PasswordDialog::CreateMasterKey);
+            return;
+        }
+        else
+        {
+            dlg.showWithMode(PasswordDialog::AskPassword);
+        }
+    }
+    if(!notesInternals.encryptionEnabled())
+        return;
+    dlg.showWithMode(PasswordDialog::ChangePassword);
 }
 
 void NotizenMainWindow::moveEntryMenu(QAction *action)
@@ -731,4 +862,9 @@ void NotizenMainWindow::on_entryTextEdit_textChanged()
 {
     if(notesInternals.isValid(notesInternals.currentCategoryPair(),notesInternals.currentEntryPair()))
         setEdited(true);
+}
+
+void NotizenMainWindow::on_settingsPushButton_clicked()
+{
+    openSettings();
 }

@@ -21,15 +21,20 @@ SOURCES += main.cpp\
     notesinternals.cpp \
     notizentextedit.cpp \
     cryptointerface.cpp \
-    passworddialog.cpp
+    passworddialog.cpp \
+    settingsdialog.cpp \
+    defaultvalues.cpp
 
 HEADERS  += notizenmainwindow.h \
     notesinternals.h \
     notizentextedit.h \
     cryptointerface.h \
-    passworddialog.h
+    passworddialog.h \
+    settingsdialog.h \
+    defaultvalues.h
 FORMS    += notizenmainwindow.ui \
-    passworddialog.ui
+    passworddialog.ui \
+    settingsdialog.ui
 
 RESOURCES += \
     icons.qrc

@@ -21,6 +21,8 @@
 #include <functional>
 #include "passworddialog.h"
 #include <QShortcut>
+#include "settingsdialog.h"
+#include <QSettings>
 
 namespace Ui {
 class NotizenMainWindow;
@@ -62,6 +64,8 @@ public:
     void selectEntry();
     //encryption
     void toggleEncryption();
+    //settings
+    void openSettings();
 private:
     Ui::NotizenMainWindow *ui;
     //object to carry out all of the database operations, like adding and removing categories and entries.
@@ -77,16 +81,29 @@ private:
     //ctrl+s shortcut to save entry changes
     //QShortcut saveEntryShortcut;
 
-    //variables to later store settings read from settings.cfg
+    //variables to later store settings read from settings.ini
     QTextCharFormat defaultTextCharFormat;
+    QFont entryFont;
+    QColor entryFontColor;
+    QFont printingFontCategory;
+    QFont printingFontEntry;
+
+    //settings dialog, non-modal
+    SettingsDialog *settingsDialog;
 
     //vectors containing CategoryPair and EntryPair elements corresponding to the categories and entries
     //listed in UI-widgets. used to interact with notesInternals object
     std::vector<CategoryPair> categoryPairList;
     std::vector<EntryPair> entryPairList;
 
+    //overload showEvent() for the purpose of loading settings once the window is visible (important, because frameGeometry() will return spurious values otherwise)
+    void showEvent(QShowEvent *e);
+
     //function to synchronize the GUI-widgets with the underlying "model", i.e. notesInternals
     void syncModelAndUI();
+
+    //function reading and applying everything from settings.ini
+    void readSettings();
 
     //auxiliary functions for specific purposes
 
@@ -127,6 +144,11 @@ private slots:
     //notifies the user that the contents of the 2 password fields don't match (when setting a new password)
     void passwordMismatch();
 
+    //apply changes made in the settings dialog
+    void settingsDialogApply();
+    //password change requested by settings dialog
+    void settingsChangePassword();
+
     //called by the "Move entry" context menu. moves current entry to the category selected in the menu
     //using high level function moveEntry
     void moveEntryMenu(QAction *action);
@@ -157,6 +179,7 @@ private slots:
     void on_encryptionPushButton_clicked();
     void on_stayOnTopToolButton_clicked(bool checked);
     void on_savePushButton_clicked();
+    void on_settingsPushButton_clicked();
     //entry list
     void on_entriesListWidget_customContextMenuRequested(const QPoint &pos);
     void on_entriesListWidget_pressed(const QModelIndex &index);
