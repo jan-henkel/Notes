@@ -804,6 +804,16 @@
     <string>Edit URL</string>
    </property>
   </action>
+  <action name="actionDeleteEntry">
+   <property name="text">
+    <string>Delete entry</string>
+   </property>
+  </action>
+  <action name="actionDeleteCategory">
+   <property name="text">
+    <string>Delete category</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>

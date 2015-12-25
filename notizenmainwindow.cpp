@@ -8,7 +8,7 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     notesInternals(this)
 {
     ui->setupUi(this);
-    //update UI
+    //update UI to show categories and so on
     updateFlags|=(CategoryListChanged|EntryListContentChanged|EntrySelectionChanged);
     syncModelAndUI();
 
@@ -24,7 +24,7 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     defaultTextCharFormat.setFont(QFont("Trebuchet MS",10,QFont::Normal,false));
     defaultTextCharFormat.setForeground(QBrush(Qt::black));
 
-    //ui->categoriesComboBox->view()->installEventFilter(this);
+    //set up event filter for category combobox (as of now unnecessary) and entry list
     ui->categoriesComboBox->installEventFilter(this);
     ui->entriesListWidget->installEventFilter(this);
 }
@@ -33,6 +33,10 @@ NotizenMainWindow::~NotizenMainWindow()
 {
     delete ui;
 }
+
+//high level functions to be called directly by user interactions.
+//they take care of the interaction with the underlying model, as well as requesting the necessary UI updates
+//they always refer to the currently selected/viewed category or entry
 
 //functions for adding, removing and saving entries and categories
 //corresponding members of notesInternals are called and the UI subsequently updated according to update flags set by the operation
@@ -53,9 +57,11 @@ void NotizenMainWindow::addEntry()
     syncModelAndUI();
 }
 
-void NotizenMainWindow::saveEntry()
+void NotizenMainWindow::removeCategory()
 {
-    notesInternals.modifyCurrentEntryText(ui->entryTextEdit->toHtml());
+    if(QMessageBox(QMessageBox::Question,tr("Delete category"),tr("Are you sure?"),QMessageBox::Yes | QMessageBox::No,this).exec()!=QMessageBox::Yes)
+        return;
+    notesInternals.removeCurrentCategory();
     syncModelAndUI();
 }
 
@@ -67,52 +73,10 @@ void NotizenMainWindow::removeEntry()
     syncModelAndUI();
 }
 
-void NotizenMainWindow::removeCategory()
-{
-    if(QMessageBox(QMessageBox::Question,tr("Delete category"),tr("Are you sure?"),QMessageBox::Yes | QMessageBox::No,this).exec()!=QMessageBox::Yes)
-        return;
-    notesInternals.removeCurrentCategory();
-    syncModelAndUI();
-}
-
-void NotizenMainWindow::printEntry()
-{
-    if(QPrinterInfo::availablePrinters().empty())
-    {
-        QMessageBox msgBox;
-        msgBox.setWindowTitle("Error");
-        msgBox.setText(tr("No printers found"));
-        msgBox.exec();
-    }
-    else
-    {
-        QPrinter printer;
-        QPrintDialog *printDialog=new QPrintDialog(&printer,this);
-        NotizenTextEdit textEdit(this);
-        if(printDialog->exec() == QDialog::Accepted)
-        {
-            textEdit.setCurrentFont(QFont("Trebuchet MS",16,QFont::Normal,false));
-            textEdit.setFontUnderline(true);
-            textEdit.insertPlainText(NotesInternals::getEntryName(notesInternals.currentEntryPair())+QString("\n\n"));
-
-            textEdit.setCurrentFont(QFont("Trebuchet MS",14,QFont::Normal,false));
-            textEdit.setFontUnderline(false);
-            textEdit.insertHtml(NotesInternals::getEntryText(notesInternals.currentEntryPair()));
-
-            textEdit.print(&printer);
-        }
-    }
-}
-
 void NotizenMainWindow::printCategory()
 {
     if(QPrinterInfo::availablePrinters().empty())
-    {
-        QMessageBox msgBox;
-        msgBox.setWindowTitle("Error");
-        msgBox.setText(tr("No printers found"));
-        msgBox.exec();
-    }
+        QMessageBox(QMessageBox::Warning,tr("Error"),tr("No printers found"),QMessageBox::Ok,this).exec();
     else
     {
         QPrinter printer;
@@ -149,51 +113,43 @@ void NotizenMainWindow::printCategory()
     }
 }
 
-void NotizenMainWindow::toggleEncryption()
+void NotizenMainWindow::printEntry()
 {
-    if(!notesInternals.encryptionEnabled())
-    {
-        PasswordDialog dlg(this);
-        dlg.setModal(true);
-        QObject::connect(&dlg,SIGNAL(newPasswordSet(QCA::SecureArray,bool)),this,SLOT(createNewPassword(QCA::SecureArray,bool)));
-        QObject::connect(&dlg,SIGNAL(passwordEntered(QCA::SecureArray)),this,SLOT(passwordEntered(QCA::SecureArray)));
-        QObject::connect(&dlg,SIGNAL(passwordMismatch()),this,SLOT(passwordMismatch()));
-        if(!notesInternals.masterKeyExists())
-        {
-            QMessageBox msg(this);
-            msg.setModal(true);
-            msg.setText("No master key set. Do you wish to create a new one?");
-            msg.setWindowTitle(tr("Master key not set"));
-            msg.setIcon(QMessageBox::Question);
-            msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-            msg.exec();
-            if(msg.result()==QMessageBox::Yes)
-                dlg.showWithMode(PasswordDialog::CreateMasterKey);
-        }
-        else
-        {
-            dlg.showWithMode(PasswordDialog::AskPassword);
-        }
-    }
+    if(QPrinterInfo::availablePrinters().empty())
+        QMessageBox(QMessageBox::Warning,tr("Error"),tr("No printers found"),QMessageBox::Ok,this).exec();
     else
     {
-        notesInternals.disableEncryption();
-        syncModelAndUI();
-        ui->encryptionPushButton->setIcon(QIcon(":/icons/lock_add.png"));
+        QPrinter printer;
+        QPrintDialog *printDialog=new QPrintDialog(&printer,this);
+        NotizenTextEdit textEdit(this);
+        if(printDialog->exec() == QDialog::Accepted)
+        {
+            textEdit.setCurrentFont(QFont("Trebuchet MS",16,QFont::Normal,false));
+            textEdit.setFontUnderline(true);
+            textEdit.insertPlainText(NotesInternals::getEntryName(notesInternals.currentEntryPair())+QString("\n\n"));
+
+            textEdit.setCurrentFont(QFont("Trebuchet MS",14,QFont::Normal,false));
+            textEdit.setFontUnderline(false);
+            textEdit.insertHtml(NotesInternals::getEntryText(notesInternals.currentEntryPair()));
+
+            textEdit.print(&printer);
+        }
     }
+}
+
+void NotizenMainWindow::saveEntry()
+{
+    notesInternals.modifyCurrentEntryText(ui->entryTextEdit->toHtml());
+    //changes were saved, currently no unsaved changes
+    setEdited(false);
+    syncModelAndUI();
 }
 
 void NotizenMainWindow::renameCategory()
 {
     QInputDialog renameDialog(this);
-    renameDialog.setInputMode(QInputDialog::TextInput);
-    renameDialog.setWindowFlags(renameDialog.windowFlags()& ~Qt::WindowContextHelpButtonHint);
-    renameDialog.setWindowTitle(tr("Choose new title"));
-    renameDialog.setLabelText(tr("Enter a new name for category '")+notesInternals.getCategoryName(notesInternals.currentCategoryPair())+QString("'"));
-    renameDialog.setTextValue(notesInternals.getCategoryName(notesInternals.currentCategoryPair()));
-    renameDialog.setModal(true);
-    renameDialog.setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
-    renameDialog.adjustSize();
+    setUpModalInputDialog(renameDialog,tr("Choose new title"),tr("Enter a new name for category '")+notesInternals.getCategoryName(notesInternals.currentCategoryPair())+QString("'"),
+                          QInputDialog::TextInput,notesInternals.getCategoryName(notesInternals.currentCategoryPair()));
     renameDialog.exec();
     if(renameDialog.result()==QInputDialog::Accepted && renameDialog.textValue()!="")
     {
@@ -206,14 +162,8 @@ void NotizenMainWindow::renameEntry()
 {
     saveChanges();
     QInputDialog renameDialog(this);
-    renameDialog.setInputMode(QInputDialog::TextInput);
-    renameDialog.setWindowFlags(renameDialog.windowFlags()& ~Qt::WindowContextHelpButtonHint);
-    renameDialog.setWindowTitle(tr("Choose new title"));
-    renameDialog.setLabelText(tr("Enter a new name for entry '")+notesInternals.getEntryName(notesInternals.currentEntryPair())+QString("'"));
-    renameDialog.setTextValue(notesInternals.getEntryName(notesInternals.currentEntryPair()));
-    renameDialog.setModal(true);
-    renameDialog.setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
-    renameDialog.adjustSize();
+    setUpModalInputDialog(renameDialog,tr("Choose new title"),tr("Enter a new name for entry '")+notesInternals.getEntryName(notesInternals.currentEntryPair())+QString("'"),
+                          QInputDialog::TextInput,notesInternals.getEntryName(notesInternals.currentEntryPair()));
     renameDialog.exec();
     if(renameDialog.result()==QInputDialog::Accepted && renameDialog.textValue()!="")
     {
@@ -222,15 +172,10 @@ void NotizenMainWindow::renameEntry()
     }
 }
 
-void NotizenMainWindow::selectEntry()
+void NotizenMainWindow::moveEntry(CategoryPair newCategory)
 {
-    saveChanges();
-    int i=ui->entriesListWidget->currentIndex().row();
-    if(i>=0 && i<(int)entryPairList.size())
-    {
-        notesInternals.selectEntry(entryPairList[i]);
-        syncModelAndUI();
-    }
+    notesInternals.moveCurrentEntry(newCategory);
+    syncModelAndUI();
 }
 
 void NotizenMainWindow::selectCategory()
@@ -246,6 +191,199 @@ void NotizenMainWindow::selectCategory()
     }
 }
 
+void NotizenMainWindow::selectEntry()
+{
+    saveChanges();
+    int i=ui->entriesListWidget->currentIndex().row();
+    if(i>=0 && i<(int)entryPairList.size())
+    {
+        notesInternals.selectEntry(entryPairList[i]);
+        syncModelAndUI();
+    }
+}
+
+void NotizenMainWindow::toggleEncryption()
+{
+    if(!notesInternals.encryptionEnabled())
+    {
+        PasswordDialog dlg(this);
+        dlg.setModal(true);
+        QObject::connect(&dlg,SIGNAL(newPasswordSet(QCA::SecureArray,bool)),this,SLOT(createNewPassword(QCA::SecureArray,bool)));
+        QObject::connect(&dlg,SIGNAL(passwordEntered(QCA::SecureArray)),this,SLOT(passwordEntered(QCA::SecureArray)));
+        QObject::connect(&dlg,SIGNAL(passwordMismatch()),this,SLOT(passwordMismatch()));
+        if(!notesInternals.masterKeyExists())
+        {
+            if(QMessageBox(QMessageBox::Question,tr("Master key not set"),tr("No master key set. Do you wish to create a new one?"),QMessageBox::Yes | QMessageBox::No,this).exec()==QMessageBox::Yes)
+                dlg.showWithMode(PasswordDialog::CreateMasterKey);
+        }
+        else
+        {
+            dlg.showWithMode(PasswordDialog::AskPassword);
+        }
+    }
+    else
+    {
+        notesInternals.disableEncryption();
+        syncModelAndUI();
+        ui->encryptionPushButton->setIcon(QIcon(":/icons/lock_add.png"));
+    }
+}
+
+//big function to handle UI updates as requested in the updateFlags variable
+
+void NotizenMainWindow::syncModelAndUI()
+{
+    //set of visible categories has changed, update categoryPairList and subsequently the combobox widget
+    if(updateFlags & CategoryListChanged)
+    {
+        categoryPairList.clear();
+        //encrypted categories go first, unencrypted second
+        for(CategorySet::const_iterator i=notesInternals.categorySet()->cbegin();i!=notesInternals.categorySet()->cend();++i)
+        {
+            if(NotesInternals::getCategoryEncrypted(*i))
+                categoryPairList.push_back(*i);
+        }
+        for(CategorySet::const_iterator i=notesInternals.categorySet()->cbegin();i!=notesInternals.categorySet()->cend();++i)
+        {
+            if(!NotesInternals::getCategoryEncrypted(*i))
+                categoryPairList.push_back(*i);
+        }
+        ui->categoriesComboBox->clear();
+        int j=-1;
+        //fill combobox with categories
+        for(int i=0;i<(int)categoryPairList.size();++i)
+        {
+            //encrypted categories get a lock-icon
+            ui->categoriesComboBox->addItem(NotesInternals::getCategoryEncrypted(categoryPairList[i])?QIcon(":/icons/lock.png"):QIcon(""),
+                                            NotesInternals::getCategoryName(categoryPairList[i]));
+            //find index of current selection as specified by notesInternals (adapts to changes like renaming)
+            if(notesInternals.currentCategoryPair()==categoryPairList[i])
+                j=i;
+        }
+        //select item corresponding to current category (-1 if current category is not set, i.e. invalid)
+        ui->categoriesComboBox->setCurrentIndex(j);
+        //category list was dealt with, remove flag
+        updateFlags &= ~CategoryListChanged;
+    }
+    //selected category or set of entries matching the search filter has changed, update entryPairList and entry list widget accordingly
+    if(updateFlags & (CategorySelectionChanged|EntryListContentChanged))
+    {
+        entryPairList.clear();
+        ui->entriesListWidget->clear();
+        if(notesInternals.isValid(notesInternals.currentCategoryPair()))
+        {
+            //entries which start with searchfilter text go first
+            for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
+            {
+                if(NotesInternals::getEntryName(*i).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
+                    entryPairList.push_back(*i);
+            }
+            //entries which don't begin with the searchfilter text but do otherwise match the filter go second
+            for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
+            {
+                if(!NotesInternals::getEntryName(*i).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive) && NotesInternals::getEntryName(*i).contains(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
+                    entryPairList.push_back(*i);
+            }
+            //entry list widget is filled with items corresponding to elements of entryPairList
+            for(int i=0;i<(int)entryPairList.size();++i)
+                ui->entriesListWidget->addItem(NotesInternals::getEntryName(entryPairList[i]));
+            //flag is not yet deleted, since entry selection wasn't dealt with
+        }
+    }
+    //deal with entry selection if either of the preceding criteria apply or another entry was selected (also applies if the selected entry was renamed)
+    if(updateFlags & (CategorySelectionChanged|EntryListContentChanged|EntrySelectionChanged))
+    {
+        int j=-1;
+        //find entry list widget index associated with the entry currently selected (as specified by the notesInternals object)
+        for(int i=0;i<(int)entryPairList.size();++i)
+        {
+            if(notesInternals.currentEntryPair()==entryPairList[i])
+                j=i;
+        }
+        //if entry isn't currently represented in entryPairList (i.e. not visible), notesInternals must be adjusted to ensure that GUI and model agree
+        if(j==-1)
+            notesInternals.selectEntry(NotesInternals::invalidEntryPair());
+        //select item corresponding to currently selected entry
+        ui->entriesListWidget->setCurrentRow(j);
+        //all effects of selecting a category and otherwise altering the listed entries are dealt with, remove associated flags
+        updateFlags &= ~(CategorySelectionChanged|EntryListContentChanged);
+    }
+    //if an entry was selected or the content of the entry currently viewed was altered (e.g. by saving), contents of the text editor are updated
+    if(updateFlags & (EntrySelectionChanged|EntryContentChanged))
+    {
+        //load appropriate content from notesInternals
+        ui->entryTextEdit->setHtml(notesInternals.getEntryText(notesInternals.currentEntryPair()));
+        //remaining unsaved changes (if any) are void
+        setEdited(false);
+        //effects of altered entry content were dealt with, remove related flag
+        updateFlags &= ~EntryContentChanged;
+    }
+    //as a final consequence of selecting an entry, reset text formatting to the default
+    if(updateFlags & EntrySelectionChanged)
+    {
+        ui->entryTextEdit->setCurrentCharFormat(defaultTextCharFormat);
+        //effects of selecting another entry were processed, remove flag
+        updateFlags &= ~EntrySelectionChanged;
+    }
+}
+
+//various auxiliary functions for specific purposes
+
+void NotizenMainWindow::editEntryTextURL()
+{
+    QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
+
+    //query to obtain new URL for currently selected text
+    QInputDialog changeURLDialog(this);
+    setUpModalInputDialog(changeURLDialog,tr("Edit URL"),tr("Set a new URL for the current selection:"),QInputDialog::TextInput,ui->entryTextEdit->textCursor().charFormat().anchorHref());
+    changeURLDialog.exec();
+
+    if(changeURLDialog.result()!=QInputDialog::Accepted)
+        return;
+    //no URL means no clickable link
+    if(changeURLDialog.textValue()=="")
+    {
+        f.setAnchor(false);
+        f.setAnchorName("");
+        f.setAnchorHref("");
+        //set char format for current selection
+        ui->entryTextEdit->textCursor().setCharFormat(f);
+    }
+    //otherwise set the URL to the one gathered above, format the text to make clickable link obvious
+    else
+    {
+        f.setAnchor(true);
+        f.setAnchorName(ui->entryTextEdit->textCursor().selectedText());
+        f.setAnchorHref(changeURLDialog.textValue());
+        f.setFontUnderline(true);
+        f.setForeground(Qt::blue);
+        //set char format for current selection
+        ui->entryTextEdit->textCursor().setCharFormat(f);
+    }
+    //may be unnecessary
+    ui->entryTextEdit->setCurrentCharFormat(f);
+}
+
+void NotizenMainWindow::setEdited(bool edited)
+{
+    edited_=edited;
+    if(edited)
+        ui->savePushButton->setIcon(QIcon(":/icons/disk_red.png"));
+    else
+        ui->savePushButton->setIcon(QIcon(":/icons/disk.png"));
+}
+
+//prompts user to save or discard changes
+void NotizenMainWindow::saveChanges()
+{
+    if(edited())
+    {
+        if(QMessageBox(QMessageBox::Question,tr("Save changes"),tr("The current entry was edited. Do you wish to save the changes?"),QMessageBox::Yes|QMessageBox::No,this).exec()==QMessageBox::Yes)
+            saveEntry();
+    }
+}
+
+//turns Qt::WindowStaysOnTopHint on or off
 void NotizenMainWindow::toggleStayOnTop(bool stayOnTop)
 {
     if(stayOnTop)
@@ -262,142 +400,7 @@ void NotizenMainWindow::toggleStayOnTop(bool stayOnTop)
     }
 }
 
-void NotizenMainWindow::editEntryTextURL()
-{
-    QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
-
-    QInputDialog changeURLDialog(this);
-    changeURLDialog.setInputMode(QInputDialog::TextInput);
-    changeURLDialog.setWindowFlags(changeURLDialog.windowFlags()& ~Qt::WindowContextHelpButtonHint);
-    changeURLDialog.setWindowTitle(tr("Edit URL"));
-    changeURLDialog.setLabelText(tr("Set a new URL for the current selection:"));
-    changeURLDialog.setTextValue(ui->entryTextEdit->textCursor().charFormat().anchorHref());
-    changeURLDialog.setModal(true);
-    changeURLDialog.setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
-    changeURLDialog.adjustSize();
-    changeURLDialog.exec();
-
-    if(changeURLDialog.result()!=QInputDialog::Accepted)
-    {
-        return;
-    }
-
-    if(changeURLDialog.textValue()=="")
-    {
-        f.setAnchor(false);
-        f.setAnchorName("");
-        f.setAnchorHref("");
-        ui->entryTextEdit->textCursor().setCharFormat(f);
-    }
-    else
-    {
-        f.setAnchor(true);
-        f.setAnchorName(ui->entryTextEdit->textCursor().selectedText());
-        f.setAnchorHref(changeURLDialog.textValue());
-        //f.setFontUnderline(true);
-        //f.setForeground(Qt::blue);
-        ui->entryTextEdit->textCursor().setCharFormat(f);
-    }
-    ui->entryTextEdit->setCurrentCharFormat(f);
-}
-
-void NotizenMainWindow::setEdited(bool edited)
-{
-    edited_=edited;
-    if(edited)
-        ui->savePushButton->setIcon(QIcon(":/icons/disk_red.png"));
-    else
-        ui->savePushButton->setIcon(QIcon(":/icons/disk.png"));
-}
-
-void NotizenMainWindow::saveChanges()
-{
-    if(edited())
-    {
-        if(QMessageBox(QMessageBox::Question,tr("Save changes"),tr("The current entry was edited. Do you wish to save the changes?"),QMessageBox::Yes|QMessageBox::No,this).exec()==QMessageBox::Yes)
-            saveEntry();
-    }
-}
-
-void NotizenMainWindow::syncModelAndUI()
-{
-    if(updateFlags & CategoryListChanged)
-    {
-        categoryPairList.clear();
-        //std::copy(notesInternals.categoriesMap()->cbegin(),notesInternals.categoriesMap()->cend(),std::back_inserter(categoryPairList));
-        for(CategorySet::const_iterator i=notesInternals.categorySet()->cbegin();i!=notesInternals.categorySet()->cend();++i)
-        {
-            if(NotesInternals::getCategoryEncrypted(*i))
-                categoryPairList.push_back(*i);
-        }
-        for(CategorySet::const_iterator i=notesInternals.categorySet()->cbegin();i!=notesInternals.categorySet()->cend();++i)
-        {
-            if(!NotesInternals::getCategoryEncrypted(*i))
-                categoryPairList.push_back(*i);
-        }
-        //std::function<bool(CategoryPair)> fObject1(NotesInternals::getCategoryEncrypted);
-        //std::function<bool(CategoryPair)> fObject2(std::not1(fObject1));
-        //std::copy_if(notesInternals.categorySet()->cbegin(),notesInternals.categorySet()->cend(),categoryPairList.begin(),NotesInternals::getCategoryEncrypted);
-        //std::copy_if(notesInternals.categorySet()->cbegin(),notesInternals.categorySet()->cend(),categoryPairList.begin(),fObject2);
-
-        ui->categoriesComboBox->clear();
-        int j=-1;
-        for(int i=0;i<(int)categoryPairList.size();++i)
-        {
-            ui->categoriesComboBox->addItem(NotesInternals::getCategoryEncrypted(categoryPairList[i])?QIcon(":/icons/lock.png"):QIcon(""),
-                                            NotesInternals::getCategoryName(categoryPairList[i]));
-            if(notesInternals.currentCategoryPair()==categoryPairList[i])
-                j=i;
-        }
-        ui->categoriesComboBox->setCurrentIndex(j);
-        updateFlags &= ~CategoryListChanged;
-    }
-    if(updateFlags & (CategorySelectionChanged|EntryListContentChanged))
-    {
-        entryPairList.clear();
-        ui->entriesListWidget->clear();
-        if(notesInternals.isValid(notesInternals.currentCategoryPair()))
-        {
-            for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
-            {
-                if(NotesInternals::getEntryName(*i).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
-                    entryPairList.push_back(*i);
-            }
-            for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
-            {
-                if(!NotesInternals::getEntryName(*i).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive) && NotesInternals::getEntryName(*i).contains(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
-                    entryPairList.push_back(*i);
-            }
-            for(int i=0;i<(int)entryPairList.size();++i)
-                ui->entriesListWidget->addItem(NotesInternals::getEntryName(entryPairList[i]));
-        }
-    }
-    if(updateFlags & (CategorySelectionChanged|EntryListContentChanged|EntrySelectionChanged))
-    {
-        int j=-1;
-        for(int i=0;i<(int)entryPairList.size();++i)
-        {
-            if(notesInternals.currentEntryPair()==entryPairList[i])
-                j=i;
-        }
-        if(j==-1)
-            notesInternals.selectEntry(NotesInternals::invalidEntryPair());
-        ui->entriesListWidget->setCurrentRow(j);
-        updateFlags &= ~(CategorySelectionChanged|EntryListContentChanged);
-    }
-    if(updateFlags & (EntrySelectionChanged|EntryContentChanged))
-    {
-        ui->entryTextEdit->setHtml(notesInternals.getEntryText(notesInternals.currentEntryPair()));
-        setEdited(false);
-        updateFlags &= ~EntryContentChanged;
-    }
-    if(updateFlags & EntrySelectionChanged)
-    {
-        ui->entryTextEdit->setCurrentCharFormat(defaultTextCharFormat);
-        updateFlags &= ~EntrySelectionChanged;
-    }
-}
-
+//event filter to deal with entry selection by other means as well as deletion by pressing 'del'
 bool NotizenMainWindow::eventFilter(QObject *target, QEvent *e)
 {
     if(target==ui->entriesListWidget)
@@ -413,6 +416,24 @@ bool NotizenMainWindow::eventFilter(QObject *target, QEvent *e)
     return false;
 }
 
+void NotizenMainWindow::closeEvent(QCloseEvent *e)
+{
+    Q_UNUSED(e)
+    saveChanges();
+}
+
+void NotizenMainWindow::setUpModalInputDialog(QInputDialog &inputDialog,QString windowTitle,QString labelText,QInputDialog::InputMode inputMode,QString textValue)
+{
+    inputDialog.setWindowFlags(inputDialog.windowFlags()& ~Qt::WindowContextHelpButtonHint);
+    inputDialog.setWindowTitle(windowTitle);
+    inputDialog.setLabelText(labelText);
+    inputDialog.setInputMode(inputMode);
+    inputDialog.setTextValue(textValue);
+    inputDialog.setModal(true);
+    inputDialog.setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    inputDialog.adjustSize();
+}
+
 void NotizenMainWindow::on_addCategoryPushButton_clicked()
 {
     addCategory();
@@ -425,16 +446,13 @@ void NotizenMainWindow::on_addEntryPushButton_clicked()
 
 void NotizenMainWindow::on_categoriesComboBox_activated(int index)
 {
+    Q_UNUSED(index)
     selectCategory();
-}
-
-void NotizenMainWindow::on_entriesListWidget_currentRowChanged(int currentRow)
-{
-
 }
 
 void NotizenMainWindow::on_entryFilterLineEdit_textEdited(const QString &arg1)
 {
+    Q_UNUSED(arg1)
     updateFlags|=EntryListContentChanged;
     notesInternals.selectEntry(NotesInternals::invalidEntryPair()); //optional, depending on search behavior
     syncModelAndUI();
@@ -479,8 +497,7 @@ void NotizenMainWindow::passwordMismatch()
 
 void NotizenMainWindow::moveEntryMenu(QAction *action)
 {
-    notesInternals.moveCurrentEntry(categoryPairList[action->data().toInt()]);
-    syncModelAndUI();
+    moveEntry(categoryPairList[action->data().toInt()]);
 }
 
 void NotizenMainWindow::on_savePushButton_clicked()
@@ -490,6 +507,7 @@ void NotizenMainWindow::on_savePushButton_clicked()
 
 void NotizenMainWindow::on_entriesListWidget_pressed(const QModelIndex &index)
 {
+    Q_UNUSED(index)
     selectEntry();
 }
 
@@ -527,6 +545,7 @@ void NotizenMainWindow::on_fontComboBox_activated(const QString &arg1)
 
 void NotizenMainWindow::on_makeLinkCheckBox_clicked(bool checked)
 {
+    Q_UNUSED(checked)
     QTextCharFormat f=ui->entryTextEdit->textCursor().charFormat();
     if(f.anchorHref()!="" || f.anchorName()!="" || f.isAnchor())
     {
@@ -583,16 +602,18 @@ void NotizenMainWindow::on_boldToolButton_clicked(bool checked)
 
 void NotizenMainWindow::on_entriesListWidget_customContextMenuRequested(const QPoint &pos)
 {
+    Q_UNUSED(pos)
     if(notesInternals.isValid(notesInternals.currentCategoryPair(),notesInternals.currentEntryPair()))
     {
         QMenu entriesContextMenu(this);
         QMenu moveMenu(this);
         moveMenu.setTitle(tr("Move entry"));
-        for(int i=0;i<categoryPairList.size();++i)
+        for(int i=0;i<(int)categoryPairList.size();++i)
             moveMenu.addAction(notesInternals.getCategoryName(categoryPairList[i]))->setData(i);
         QObject::connect(&moveMenu,SIGNAL(triggered(QAction*)),this,SLOT(moveEntryMenu(QAction*)));
         entriesContextMenu.addMenu(&moveMenu);
         entriesContextMenu.addAction(this->ui->actionRenameEntry);
+        entriesContextMenu.addAction(this->ui->actionDeleteEntry);
         entriesContextMenu.exec(QCursor::pos());
     }
 }
@@ -618,11 +639,15 @@ void NotizenMainWindow::on_entryTextEdit_currentCharFormatChanged(const QTextCha
 
 void NotizenMainWindow::on_categoriesComboBox_customContextMenuRequested(const QPoint &pos)
 {
+    Q_UNUSED(pos)
     QMenu *categoriesContextMenu=ui->categoriesComboBox->lineEdit()->createStandardContextMenu();
     categoriesContextMenu->removeAction(categoriesContextMenu->actions()[0]);
     categoriesContextMenu->removeAction(categoriesContextMenu->actions()[0]);
     if(notesInternals.isValid(notesInternals.currentCategoryPair()))
+    {
+        categoriesContextMenu->insertAction(categoriesContextMenu->actions()[0],ui->actionDeleteCategory);
         categoriesContextMenu->insertAction(categoriesContextMenu->actions()[0],ui->actionRenameCategory);
+    }
     categoriesContextMenu->exec(QCursor::pos());
     delete categoriesContextMenu;
 }
@@ -630,6 +655,11 @@ void NotizenMainWindow::on_categoriesComboBox_customContextMenuRequested(const Q
 void NotizenMainWindow::on_actionRenameCategory_triggered()
 {
     renameCategory();
+}
+
+void NotizenMainWindow::on_actionDeleteCategory_triggered()
+{
+    removeCategory();
 }
 
 void NotizenMainWindow::on_entryFilterLineEdit_returnPressed()
@@ -648,8 +678,14 @@ void NotizenMainWindow::on_actionRenameEntry_triggered()
     renameEntry();
 }
 
+void NotizenMainWindow::on_actionDeleteEntry_triggered()
+{
+    removeEntry();
+}
+
 void NotizenMainWindow::on_entryTextEdit_customContextMenuRequested(const QPoint &pos)
 {
+    Q_UNUSED(pos)
     QMenu *entryTextContextMenu=ui->entryTextEdit->createStandardContextMenu();
     if(!ui->entryTextEdit->textCursor().selection().isEmpty())
         entryTextContextMenu->addAction(ui->actionEditURL);
