@@ -5,7 +5,8 @@
 NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::NotizenMainWindow),
-    notesInternals(this)
+    notesInternals(this),
+    settingsDialog(new SettingsDialog(this))
     //saveEntryShortcut(QKeySequence(Qt::CTRL,Qt::Key_S),this,"SLOT(saveEntryShortcutTriggered())")
 {
     ui->setupUi(this);
@@ -235,6 +236,11 @@ void NotizenMainWindow::toggleEncryption()
     }
 }
 
+void NotizenMainWindow::openSettings()
+{
+    settingsDialog->show();
+}
+
 //big function to handle UI updates as requested in the updateFlags variable
 
 void NotizenMainWindow::syncModelAndUI()
@@ -394,13 +400,13 @@ void NotizenMainWindow::toggleStayOnTop(bool stayOnTop)
 {
     if(stayOnTop)
     {
-        this->hide();
+        //this->hide();
         this->setWindowFlags(this->windowFlags()|Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint);
         this->show();
     }
     else
     {
-        this->hide();
+        //this->hide();
         this->setWindowFlags(this->windowFlags()&(~(Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint|Qt::WindowStaysOnBottomHint)));
         this->show();
     }
@@ -731,4 +737,9 @@ void NotizenMainWindow::on_entryTextEdit_textChanged()
 {
     if(notesInternals.isValid(notesInternals.currentCategoryPair(),notesInternals.currentEntryPair()))
         setEdited(true);
+}
+
+void NotizenMainWindow::on_settingsPushButton_clicked()
+{
+    openSettings();
 }

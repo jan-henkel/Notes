@@ -218,8 +218,8 @@
            <font>
             <family>Trebuchet MS</family>
             <pointsize>10</pointsize>
-            <weight>75</weight>
-            <bold>true</bold>
+            <weight>50</weight>
+            <bold>false</bold>
            </font>
           </property>
          </widget>
@@ -294,8 +294,8 @@
            <font>
             <family>Trebuchet MS</family>
             <pointsize>10</pointsize>
-            <weight>75</weight>
-            <bold>true</bold>
+            <weight>50</weight>
+            <bold>false</bold>
            </font>
           </property>
           <property name="contextMenuPolicy">

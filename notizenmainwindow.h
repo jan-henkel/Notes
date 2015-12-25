@@ -21,6 +21,7 @@
 #include <functional>
 #include "passworddialog.h"
 #include <QShortcut>
+#include "settingsdialog.h"
 
 namespace Ui {
 class NotizenMainWindow;
@@ -62,6 +63,8 @@ public:
     void selectEntry();
     //encryption
     void toggleEncryption();
+    //settings
+    void openSettings();
 private:
     Ui::NotizenMainWindow *ui;
     //object to carry out all of the database operations, like adding and removing categories and entries.
@@ -79,6 +82,9 @@ private:
 
     //variables to later store settings read from settings.cfg
     QTextCharFormat defaultTextCharFormat;
+
+    //settings dialog, non-modal
+    SettingsDialog *settingsDialog;
 
     //vectors containing CategoryPair and EntryPair elements corresponding to the categories and entries
     //listed in UI-widgets. used to interact with notesInternals object
@@ -179,6 +185,7 @@ private slots:
 
     //slot to be called by save entry shortcut
     //void saveEntryShortcutTriggered();
+    void on_settingsPushButton_clicked();
 };
 
 #endif // NOTIZENMAINWINDOW_H
