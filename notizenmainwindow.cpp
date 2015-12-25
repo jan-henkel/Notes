@@ -6,6 +6,7 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::NotizenMainWindow),
     notesInternals(this)
+    //saveEntryShortcut(QKeySequence(Qt::CTRL,Qt::Key_S),this,"SLOT(saveEntryShortcutTriggered())")
 {
     ui->setupUi(this);
     //update UI to show categories and so on
@@ -27,6 +28,11 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     //set up event filter for category combobox (as of now unnecessary) and entry list
     ui->categoriesComboBox->installEventFilter(this);
     ui->entriesListWidget->installEventFilter(this);
+
+    //set up ctrl+s shortcut to save entry changes
+    //saveEntryShortcut.setKey();
+    //saveEntryShortcut.setEnabled(true);
+    //QObject::connect(&saveEntryShortcut,SIGNAL(activated()),this,SLOT(saveEntryShortcutTriggered()));
 }
 
 NotizenMainWindow::~NotizenMainWindow()
@@ -400,7 +406,7 @@ void NotizenMainWindow::toggleStayOnTop(bool stayOnTop)
     }
 }
 
-//event filter to deal with entry selection by other means as well as deletion by pressing 'del'
+//event filter to deal with user input not caught by the signal-slot mechanism
 bool NotizenMainWindow::eventFilter(QObject *target, QEvent *e)
 {
     if(target==ui->entriesListWidget)
@@ -408,8 +414,25 @@ bool NotizenMainWindow::eventFilter(QObject *target, QEvent *e)
         if(e->type()==QEvent::KeyRelease)
         {
             selectEntry();
+            //delete entries when 'del' is pressed
             if(((QKeyEvent*)e)->key()==Qt::Key_Delete)
                 removeEntry();
+        }
+    }
+    //add category on pressing return, if there isn't one of the same name in the list
+    if(target==ui->categoriesComboBox)
+    {
+        if(e->type()==QEvent::KeyRelease)
+        {
+            if(((QKeyEvent*)e)->text()=="\n" || ((QKeyEvent*)e)->text()=="\r")
+            {
+                bool nameExists=false;
+                for(int i=0;i<(int)categoryPairList.size();++i)
+                    if(notesInternals.getCategoryName(categoryPairList[i])==ui->categoriesComboBox->currentText())
+                        nameExists=true;
+                if(!nameExists)
+                    addCategory();
+            }
         }
     }
     e->accept();
@@ -453,14 +476,15 @@ void NotizenMainWindow::on_categoriesComboBox_activated(int index)
 void NotizenMainWindow::on_entryFilterLineEdit_textEdited(const QString &arg1)
 {
     Q_UNUSED(arg1)
+    saveChanges();
     updateFlags|=EntryListContentChanged;
-    notesInternals.selectEntry(NotesInternals::invalidEntryPair()); //optional, depending on search behavior
+    //notesInternals.selectEntry(NotesInternals::invalidEntryPair()); //optional, depending on search behavior
     syncModelAndUI();
     if(!entryPairList.empty())
-    {
         notesInternals.selectEntry(entryPairList[0]);
-        syncModelAndUI();
-    }
+    //else
+    //    notesInternals.selectEntry(NotesInternals::invalidEntryPair());
+    syncModelAndUI();
 }
 
 void NotizenMainWindow::createNewPassword(QCA::SecureArray password, bool createMasterKey)
@@ -697,6 +721,11 @@ void NotizenMainWindow::on_actionEditURL_triggered()
 {
     editEntryTextURL();
 }
+
+/*void NotizenMainWindow::saveEntryShortcutTriggered()
+{
+    saveEntry();
+}*/
 
 void NotizenMainWindow::on_entryTextEdit_textChanged()
 {
