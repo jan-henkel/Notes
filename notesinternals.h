@@ -25,9 +25,64 @@ typedef std::pair<QString,QDateTime> NameDate;
 //pair types store both name and date, as well as a pointer to the content
 typedef std::pair<NameDate,Entry*> EntryPair;
 typedef std::pair<NameDate,Category*> CategoryPair;
+
+struct compare_entry
+{
+    bool operator() (const EntryPair &l,const EntryPair &r) const
+    {
+        QString ll=l.first.first.toLower();
+        QString lr=r.first.first.toLower();
+        if(QString::localeAwareCompare(ll,lr)<0)
+            return true;
+        else
+        {
+            if(ll==lr)
+            {
+                if(QString::localeAwareCompare(l.first.first,r.first.first)<0)
+                {
+                    return true;
+                }
+                else
+                {
+                    if(l.first.first==r.first.first && l.first.second<r.first.second)
+                        return true;
+                }
+            }
+        }
+        return false;
+    }
+};
+
+struct compare_category
+{
+    bool operator() (const CategoryPair &l,const CategoryPair &r) const
+    {
+        QString ll=l.first.first.toLower();
+        QString lr=r.first.first.toLower();
+        if(QString::localeAwareCompare(ll,lr)<0)
+            return true;
+        else
+        {
+            if(ll==lr)
+            {
+                if(QString::localeAwareCompare(l.first.first,r.first.first)<0)
+                {
+                    return true;
+                }
+                else
+                {
+                    if(l.first.first==r.first.first && l.first.second<r.first.second)
+                        return true;
+                }
+            }
+        }
+        return false;
+    }
+};
+
 //set types store pairs
-typedef std::set<EntryPair> EntrySet;
-typedef std::set<CategoryPair> CategorySet;
+typedef std::set<EntryPair,compare_entry> EntrySet;
+typedef std::set<CategoryPair,compare_category> CategorySet;
 
 //Entry class
 class Entry

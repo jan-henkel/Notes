@@ -1,5 +1,7 @@
 #include "notesinternals.h"
 
+
+
 NotesInternals::NotesInternals(QObject *parent) : QObject(parent),hashFunction_("sha256"),currentCategoryPair_(invalidCategoryPair()),currentEntryPair_(invalidEntryPair()),encryptionEnabled_(false)
 {
     QCA::init();
