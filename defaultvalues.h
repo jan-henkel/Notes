@@ -11,6 +11,17 @@ namespace DefaultValues
     extern QColor entryFontColor;
     extern QFont printingFontCategory;
     extern QFont printingFontEntry;
+    extern int mainWindowPosition;
+    extern int categoryIndex;
+    extern QFont uiFont;
+    extern bool entryListFontBold;
+    extern bool entryListFontItalic;
+    extern QFont labelFont;
+    extern QColor labelCategoryBackgroundColor;
+    extern QColor labelCategoryFontColor;
+    extern QColor labelEntryBackgroundColor;
+    extern QColor labelEntryFontColor;
+    extern bool windowAlwaysOnTop;
 }
 
 class DefaultValuesInitializer
