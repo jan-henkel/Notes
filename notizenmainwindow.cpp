@@ -27,6 +27,7 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     //set up event filter for category combobox (as of now unnecessary) and entry list
     ui->categoriesComboBox->installEventFilter(this);
     ui->entriesListWidget->installEventFilter(this);
+    this->installEventFilter(this);
 
     //set up ctrl+s shortcut to save entry changes
     //saveEntryShortcut.setKey();
@@ -536,6 +537,10 @@ bool NotizenMainWindow::eventFilter(QObject *target, QEvent *e)
             }
         }
     }
+
+    if(e->type()==QEvent::KeyPress && ((QKeyEvent*)e)->matches(QKeySequence::Save))
+        saveEntry();
+
     e->accept();
     return false;
 }
