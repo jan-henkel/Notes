@@ -34,7 +34,9 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     //saveEntryShortcut.setKey();
     //saveEntryShortcut.setEnabled(true);
     //QObject::connect(&saveEntryShortcut,SIGNAL(activated()),this,SLOT(saveEntryShortcutTriggered()));
-    readSettings();
+
+    QObject::connect(settingsDialog,SIGNAL(updateMainWindow()),this,SLOT(settingsDialogApply()));
+    QObject::connect(settingsDialog,SIGNAL(changePassword()),this,SLOT(settingsChangePassword()));
 }
 
 NotizenMainWindow::~NotizenMainWindow()
@@ -242,6 +244,12 @@ void NotizenMainWindow::openSettings()
     settingsDialog->showSettings(&this->notesInternals);
 }
 
+void NotizenMainWindow::showEvent(QShowEvent *e)
+{
+    QMainWindow::showEvent(e);
+    readSettings();
+}
+
 //big function to handle UI updates as requested in the updateFlags variable
 
 void NotizenMainWindow::syncModelAndUI()
@@ -367,19 +375,27 @@ void NotizenMainWindow::readSettings()
     settings.endGroup();
 
     settings.beginGroup("mainwindow");
+    int screenWidth=QApplication::desktop()->availableGeometry().width();
+    int screenHeight=QApplication::desktop()->availableGeometry().height();
+    int windowWidth=this->frameGeometry().width();
+    int windowHeight=this->frameGeometry().height();
     switch(settings.value("default_position",DefaultValues::mainWindowPosition).toInt())
     {
     case 0:
-        this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignTop | Qt::AlignLeft,this->size(),QApplication::desktop()->availableGeometry()));
+        //this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignTop | Qt::AlignLeft,this->size(),QApplication::desktop()->availableGeometry()));
+        move(0,0);
         break;
     case 1:
-        this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignTop | Qt::AlignRight,this->size(),QApplication::desktop()->availableGeometry()));
+        //this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignTop | Qt::AlignRight,this->size(),QApplication::desktop()->availableGeometry()));
+        move(screenWidth-windowWidth,0);
         break;
     case 2:
-        this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignBottom | Qt::AlignLeft,this->size(),QApplication::desktop()->availableGeometry()));
+        //this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignBottom | Qt::AlignLeft,this->size(),QApplication::desktop()->availableGeometry()));
+        move(0,screenHeight-windowHeight);
         break;
     case 3:
-        this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignBottom | Qt::AlignRight,this->size(),QApplication::desktop()->availableGeometry()));
+        //this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignBottom | Qt::AlignRight,this->size(),QApplication::desktop()->availableGeometry()));
+        move(screenWidth-windowWidth,screenHeight-windowHeight);
         break;
     case 4:
         this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignCenter,this->size(),QApplication::desktop()->availableGeometry()));
@@ -567,13 +583,20 @@ void NotizenMainWindow::createNewPassword(QCA::SecureArray password, bool create
     if(createMasterKey)
     {
         notesInternals.createNewMasterKey(password);
-        if(!notesInternals.enableEncryption(password))
+        if(!notesInternals.encryptionEnabled())
         {
-            QMessageBox(QMessageBox::Warning,tr("Error"),tr("An error occured while setting up encryption."),QMessageBox::Ok,this).exec();
-            return;
+            if(!notesInternals.enableEncryption(password))
+            {
+                QMessageBox(QMessageBox::Warning,tr("Error"),tr("An error occured while setting up encryption."),QMessageBox::Ok,this).exec();
+                return;
+            }
+            syncModelAndUI();
+            ui->encryptionPushButton->setIcon(QIcon(":/icons/lock_delete.png"));
         }
-        syncModelAndUI();
-        ui->encryptionPushButton->setIcon(QIcon(":/icons/lock_delete.png"));
+    }
+    else
+    {
+        notesInternals.createNewPassword(password);
     }
 }
 
@@ -592,6 +615,37 @@ void NotizenMainWindow::passwordMismatch()
 {
     QMessageBox(QMessageBox::Warning,tr("Inputs don't match"),tr("The passwords you entered do not match."),QMessageBox::Ok,this).exec();
     return;
+}
+
+void NotizenMainWindow::settingsDialogApply()
+{
+    readSettings();
+    syncModelAndUI();
+}
+
+void NotizenMainWindow::settingsChangePassword()
+{
+    PasswordDialog dlg(this);
+    dlg.setModal(true);
+    QObject::connect(&dlg,SIGNAL(newPasswordSet(QCA::SecureArray,bool)),this,SLOT(createNewPassword(QCA::SecureArray,bool)));
+    QObject::connect(&dlg,SIGNAL(passwordEntered(QCA::SecureArray)),this,SLOT(passwordEntered(QCA::SecureArray)));
+    QObject::connect(&dlg,SIGNAL(passwordMismatch()),this,SLOT(passwordMismatch()));
+    if(!notesInternals.encryptionEnabled())
+    {
+        if(!notesInternals.masterKeyExists())
+        {
+            if(QMessageBox(QMessageBox::Question,tr("Master key not set"),tr("No master key set. Do you wish to create a new one?"),QMessageBox::Yes | QMessageBox::No,this).exec()==QMessageBox::Yes)
+                dlg.showWithMode(PasswordDialog::CreateMasterKey);
+            return;
+        }
+        else
+        {
+            dlg.showWithMode(PasswordDialog::AskPassword);
+        }
+    }
+    if(!notesInternals.encryptionEnabled())
+        return;
+    dlg.showWithMode(PasswordDialog::ChangePassword);
 }
 
 void NotizenMainWindow::moveEntryMenu(QAction *action)

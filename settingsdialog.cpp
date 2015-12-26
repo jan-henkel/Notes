@@ -131,7 +131,7 @@ void SettingsDialog::on_applyPushButton_2_clicked()
     QSettings settings("settings.ini",QSettings::IniFormat,this);
     settings.beginGroup("mainwindow");
     settings.setValue("default_position",ui->defaultPositionComboBox->currentIndex());
-    settings.setValue("default_category",ui->defaultCategoryComboBox->currentIndex());
+    settings.setValue("default_category",ui->defaultCategoryComboBox->currentIndex()-1);
     settings.setValue("ui_fontfamily",ui->uiFontFamilyComboBox->currentFont());
     settings.setValue("ui_fontsize",ui->uiFontSizeSpinBox->value());
     settings.setValue("ui_fontbold",ui->uiFontBoldToolButton->isChecked());
@@ -148,4 +148,76 @@ void SettingsDialog::on_applyPushButton_2_clicked()
     settings.setValue("entrylabel_foreground", entryLabelFontColor_.name());
     settings.setValue("default_window_on_top",ui->alwaysOnTopCheckBox->isChecked());
     settings.endGroup();
+
+    emit updateMainWindow();
+}
+
+void SettingsDialog::on_fontColorPushButton_clicked()
+{
+    QColorDialog dlg(this);
+    dlg.setCurrentColor(entryFontColor_);
+    dlg.setModal(true);
+    dlg.exec();
+    if(dlg.result()==QDialog::Accepted)
+    {
+        entryFontColor_=dlg.selectedColor();
+        ui->fontColorPushButton->setStyleSheet(QString("background-color: %1").arg(entryFontColor_.name()));
+    }
+}
+
+void SettingsDialog::on_categoryLabelBackgroundColorPushButton_clicked()
+{
+    QColorDialog dlg(this);
+    dlg.setCurrentColor(categoryLabelBackground_);
+    dlg.setModal(true);
+    dlg.exec();
+    if(dlg.result()==QDialog::Accepted)
+    {
+        categoryLabelBackground_=dlg.selectedColor();
+        ui->categoryLabelBackgroundColorPushButton->setStyleSheet(QString("background-color: %1").arg(categoryLabelBackground_.name()));
+    }
+}
+
+void SettingsDialog::on_categoryLabelFontColorPushButton_clicked()
+{
+    QColorDialog dlg(this);
+    dlg.setCurrentColor(categoryLabelFontColor_);
+    dlg.setModal(true);
+    dlg.exec();
+    if(dlg.result()==QDialog::Accepted)
+    {
+        categoryLabelFontColor_=dlg.selectedColor();
+        ui->categoryLabelFontColorPushButton->setStyleSheet(QString("background-color: %1").arg(categoryLabelFontColor_.name()));
+    }
+}
+
+void SettingsDialog::on_entryLabelBackgroundColorPushButton_clicked()
+{
+    QColorDialog dlg(this);
+    dlg.setCurrentColor(entryLabelBackground_);
+    dlg.setModal(true);
+    dlg.exec();
+    if(dlg.result()==QDialog::Accepted)
+    {
+        entryLabelBackground_=dlg.selectedColor();
+        ui->entryLabelBackgroundColorPushButton->setStyleSheet(QString("background-color: %1").arg(entryLabelBackground_.name()));
+    }
+}
+
+void SettingsDialog::on_entryLabelFontColorPushButton_clicked()
+{
+    QColorDialog dlg(this);
+    dlg.setCurrentColor(entryLabelFontColor_);
+    dlg.setModal(true);
+    dlg.exec();
+    if(dlg.result()==QDialog::Accepted)
+    {
+        entryLabelFontColor_=dlg.selectedColor();
+        ui->entryLabelFontColorPushButton->setStyleSheet(QString("background-color: %1").arg(entryLabelFontColor_.name()));
+    }
+}
+
+void SettingsDialog::on_changePasswordPushButton_clicked()
+{
+    emit changePassword();
 }

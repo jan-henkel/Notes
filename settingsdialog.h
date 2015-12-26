@@ -7,6 +7,7 @@
 #include <QTextCharFormat>
 #include <QColor>
 #include <QFontDialog>
+#include <QColorDialog>
 #include <QTextBrowser>
 #include <QTextCursor>
 #include "notizentextedit.h"
@@ -27,10 +28,23 @@ public:
     void showSettings(NotesInternals* notesInternals);
 signals:
     void updateMainWindow();
+    void changePassword();
 private slots:
     void on_applyPushButton_clicked();
 
     void on_applyPushButton_2_clicked();
+
+    void on_fontColorPushButton_clicked();
+
+    void on_categoryLabelBackgroundColorPushButton_clicked();
+
+    void on_categoryLabelFontColorPushButton_clicked();
+
+    void on_entryLabelBackgroundColorPushButton_clicked();
+
+    void on_entryLabelFontColorPushButton_clicked();
+
+    void on_changePasswordPushButton_clicked();
 
 private:
     NotesInternals *notesInternals_;

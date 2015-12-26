@@ -244,6 +244,7 @@ bool NotesInternals::createNewMasterKey(const QCA::SecureArray &newPassword)
     {
         for(CategorySet::iterator i=categorySet_.begin();i!=categorySet_.end();++i)
         {
+            updateCategoryFile(*i);
             for(EntrySet::iterator j=getCategory(*i)->entrySet_.begin();j!=getCategory(*i)->entrySet_.end();++j)
                 updateEntryFile(*i,*j);
         }
@@ -530,7 +531,7 @@ bool NotesInternals::updateEntryFile(CategoryPair categoryPair, EntryPair entryP
     return true;
 }
 
-bool NotesInternals::updateCategoryFile(CategoryPair &categoryPair)
+bool NotesInternals::updateCategoryFile(CategoryPair categoryPair)
 {
     //save previous folder name
     QString previousFolderName=getCategoryFolderName(categoryPair);

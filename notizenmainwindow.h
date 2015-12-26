@@ -96,6 +96,9 @@ private:
     std::vector<CategoryPair> categoryPairList;
     std::vector<EntryPair> entryPairList;
 
+    //overload showEvent() for the purpose of loading settings once the window is visible (important, because frameGeometry() will return spurious values otherwise)
+    void showEvent(QShowEvent *e);
+
     //function to synchronize the GUI-widgets with the underlying "model", i.e. notesInternals
     void syncModelAndUI();
 
@@ -140,6 +143,11 @@ private slots:
     void passwordEntered(QCA::SecureArray password);
     //notifies the user that the contents of the 2 password fields don't match (when setting a new password)
     void passwordMismatch();
+
+    //apply changes made in the settings dialog
+    void settingsDialogApply();
+    //password change requested by settings dialog
+    void settingsChangePassword();
 
     //called by the "Move entry" context menu. moves current entry to the category selected in the menu
     //using high level function moveEntry

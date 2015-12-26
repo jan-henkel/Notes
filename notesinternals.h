@@ -193,7 +193,7 @@ private:
     //function to update entry file. creates file if it doesn't exist yet (useful for creating new entries)
     bool updateEntryFile(CategoryPair categoryPair,EntryPair entryPair);
     //function to update category file and folder. creates file and folder if it doesn't exist yet (useful for new categories)
-    bool updateCategoryFile(CategoryPair &categoryPair);
+    bool updateCategoryFile(CategoryPair categoryPair);
 
     //functions to extract pointers to non-constant category or entry associated with pair
     static Category* getCategory_(const CategoryPair &categoryPair)
