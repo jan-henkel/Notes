@@ -77,6 +77,8 @@ private:
     qint16 updateFlags;
     //string to store entry name filter, as entered into the entry search field (might not be necessary)
     QString filterString;
+    //boolean to make sure settings are only read on the initial show event of the main window
+    bool initialShow_;
 
     //ctrl+s shortcut to save entry changes
     //QShortcut saveEntryShortcut;

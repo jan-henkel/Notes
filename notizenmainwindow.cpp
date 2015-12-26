@@ -6,6 +6,7 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::NotizenMainWindow),
     notesInternals(this),
+    initialShow_(true),
     settingsDialog(new SettingsDialog(this))
     //saveEntryShortcut(QKeySequence(Qt::CTRL,Qt::Key_S),this,"SLOT(saveEntryShortcutTriggered())")
 {
@@ -27,6 +28,7 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     //set up event filter for category combobox (as of now unnecessary) and entry list
     ui->categoriesComboBox->installEventFilter(this);
     ui->entriesListWidget->installEventFilter(this);
+    this->installEventFilter(this);
 
     //set up ctrl+s shortcut to save entry changes
     //saveEntryShortcut.setKey();
@@ -250,7 +252,11 @@ void NotizenMainWindow::openSettings()
 void NotizenMainWindow::showEvent(QShowEvent *e)
 {
     QMainWindow::showEvent(e);
-    readSettings();
+    if(initialShow_)
+    {
+        initialShow_=false;
+        readSettings();
+    }
 }
 
 //big function to handle UI updates as requested in the updateFlags variable
@@ -423,8 +429,17 @@ void NotizenMainWindow::readSettings()
                                      settings.value("label_fontitalic",DefaultValues::labelFont.italic()).toBool()));
     ui->entryLabel->setFont(ui->categoryLabel->font());
     ui->categoryLabel->setStyleSheet(QString("background-color: %1;\ncolor: %2").arg(settings.value("categorylabel_background",DefaultValues::labelCategoryBackgroundColor.name()).toString(),settings.value("categorylabel_foreground",DefaultValues::labelCategoryFontColor.name()).toString()));
+    ui->addCategoryPushButton->setStyleSheet(ui->categoryLabel->styleSheet());
+    ui->removeCategoryPushButton->setStyleSheet(ui->categoryLabel->styleSheet());
+    ui->printCategoryPushButton->setStyleSheet(ui->categoryLabel->styleSheet());
     ui->entryLabel->setStyleSheet(QString("background-color: %1;\ncolor: %2").arg(settings.value("entrylabel_background",DefaultValues::labelEntryBackgroundColor.name()).toString(),settings.value("entrylabel_foreground",DefaultValues::labelEntryFontColor.name()).toString()));
-    toggleStayOnTop(settings.value("default_window_on_top",DefaultValues::windowAlwaysOnTop).toBool());
+    ui->addEntryPushButton->setStyleSheet(ui->entryLabel->styleSheet());
+    ui->removeEntryPushButton->setStyleSheet(ui->entryLabel->styleSheet());
+    ui->printEntryPushButton->setStyleSheet(ui->entryLabel->styleSheet());
+    if(settings.value("default_window_on_top",DefaultValues::windowAlwaysOnTop).toBool())
+        this->setWindowFlags(this->windowFlags()|Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint);
+    else
+        this->setWindowFlags(this->windowFlags()&~(Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint));
     settings.endGroup();
 }
 
@@ -530,6 +545,10 @@ bool NotizenMainWindow::eventFilter(QObject *target, QEvent *e)
             }
         }
     }
+
+    if(e->type()==QEvent::KeyPress && ((QKeyEvent*)e)->matches(QKeySequence::Save))
+        saveEntry();
+
     e->accept();
     return false;
 }
