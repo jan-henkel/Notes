@@ -35,6 +35,8 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
 
     QObject::connect(settingsDialog,SIGNAL(updateMainWindow()),this,SLOT(settingsDialogApply()));
     QObject::connect(settingsDialog,SIGNAL(changePassword()),this,SLOT(settingsChangePassword()));
+
+    ui->categoriesComboBox->completer()->setCaseSensitivity(Qt::CaseSensitive);
 }
 
 NotizenMainWindow::~NotizenMainWindow()
