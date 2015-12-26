@@ -83,7 +83,6 @@ void SettingsDialog::untickCheckboxes()
 
 void SettingsDialog::on_applyPushButton_clicked()
 {
-    untickCheckboxes();
     QSettings settings("settings.ini",QSettings::IniFormat,this);
     settings.beginGroup("entry");
     settings.setValue("fontfamily",ui->fontFamilyComboBox->currentFont().family());
@@ -132,6 +131,7 @@ void SettingsDialog::on_applyPushButton_clicked()
             }
         }
     }
+    untickCheckboxes();
 
     emit updateMainWindow();
 }
