@@ -23,8 +23,6 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
 
     //set default char format. to do: read this from a config file instead of hardcoding
     defaultTextCharFormat=ui->entryTextEdit->currentCharFormat();
-    defaultTextCharFormat.setFont(QFont("Trebuchet MS",10,QFont::Normal,false));
-    defaultTextCharFormat.setForeground(QBrush(Qt::black));
 
     //set up event filter for category combobox (as of now unnecessary) and entry list
     ui->categoriesComboBox->installEventFilter(this);
@@ -97,24 +95,21 @@ void NotizenMainWindow::printCategory()
             textEdit.moveCursor(QTextCursor::End);
             QTextBlockFormat f;
             f.setAlignment(Qt::AlignCenter);
-            textEdit.setCurrentFont(QFont("Trebuchet MS",16,QFont::Bold,false));
-            textEdit.setFontUnderline(true);
+            textEdit.setCurrentFont(printingFontCategory);
             textEdit.textCursor().insertBlock(f);
             textEdit.textCursor().insertText(NotesInternals::getCategoryName(notesInternals.currentCategoryPair()));
             f.setAlignment(Qt::AlignLeft);
             textEdit.textCursor().insertBlock(f);
             for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
             {
-                textEdit.setCurrentFont(QFont("Trebuchet MS",14,QFont::Normal,false));
-                textEdit.setFontUnderline(true);
+                textEdit.setCurrentFont(printingFontEntry);
                 QTextCharFormat f=textEdit.currentCharFormat();
                 f.setForeground(Qt::black);
                 textEdit.setCurrentCharFormat(f);
                 textEdit.insertPlainText(QString("\n\n"));
                 textEdit.insertPlainText(NotesInternals::getEntryName(*i)+QString("\n\n"));
 
-                textEdit.setCurrentFont(QFont("Trebuchet MS",12,QFont::Normal,false));
-                textEdit.setFontUnderline(false);
+                textEdit.setCurrentFont(DefaultValues::entryFont);
                 textEdit.insertHtml(NotesInternals::getEntryText(*i));
             }
 
@@ -134,12 +129,10 @@ void NotizenMainWindow::printEntry()
         NotizenTextEdit textEdit(this);
         if(printDialog->exec() == QDialog::Accepted)
         {
-            textEdit.setCurrentFont(QFont("Trebuchet MS",16,QFont::Normal,false));
-            textEdit.setFontUnderline(true);
+            textEdit.setCurrentFont(printingFontEntry);
             textEdit.insertPlainText(NotesInternals::getEntryName(notesInternals.currentEntryPair())+QString("\n\n"));
 
-            textEdit.setCurrentFont(QFont("Trebuchet MS",14,QFont::Normal,false));
-            textEdit.setFontUnderline(false);
+            textEdit.setCurrentFont(DefaultValues::entryFont);
             textEdit.insertHtml(NotesInternals::getEntryText(notesInternals.currentEntryPair()));
 
             textEdit.print(&printer);
@@ -199,6 +192,13 @@ void NotizenMainWindow::selectCategory()
         notesInternals.selectCategory(categoryPairList[index]);
         syncModelAndUI();
     }
+    else
+    {
+        updateFlags|=EntryListContentChanged;
+        ui->entryFilterLineEdit->setText("");
+        notesInternals.selectCategory(notesInternals.invalidCategoryPair());
+        syncModelAndUI();
+    }
 }
 
 void NotizenMainWindow::selectEntry()
@@ -214,6 +214,7 @@ void NotizenMainWindow::selectEntry()
 
 void NotizenMainWindow::toggleEncryption()
 {
+    saveChanges();
     if(!notesInternals.encryptionEnabled())
     {
         PasswordDialog dlg(this);
@@ -360,7 +361,8 @@ void NotizenMainWindow::readSettings()
                     settings.value("fontitalic",DefaultValues::entryFont.italic()).toBool());
     entryFontColor=QColor(settings.value("fontcolor",DefaultValues::entryFontColor).toString());
     settings.endGroup();
-
+    defaultTextCharFormat.setFont(entryFont);
+    defaultTextCharFormat.setForeground(QBrush(entryFontColor));
     settings.beginGroup("printing");
     printingFontCategory=QFont(settings.value("category_heading_fontfamily",DefaultValues::printingFontCategory.family()).toString(),
                                settings.value("category_heading_fontsize",DefaultValues::printingFontCategory.pointSize()).toInt(),

@@ -16,6 +16,7 @@ SettingsDialog::~SettingsDialog()
 void SettingsDialog::showSettings(NotesInternals *notesInternals)
 {
     notesInternals_=notesInternals;
+    untickCheckboxes();
     QSettings settings("settings.ini",QSettings::IniFormat,this);
 
     settings.beginGroup("entry");
@@ -72,8 +73,17 @@ void SettingsDialog::showSettings(NotesInternals *notesInternals)
     show();
 }
 
+void SettingsDialog::untickCheckboxes()
+{
+    ui->fontFamilyApplyAllCheckBox->setChecked(false);
+    ui->fontSizeApplyAllCheckBox->setChecked(false);
+    ui->fontStyleApplyAllCheckBox->setChecked(false);
+    ui->fontColorApplyAllCheckBox->setChecked(false);
+}
+
 void SettingsDialog::on_applyPushButton_clicked()
 {
+    untickCheckboxes();
     QSettings settings("settings.ini",QSettings::IniFormat,this);
     settings.beginGroup("entry");
     settings.setValue("fontfamily",ui->fontFamilyComboBox->currentFont().family());
@@ -220,4 +230,50 @@ void SettingsDialog::on_entryLabelFontColorPushButton_clicked()
 void SettingsDialog::on_changePasswordPushButton_clicked()
 {
     emit changePassword();
+}
+
+void SettingsDialog::on_resetPushButton_2_clicked()
+{
+    ui->defaultPositionComboBox->setCurrentIndex(DefaultValues::mainWindowPosition);
+    ui->defaultCategoryComboBox->setCurrentIndex(DefaultValues::categoryIndex);
+    ui->uiFontFamilyComboBox->setCurrentFont(DefaultValues::uiFont.family());
+    ui->uiFontSizeSpinBox->setValue(DefaultValues::uiFont.pointSize());
+    ui->uiFontBoldToolButton->setChecked(DefaultValues::uiFont.bold());
+    ui->uiFontItalicToolButton->setChecked(DefaultValues::uiFont.italic());
+    ui->entryListFontBoldToolButton->setChecked(DefaultValues::entryListFontBold);
+    ui->entryListFontItalicToolButton->setChecked(DefaultValues::entryListFontItalic);
+    ui->labelFontFamilyComboBox->setCurrentFont(DefaultValues::labelFont.family());
+    ui->labelFontSizeSpinBox->setValue(DefaultValues::labelFont.pointSize());
+    ui->labelFontBoldToolButton->setChecked(DefaultValues::labelFont.bold());
+    ui->labelFontItalicToolButton->setChecked(DefaultValues::labelFont.italic());
+    categoryLabelBackground_=QColor(DefaultValues::labelCategoryBackgroundColor.name());
+    ui->categoryLabelBackgroundColorPushButton->setStyleSheet(QString("background-color: %1").arg(categoryLabelBackground_.name()));
+    categoryLabelFontColor_=QColor(DefaultValues::labelCategoryFontColor.name());
+    ui->categoryLabelFontColorPushButton->setStyleSheet(QString("background-color: %1").arg(categoryLabelFontColor_.name()));
+    entryLabelBackground_=QColor(DefaultValues::labelEntryBackgroundColor.name());
+    ui->entryLabelBackgroundColorPushButton->setStyleSheet(QString("background-color: %1").arg(entryLabelBackground_.name()));
+    entryLabelFontColor_=QColor(DefaultValues::labelEntryFontColor.name());
+    ui->entryLabelFontColorPushButton->setStyleSheet(QString("background-color: %1").arg(entryLabelFontColor_.name()));
+    ui->alwaysOnTopCheckBox->setChecked(DefaultValues::windowAlwaysOnTop);
+}
+
+void SettingsDialog::on_resetPushButton_clicked()
+{
+    untickCheckboxes();
+    ui->fontFamilyComboBox->setCurrentFont(DefaultValues::entryFont.family());
+    ui->fontSizeSpinbox->setValue(DefaultValues::entryFont.pointSize());
+    ui->fontBoldToolButton->setChecked(DefaultValues::entryFont.bold());
+    ui->fontItalicToolButton->setChecked(DefaultValues::entryFont.italic());
+    entryFontColor_=QColor(DefaultValues::entryFontColor);
+    ui->fontColorPushButton->setStyleSheet(QString("background-color: %1").arg(entryFontColor_.name()));
+    ui->printingFontCategoryComboBox->setCurrentFont(DefaultValues::printingFontCategory.family());
+    ui->printingFontCategorySizeSpinBox->setValue(DefaultValues::printingFontCategory.pointSize());
+    ui->printingFontCategoryBoldToolButton->setChecked(DefaultValues::printingFontCategory.bold());
+    ui->printingFontCategoryItalicToolButton->setChecked(DefaultValues::printingFontCategory.italic());
+    ui->printingFontCategoryUnderlineToolButton->setChecked(DefaultValues::printingFontCategory.underline());
+    ui->printingFontEntryComboBox->setCurrentFont(DefaultValues::printingFontEntry.family());
+    ui->printingFontEntrySizeSpinBox->setValue(DefaultValues::printingFontEntry.pointSize());
+    ui->printingFontEntryBoldToolButton->setChecked(DefaultValues::printingFontEntry.bold());
+    ui->printingFontEntryItalicToolButton->setChecked(DefaultValues::printingFontEntry.italic());
+    ui->printingFontEntryUnderlineToolButton->setChecked(DefaultValues::printingFontEntry.underline());
 }

@@ -26,6 +26,7 @@ public:
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();
     void showSettings(NotesInternals* notesInternals);
+    void untickCheckboxes();
 signals:
     void updateMainWindow();
     void changePassword();
@@ -45,6 +46,10 @@ private slots:
     void on_entryLabelFontColorPushButton_clicked();
 
     void on_changePasswordPushButton_clicked();
+
+    void on_resetPushButton_2_clicked();
+
+    void on_resetPushButton_clicked();
 
 private:
     NotesInternals *notesInternals_;
