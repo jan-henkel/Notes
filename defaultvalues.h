@@ -28,6 +28,7 @@ class DefaultValuesInitializer
 {
 public:
     DefaultValuesInitializer();
+    void initialize();
 };
 
 #endif // DEFAULTVALUES_H

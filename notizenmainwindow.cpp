@@ -34,6 +34,7 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     //saveEntryShortcut.setKey();
     //saveEntryShortcut.setEnabled(true);
     //QObject::connect(&saveEntryShortcut,SIGNAL(activated()),this,SLOT(saveEntryShortcutTriggered()));
+    readSettings();
 }
 
 NotizenMainWindow::~NotizenMainWindow()
@@ -337,6 +338,74 @@ void NotizenMainWindow::syncModelAndUI()
         //effects of selecting another entry were processed, remove flag
         updateFlags &= ~EntrySelectionChanged;
     }
+}
+
+//read settings from settings.ini and apply them
+void NotizenMainWindow::readSettings()
+{
+    QSettings settings("settings.ini",QSettings::IniFormat,this);
+
+    settings.beginGroup("entry");
+    entryFont=QFont(settings.value("fontfamily",DefaultValues::entryFont.family()).toString(),
+                    settings.value("fontsize",DefaultValues::entryFont.pointSize()).toInt(),
+                    settings.value("fontbold",DefaultValues::entryFont.bold()).toBool()?QFont::Bold:QFont::Normal,
+                    settings.value("fontitalic",DefaultValues::entryFont.italic()).toBool());
+    entryFontColor=QColor(settings.value("fontcolor",DefaultValues::entryFontColor).toString());
+    settings.endGroup();
+
+    settings.beginGroup("printing");
+    printingFontCategory=QFont(settings.value("category_heading_fontfamily",DefaultValues::printingFontCategory.family()).toString(),
+                               settings.value("category_heading_fontsize",DefaultValues::printingFontCategory.pointSize()).toInt(),
+                               settings.value("category_heading_bold",DefaultValues::printingFontCategory.bold()).toBool()?QFont::Bold:QFont::Normal,
+                               settings.value("category_heading_italic",DefaultValues::printingFontCategory.italic()).toBool());
+    printingFontCategory.setUnderline(settings.value("category_heading_underline",DefaultValues::printingFontCategory.underline()).toBool());
+    printingFontEntry=QFont(settings.value("entry_heading_fontfamily",DefaultValues::printingFontEntry.family()).toString(),
+                            settings.value("entry_heading_fontsize",DefaultValues::printingFontEntry.pointSize()).toInt(),
+                            settings.value("entry_heading_bold",DefaultValues::printingFontEntry.bold()).toBool()?QFont::Bold:QFont::Normal,
+                            settings.value("entry_heading_italic",DefaultValues::printingFontEntry.italic()).toBool());
+    printingFontEntry.setUnderline(settings.value("entry_heading_underline",DefaultValues::printingFontEntry.underline()).toBool());
+    settings.endGroup();
+
+    settings.beginGroup("mainwindow");
+    switch(settings.value("default_position",DefaultValues::mainWindowPosition).toInt())
+    {
+    case 0:
+        this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignTop | Qt::AlignLeft,this->size(),QApplication::desktop()->availableGeometry()));
+        break;
+    case 1:
+        this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignTop | Qt::AlignRight,this->size(),QApplication::desktop()->availableGeometry()));
+        break;
+    case 2:
+        this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignBottom | Qt::AlignLeft,this->size(),QApplication::desktop()->availableGeometry()));
+        break;
+    case 3:
+        this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignBottom | Qt::AlignRight,this->size(),QApplication::desktop()->availableGeometry()));
+        break;
+    case 4:
+        this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignCenter,this->size(),QApplication::desktop()->availableGeometry()));
+        break;
+    }
+
+    ui->categoriesComboBox->setCurrentIndex(settings.value("default_category",DefaultValues::categoryIndex).toInt());
+    selectCategory();
+    ui->categoriesComboBox->setFont(QFont(settings.value("ui_fontfamily",DefaultValues::uiFont.family()).toString(),
+                                    settings.value("ui_fontsize",DefaultValues::uiFont.pointSize()).toInt(),
+                                    settings.value("ui_fontbold",DefaultValues::uiFont.bold()).toBool()?QFont::Bold:QFont::Normal,
+                                    settings.value("ui_fontitalic",DefaultValues::uiFont.italic()).toBool()));
+    ui->entryFilterLineEdit->setFont(ui->categoriesComboBox->font());
+    ui->entriesListWidget->setFont(QFont(settings.value("ui_fontfamily",DefaultValues::uiFont.family()).toString(),
+                                         settings.value("ui_fontsize",DefaultValues::uiFont.pointSize()).toInt(),
+                                         settings.value("entrylist_fontbold",DefaultValues::entryListFontBold).toBool()?QFont::Bold:QFont::Normal,
+                                         settings.value("entrylist_fontitalic",DefaultValues::entryListFontItalic).toBool()));
+    ui->categoryLabel->setFont(QFont(settings.value("label_fontfamily",DefaultValues::labelFont.family()).toString(),
+                                     settings.value("label_fontsize",DefaultValues::labelFont.pointSize()).toInt(),
+                                     settings.value("label_fontbold",DefaultValues::labelFont.bold()).toBool()?QFont::Bold:QFont::Normal,
+                                     settings.value("label_fontitalic",DefaultValues::labelFont.italic()).toBool()));
+    ui->entryLabel->setFont(ui->categoryLabel->font());
+    ui->categoryLabel->setStyleSheet(QString("background-color: %1;\ncolor: %2").arg(settings.value("categorylabel_background",DefaultValues::labelCategoryBackgroundColor.name()).toString(),settings.value("categorylabel_foreground",DefaultValues::labelCategoryFontColor.name()).toString()));
+    ui->entryLabel->setStyleSheet(QString("background-color: %1;\ncolor: %2").arg(settings.value("entrylabel_background",DefaultValues::labelEntryBackgroundColor.name()).toString(),settings.value("entrylabel_foreground",DefaultValues::labelEntryFontColor.name()).toString()));
+    toggleStayOnTop(settings.value("default_window_on_top",DefaultValues::windowAlwaysOnTop).toBool());
+    settings.endGroup();
 }
 
 //various auxiliary functions for specific purposes

@@ -23,6 +23,11 @@ using namespace DefaultValues;
 
 DefaultValuesInitializer::DefaultValuesInitializer()
 {
+
+}
+
+void DefaultValuesInitializer::initialize()
+{
     entryFont=QFont(QFont().defaultFamily(),10,QFont::Normal,false);
     entryFontColor=QColor(Qt::black);
     printingFontCategory=QFont(QFont().defaultFamily(),16,QFont::Bold,false);

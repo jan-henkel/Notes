@@ -49,7 +49,8 @@ void SettingsDialog::showSettings(NotesInternals *notesInternals)
     ui->defaultPositionComboBox->setCurrentIndex(settings.value("default_position",DefaultValues::mainWindowPosition).toInt());
     ui->defaultCategoryComboBox->setCurrentIndex(settings.value("default_category",DefaultValues::categoryIndex).toInt()+1);
     ui->uiFontFamilyComboBox->setCurrentFont(settings.value("ui_fontfamily",DefaultValues::uiFont.family()).toString());
-    ui->uiFontBoldToolButton->setChecked(settings.value("ui_fontfamily",DefaultValues::uiFont.bold()).toBool());
+    ui->uiFontSizeSpinBox->setValue(settings.value("ui_fontsize",DefaultValues::uiFont.pointSize()).toInt());
+    ui->uiFontBoldToolButton->setChecked(settings.value("ui_fontbold",DefaultValues::uiFont.bold()).toBool());
     ui->uiFontItalicToolButton->setChecked(settings.value("ui_fontitalic",DefaultValues::uiFont.italic()).toBool());
     ui->entryListFontBoldToolButton->setChecked(settings.value("entrylist_fontbold",DefaultValues::entryListFontBold).toBool());
     ui->entryListFontItalicToolButton->setChecked(settings.value("entrylist_fontitalic",DefaultValues::entryListFontItalic).toBool());
@@ -57,13 +58,13 @@ void SettingsDialog::showSettings(NotesInternals *notesInternals)
     ui->labelFontSizeSpinBox->setValue(settings.value("label_fontsize",DefaultValues::labelFont.pointSize()).toInt());
     ui->labelFontBoldToolButton->setChecked(settings.value("label_fontbold",DefaultValues::labelFont.bold()).toBool());
     ui->labelFontItalicToolButton->setChecked(settings.value("label_fontitalic",DefaultValues::labelFont.italic()).toBool());
-    categoryLabelBackground_=QColor(settings.value("categorylabel_background",DefaultValues::labelCategoryBackgroundColor).toString());
+    categoryLabelBackground_=QColor(settings.value("categorylabel_background",DefaultValues::labelCategoryBackgroundColor.name()).toString());
     ui->categoryLabelBackgroundColorPushButton->setStyleSheet(QString("background-color: %1").arg(categoryLabelBackground_.name()));
-    categoryLabelFontColor_=QColor(settings.value("categorylabel_foreground",DefaultValues::labelCategoryFontColor).toString());
+    categoryLabelFontColor_=QColor(settings.value("categorylabel_foreground",DefaultValues::labelCategoryFontColor.name()).toString());
     ui->categoryLabelFontColorPushButton->setStyleSheet(QString("background-color: %1").arg(categoryLabelFontColor_.name()));
-    entryLabelBackground_=QColor(settings.value("entrylabel_background",DefaultValues::labelEntryBackgroundColor).toString());
+    entryLabelBackground_=QColor(settings.value("entrylabel_background",DefaultValues::labelEntryBackgroundColor.name()).toString());
     ui->entryLabelBackgroundColorPushButton->setStyleSheet(QString("background-color: %1").arg(entryLabelBackground_.name()));
-    entryLabelFontColor_=QColor(settings.value("entrylabel_foreground",DefaultValues::labelEntryFontColor).toString());
+    entryLabelFontColor_=QColor(settings.value("entrylabel_foreground",DefaultValues::labelEntryFontColor.name()).toString());
     ui->entryLabelFontColorPushButton->setStyleSheet(QString("background-color: %1").arg(entryLabelFontColor_.name()));
     ui->alwaysOnTopCheckBox->setChecked(settings.value("default_window_on_top",DefaultValues::windowAlwaysOnTop).toBool());
     settings.endGroup();
@@ -132,7 +133,8 @@ void SettingsDialog::on_applyPushButton_2_clicked()
     settings.setValue("default_position",ui->defaultPositionComboBox->currentIndex());
     settings.setValue("default_category",ui->defaultCategoryComboBox->currentIndex());
     settings.setValue("ui_fontfamily",ui->uiFontFamilyComboBox->currentFont());
-    settings.setValue("ui_fontfamily",ui->uiFontBoldToolButton->isChecked());
+    settings.setValue("ui_fontsize",ui->uiFontSizeSpinBox->value());
+    settings.setValue("ui_fontbold",ui->uiFontBoldToolButton->isChecked());
     settings.setValue("ui_fontitalic",ui->uiFontItalicToolButton->isChecked());
     settings.setValue("entrylist_fontbold",ui->entryListFontBoldToolButton->isChecked());
     settings.setValue("entrylist_fontitalic",ui->entryListFontItalicToolButton->isChecked());
@@ -140,10 +142,10 @@ void SettingsDialog::on_applyPushButton_2_clicked()
     settings.setValue("label_fontsize",ui->labelFontSizeSpinBox->value());
     settings.setValue("label_fontbold",ui->labelFontBoldToolButton->isChecked());
     settings.setValue("label_fontitalic",ui->labelFontItalicToolButton->isChecked());
-    settings.setValue("categorylabel_background", categoryLabelBackground_);
-    settings.setValue("categorylabel_foreground", categoryLabelFontColor_);
-    settings.setValue("entrylabel_background", entryLabelBackground_);
-    settings.setValue("entrylabel_foreground", entryLabelFontColor_);
+    settings.setValue("categorylabel_background", categoryLabelBackground_.name());
+    settings.setValue("categorylabel_foreground", categoryLabelFontColor_.name());
+    settings.setValue("entrylabel_background", entryLabelBackground_.name());
+    settings.setValue("entrylabel_foreground", entryLabelFontColor_.name());
     settings.setValue("default_window_on_top",ui->alwaysOnTopCheckBox->isChecked());
     settings.endGroup();
 }

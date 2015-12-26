@@ -22,6 +22,7 @@
 #include "passworddialog.h"
 #include <QShortcut>
 #include "settingsdialog.h"
+#include <QSettings>
 
 namespace Ui {
 class NotizenMainWindow;
@@ -80,8 +81,12 @@ private:
     //ctrl+s shortcut to save entry changes
     //QShortcut saveEntryShortcut;
 
-    //variables to later store settings read from settings.cfg
+    //variables to later store settings read from settings.ini
     QTextCharFormat defaultTextCharFormat;
+    QFont entryFont;
+    QColor entryFontColor;
+    QFont printingFontCategory;
+    QFont printingFontEntry;
 
     //settings dialog, non-modal
     SettingsDialog *settingsDialog;
@@ -93,6 +98,9 @@ private:
 
     //function to synchronize the GUI-widgets with the underlying "model", i.e. notesInternals
     void syncModelAndUI();
+
+    //function reading and applying everything from settings.ini
+    void readSettings();
 
     //auxiliary functions for specific purposes
 
@@ -163,6 +171,7 @@ private slots:
     void on_encryptionPushButton_clicked();
     void on_stayOnTopToolButton_clicked(bool checked);
     void on_savePushButton_clicked();
+    void on_settingsPushButton_clicked();
     //entry list
     void on_entriesListWidget_customContextMenuRequested(const QPoint &pos);
     void on_entriesListWidget_pressed(const QModelIndex &index);
@@ -185,7 +194,6 @@ private slots:
 
     //slot to be called by save entry shortcut
     //void saveEntryShortcutTriggered();
-    void on_settingsPushButton_clicked();
 };
 
 #endif // NOTIZENMAINWINDOW_H
