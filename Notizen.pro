@@ -22,14 +22,16 @@ SOURCES += main.cpp\
     notizentextedit.cpp \
     cryptointerface.cpp \
     passworddialog.cpp \
-    settingsdialog.cpp
+    settingsdialog.cpp \
+    defaultvalues.cpp
 
 HEADERS  += notizenmainwindow.h \
     notesinternals.h \
     notizentextedit.h \
     cryptointerface.h \
     passworddialog.h \
-    settingsdialog.h
+    settingsdialog.h \
+    defaultvalues.h
 FORMS    += notizenmainwindow.ui \
     passworddialog.ui \
     settingsdialog.ui

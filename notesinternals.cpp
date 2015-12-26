@@ -191,7 +191,7 @@ const EntryPair NotesInternals::moveEntry(CategoryPair &oldCategoryPair, EntryPa
     return entryPair;
 }
 
-const EntryPair NotesInternals::modifyEntryText(CategoryPair &categoryPair, EntryPair &entryPair, QCA::SecureArray newEntryText)
+const EntryPair NotesInternals::modifyEntryText(CategoryPair categoryPair, EntryPair entryPair, QCA::SecureArray newEntryText)
 {
     //return invalid entry pair in case (categoryPair,entryPair) does not represent a valid entry
     if(!isValid(categoryPair,entryPair))

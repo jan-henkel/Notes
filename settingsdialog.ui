@@ -94,7 +94,7 @@
           <enum>Qt::LeftToRight</enum>
          </property>
          <property name="text">
-          <string>Apply to all entries</string>
+          <string>Apply to existing entries</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -275,6 +275,12 @@
        </item>
        <item row="4" column="1">
         <widget class="QPushButton" name="fontColorPushButton">
+         <property name="maximumSize">
+          <size>
+           <width>49</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>10</pointsize>
@@ -374,7 +380,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QToolButton" name="printingFontItalicBoldToolButton">
+          <widget class="QToolButton" name="printingFontCategoryItalicToolButton">
            <property name="maximumSize">
             <size>
              <width>24</width>

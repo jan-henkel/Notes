@@ -238,7 +238,7 @@ void NotizenMainWindow::toggleEncryption()
 
 void NotizenMainWindow::openSettings()
 {
-    settingsDialog->show();
+    settingsDialog->showSettings(&this->notesInternals);
 }
 
 //big function to handle UI updates as requested in the updateFlags variable
