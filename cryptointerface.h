@@ -1,7 +1,7 @@
 #ifndef CRYPTOBUFFER_H
 #define CRYPTOBUFFER_H
 
-#define DEFAULT_PBKDF2_ITERATIONS 300000
+#define DEFAULT_PBKDF2_ITERATIONS 100000
 
 #include <QObject>
 #include <Qca-qt5/QtCrypto/QtCrypto>
