@@ -351,6 +351,8 @@ void NotizenMainWindow::syncModelAndUI()
     //as a final consequence of selecting an entry, reset text formatting to the default
     if(updateFlags & EntrySelectionChanged)
     {
+        ui->entryTextEdit->setFont(entryFont);
+        ui->entryTextEdit->setTextColor(entryFontColor);
         ui->entryTextEdit->setCurrentCharFormat(defaultTextCharFormat);
         //effects of selecting another entry were processed, remove flag
         updateFlags &= ~EntrySelectionChanged;
@@ -720,9 +722,7 @@ void NotizenMainWindow::on_printCategoryPushButton_clicked()
 
 void NotizenMainWindow::on_fontComboBox_activated(const QString &arg1)
 {
-    QTextCharFormat f=ui->entryTextEdit->currentCharFormat();
-    f.setFontFamily(arg1);
-    ui->entryTextEdit->setCurrentCharFormat(f);
+    ui->entryTextEdit->setFontFamily(arg1);
 }
 
 void NotizenMainWindow::on_makeLinkCheckBox_clicked(bool checked)
