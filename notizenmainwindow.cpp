@@ -351,6 +351,8 @@ void NotizenMainWindow::syncModelAndUI()
     //as a final consequence of selecting an entry, reset text formatting to the default
     if(updateFlags & EntrySelectionChanged)
     {
+        ui->entryTextEdit->setFont(entryFont);
+        ui->entryTextEdit->setTextColor(entryFontColor);
         ui->entryTextEdit->setCurrentCharFormat(defaultTextCharFormat);
         //effects of selecting another entry were processed, remove flag
         updateFlags &= ~EntrySelectionChanged;
