@@ -722,9 +722,7 @@ void NotizenMainWindow::on_printCategoryPushButton_clicked()
 
 void NotizenMainWindow::on_fontComboBox_activated(const QString &arg1)
 {
-    QTextCharFormat f=ui->entryTextEdit->currentCharFormat();
-    f.setFontFamily(arg1);
-    ui->entryTextEdit->setCurrentCharFormat(f);
+    ui->entryTextEdit->setFontFamily(arg1);
 }
 
 void NotizenMainWindow::on_makeLinkCheckBox_clicked(bool checked)
