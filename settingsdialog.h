@@ -10,6 +10,7 @@
 #include <QColorDialog>
 #include <QTextBrowser>
 #include <QTextCursor>
+#include <QDirIterator>
 #include "notizentextedit.h"
 #include "notesinternals.h"
 #include "defaultvalues.h"
@@ -50,6 +51,8 @@ private slots:
     void on_resetPushButton_2_clicked();
 
     void on_resetPushButton_clicked();
+
+    void on_resetWindowDimensionsPushButton_clicked();
 
 private:
     NotesInternals *notesInternals_;

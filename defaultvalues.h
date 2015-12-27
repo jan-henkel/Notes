@@ -22,6 +22,8 @@ namespace DefaultValues
     extern QColor labelEntryBackgroundColor;
     extern QColor labelEntryFontColor;
     extern bool windowAlwaysOnTop;
+    extern int mainWindowWidth;
+    extern int mainWindowHeight;
 }
 
 class DefaultValuesInitializer

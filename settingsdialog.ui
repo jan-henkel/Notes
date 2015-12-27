@@ -27,11 +27,11 @@
       </font>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="defaultFontTab">
       <attribute name="title">
-       <string>Fonts</string>
+       <string>Entries and printing</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_2">
        <item row="0" column="0">
@@ -608,83 +608,10 @@
      </widget>
      <widget class="QWidget" name="tab">
       <attribute name="title">
-       <string>Main window</string>
+       <string>User interface</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_6">
-       <item row="0" column="0" alignment="Qt::AlignTop">
-        <widget class="QLabel" name="defaultPositionLabel">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Default position</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2">
-        <widget class="QComboBox" name="defaultPositionComboBox">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <item>
-          <property name="text">
-           <string>Top left</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Top right</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Bottom left</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Bottom right</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Center</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item row="1" column="0" alignment="Qt::AlignTop">
-        <widget class="QLabel" name="defaultCategoryLabel">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Default category</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="2">
-        <widget class="QComboBox" name="defaultCategoryComboBox">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0" alignment="Qt::AlignTop">
+       <item row="3" column="0" alignment="Qt::AlignTop">
         <widget class="QLabel" name="uiFontLabel">
          <property name="font">
           <font>
@@ -699,7 +626,159 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="2">
+       <item row="4" column="0" alignment="Qt::AlignTop">
+        <widget class="QLabel" name="labelFontLabel">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Label font</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0" alignment="Qt::AlignTop">
+        <widget class="QLabel" name="labelColorsLabel">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>24</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>24</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Label colors</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" alignment="Qt::AlignTop">
+        <widget class="QLabel" name="defaultPositionLabel">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Default position</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0" alignment="Qt::AlignTop">
+        <widget class="QLabel" name="defaultCategoryLabel">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Default category</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1">
+        <spacer name="verticalSpacer_4">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="8" column="0" colspan="2">
+        <layout class="QHBoxLayout" name="resetApplyLayout_2">
+         <item>
+          <widget class="QPushButton" name="resetPushButton_2">
+           <property name="text">
+            <string>Reset</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="applyPushButton_2">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="text">
+            <string>Apply</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="6" column="3">
+        <widget class="QPushButton" name="resetWindowDimensionsPushButton">
+         <property name="text">
+          <string>Reset window dimensions</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <widget class="QLabel" name="miscWindowPropertiesLabel">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Misc. default window settings</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="2" colspan="2">
         <layout class="QGridLayout" name="gridLayout">
          <property name="spacing">
           <number>2</number>
@@ -867,22 +946,7 @@
          </item>
         </layout>
        </item>
-       <item row="3" column="0" alignment="Qt::AlignTop">
-        <widget class="QLabel" name="labelFontLabel">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Label font</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="2">
+       <item row="4" column="2" colspan="2">
         <layout class="QGridLayout" name="gridLayout_4">
          <property name="spacing">
           <number>2</number>
@@ -987,40 +1051,50 @@
          </item>
         </layout>
        </item>
-       <item row="4" column="0" alignment="Qt::AlignTop">
-        <widget class="QLabel" name="labelColorsLabel">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>24</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>24</height>
-          </size>
-         </property>
+       <item row="2" column="2" colspan="2">
+        <widget class="QComboBox" name="defaultCategoryComboBox">
          <property name="font">
           <font>
            <pointsize>10</pointsize>
           </font>
          </property>
-         <property name="text">
-          <string>Label colors</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
         </widget>
        </item>
-       <item row="4" column="2">
+       <item row="1" column="2" colspan="2">
+        <widget class="QComboBox" name="defaultPositionComboBox">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
+         <item>
+          <property name="text">
+           <string>Top left</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Top right</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Bottom left</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Bottom right</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Center</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="5" column="2" colspan="2">
         <layout class="QGridLayout" name="gridLayout_3">
          <property name="spacing">
           <number>2</number>
@@ -1159,79 +1233,31 @@
          </item>
         </layout>
        </item>
-       <item row="5" column="0" alignment="Qt::AlignTop">
-        <widget class="QLabel" name="alwaysOnTopLabel">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Window always on top by default</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="2" alignment="Qt::AlignTop">
+       <item row="6" column="2">
         <widget class="QCheckBox" name="alwaysOnTopCheckBox">
          <property name="text">
-          <string/>
+          <string>Always on top</string>
          </property>
         </widget>
        </item>
-       <item row="6" column="1">
-        <spacer name="verticalSpacer_4">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
+       <item row="0" column="0" colspan="2">
+        <widget class="QLabel" name="languageLabel">
+         <property name="text">
+          <string>Language</string>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
+        </widget>
        </item>
-       <item row="7" column="0" colspan="2">
-        <layout class="QHBoxLayout" name="resetApplyLayout_2">
+       <item row="0" column="2" colspan="2">
+        <widget class="QComboBox" name="languageComboBox">
+         <property name="insertPolicy">
+          <enum>QComboBox::InsertAlphabetically</enum>
+         </property>
          <item>
-          <widget class="QPushButton" name="resetPushButton_2">
-           <property name="text">
-            <string>Reset</string>
-           </property>
-          </widget>
+          <property name="text">
+           <string>English</string>
+          </property>
          </item>
-         <item>
-          <widget class="QPushButton" name="applyPushButton_2">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="text">
-            <string>Apply</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
+        </widget>
        </item>
       </layout>
      </widget>

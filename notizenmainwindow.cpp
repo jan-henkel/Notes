@@ -385,6 +385,8 @@ void NotizenMainWindow::readSettings()
     settings.endGroup();
 
     settings.beginGroup("mainwindow");
+    this->resize(settings.value("last_width",DefaultValues::mainWindowWidth).toInt(),settings.value("last_height",DefaultValues::mainWindowHeight).toInt());
+
     int screenWidth=QApplication::desktop()->availableGeometry().width();
     int screenHeight=QApplication::desktop()->availableGeometry().height();
     int windowWidth=this->frameGeometry().width();
@@ -436,10 +438,9 @@ void NotizenMainWindow::readSettings()
     ui->addEntryPushButton->setStyleSheet(ui->entryLabel->styleSheet());
     ui->removeEntryPushButton->setStyleSheet(ui->entryLabel->styleSheet());
     ui->printEntryPushButton->setStyleSheet(ui->entryLabel->styleSheet());
-    if(settings.value("default_window_on_top",DefaultValues::windowAlwaysOnTop).toBool())
-        this->setWindowFlags(this->windowFlags()|Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint);
-    else
-        this->setWindowFlags(this->windowFlags()&~(Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint));
+
+    toggleStayOnTop(settings.value("default_window_on_top",DefaultValues::windowAlwaysOnTop).toBool());
+    ui->stayOnTopToolButton->setChecked(settings.value("default_window_on_top",DefaultValues::windowAlwaysOnTop).toBool());
     settings.endGroup();
 }
 
@@ -557,6 +558,11 @@ void NotizenMainWindow::closeEvent(QCloseEvent *e)
 {
     Q_UNUSED(e)
     saveChanges();
+    QSettings settings("settings.ini",QSettings::IniFormat);
+    settings.beginGroup("mainwindow");
+    settings.setValue("last_width",this->width());
+    settings.setValue("last_height",this->height());
+    settings.endGroup();
 }
 
 void NotizenMainWindow::setUpModalInputDialog(QInputDialog &inputDialog,QString windowTitle,QString labelText,QInputDialog::InputMode inputMode,QString textValue)
