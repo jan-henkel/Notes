@@ -93,5 +93,9 @@
         <file>icons/unpinned2.png</file>
         <file>icons/pinned2.png</file>
         <file>icons/pinned2lshift.png</file>
+        <file>icons/notepad.png</file>
+        <file>icons/notepad2.png</file>
+        <file>icons/notepad3.png</file>
+        <file>icons/notepad.ico</file>
     </qresource>
 </RCC>
