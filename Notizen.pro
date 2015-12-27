@@ -41,5 +41,4 @@ FORMS    += notizenmainwindow.ui \
 RESOURCES += \
     icons.qrc
 
-#TRANSLATIONS = en.ts \
-#               ger.ts
+TRANSLATIONS = localization/German.ts

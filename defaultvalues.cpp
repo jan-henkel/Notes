@@ -17,6 +17,8 @@ namespace DefaultValues
     QColor labelEntryBackgroundColor;
     QColor labelEntryFontColor;
     bool windowAlwaysOnTop;
+    int mainWindowWidth;
+    int mainWindowHeight;
 }
 
 using namespace DefaultValues;
@@ -45,4 +47,6 @@ void DefaultValuesInitializer::initialize()
     labelEntryBackgroundColor=QColor(207, 228, 255);
     labelEntryFontColor=QColor(Qt::black);
     windowAlwaysOnTop=true;
+    mainWindowWidth=610;
+    mainWindowHeight=505;
 }

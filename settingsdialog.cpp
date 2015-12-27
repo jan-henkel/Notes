@@ -46,6 +46,16 @@ void SettingsDialog::showSettings(NotesInternals *notesInternals)
     for(CategorySet::const_iterator i=notesInternals_->categorySet()->cbegin();i!=notesInternals_->categorySet()->cend();++i)
         ui->defaultCategoryComboBox->addItem(notesInternals->getCategoryName(*i));
 
+    QDirIterator langFiles("./localization",QStringList()<<"*.qm");
+    while(langFiles.hasNext())
+    {
+        langFiles.next();
+        QString lang=langFiles.fileName();
+        lang.truncate(lang.indexOf("."));
+        ui->languageComboBox->addItem(lang);
+    }
+    ui->languageComboBox->setCurrentText(settings.value("language","English").toString());
+
     settings.beginGroup("mainwindow");
     ui->defaultPositionComboBox->setCurrentIndex(settings.value("default_position",DefaultValues::mainWindowPosition).toInt());
     ui->defaultCategoryComboBox->setCurrentIndex(settings.value("default_category",DefaultValues::categoryIndex).toInt()+1);
@@ -71,6 +81,7 @@ void SettingsDialog::showSettings(NotesInternals *notesInternals)
     settings.endGroup();
 
     show();
+    this->adjustSize();
 }
 
 void SettingsDialog::untickCheckboxes()
@@ -139,6 +150,9 @@ void SettingsDialog::on_applyPushButton_clicked()
 void SettingsDialog::on_applyPushButton_2_clicked()
 {
     QSettings settings("settings.ini",QSettings::IniFormat,this);
+
+    settings.setValue("language",ui->languageComboBox->currentText());
+
     settings.beginGroup("mainwindow");
     settings.setValue("default_position",ui->defaultPositionComboBox->currentIndex());
     settings.setValue("default_category",ui->defaultCategoryComboBox->currentIndex()-1);
@@ -276,4 +290,14 @@ void SettingsDialog::on_resetPushButton_clicked()
     ui->printingFontEntryBoldToolButton->setChecked(DefaultValues::printingFontEntry.bold());
     ui->printingFontEntryItalicToolButton->setChecked(DefaultValues::printingFontEntry.italic());
     ui->printingFontEntryUnderlineToolButton->setChecked(DefaultValues::printingFontEntry.underline());
+}
+
+void SettingsDialog::on_resetWindowDimensionsPushButton_clicked()
+{
+    QSettings settings("settings.ini",QSettings::IniFormat);
+    settings.beginGroup("mainwindow");
+    settings.setValue("last_width",DefaultValues::mainWindowWidth);
+    settings.setValue("last_height",DefaultValues::mainWindowHeight);
+    settings.endGroup();
+    emit updateMainWindow();
 }
