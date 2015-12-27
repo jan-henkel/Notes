@@ -147,6 +147,9 @@ void NotizenMainWindow::printEntry()
 void NotizenMainWindow::saveEntry()
 {
     notesInternals.modifyCurrentEntryText(ui->entryTextEdit->toHtml());
+    //entry content is already as represented in the editor now, clear flag
+    //(to do: implement something like model-view-viewmodel pattern cleanly to avoid this sort of thing)
+    updateFlags&=~EntryContentChanged;
     //changes were saved, currently no unsaved changes
     setEdited(false);
     syncModelAndUI();
