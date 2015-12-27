@@ -231,6 +231,7 @@ void NotesInternals::disableEncryption()
 {
     //remove encrypted categories and set encryption boolean to false
     removeEncryptedCategories();
+    cryptoInterface_.unsetMasterKey();
     encryptionEnabled_=false;
 }
 

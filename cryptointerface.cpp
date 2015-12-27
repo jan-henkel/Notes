@@ -179,6 +179,14 @@ QCA::SecureArray CryptoInterface::decrypt(const QCA::SecureArray &cipher, const 
     return ret;
 }
 
+void CryptoInterface::unsetMasterKey()
+{
+    //discard previous master key
+    masterkey_.clear();
+    masterkey_=QCA::SymmetricKey(32);
+    masterKeySet_=false;
+}
+
 void CryptoInterface::scrambleMemory(QCA::SecureArray &memory, quint64 size)
 {
     memory.fill(char(0),size-1);
