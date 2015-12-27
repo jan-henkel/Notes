@@ -6,6 +6,7 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::NotizenMainWindow),
     notesInternals(this),
+    initialShow_(true),
     settingsDialog(new SettingsDialog(this))
     //saveEntryShortcut(QKeySequence(Qt::CTRL,Qt::Key_S),this,"SLOT(saveEntryShortcutTriggered())")
 {
@@ -251,7 +252,11 @@ void NotizenMainWindow::openSettings()
 void NotizenMainWindow::showEvent(QShowEvent *e)
 {
     QMainWindow::showEvent(e);
-    readSettings();
+    if(initialShow_)
+    {
+        initialShow_=false;
+        readSettings();
+    }
 }
 
 //big function to handle UI updates as requested in the updateFlags variable
@@ -431,7 +436,10 @@ void NotizenMainWindow::readSettings()
     ui->addEntryPushButton->setStyleSheet(ui->entryLabel->styleSheet());
     ui->removeEntryPushButton->setStyleSheet(ui->entryLabel->styleSheet());
     ui->printEntryPushButton->setStyleSheet(ui->entryLabel->styleSheet());
-    toggleStayOnTop(settings.value("default_window_on_top",DefaultValues::windowAlwaysOnTop).toBool());
+    if(settings.value("default_window_on_top",DefaultValues::windowAlwaysOnTop).toBool())
+        this->setWindowFlags(this->windowFlags()|Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint);
+    else
+        this->setWindowFlags(this->windowFlags()&~(Qt::CustomizeWindowHint|Qt::WindowStaysOnTopHint));
     settings.endGroup();
 }
 
