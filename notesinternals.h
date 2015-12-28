@@ -44,8 +44,13 @@ struct compare_entry
                 }
                 else
                 {
-                    if(l.first.first==r.first.first && l.first.second<r.first.second)
-                        return true;
+                    if(l.first.first==r.first.first)
+                    {
+                        if(l.first.second<r.first.second)
+                            return true;
+                        else if(l.first.second==r.first.second)
+                            return (l.second<r.second);
+                    }
                 }
             }
         }
@@ -71,8 +76,13 @@ struct compare_category
                 }
                 else
                 {
-                    if(l.first.first==r.first.first && l.first.second<r.first.second)
-                        return true;
+                    if(l.first.first==r.first.first)
+                    {
+                        if(l.first.second<r.first.second)
+                            return true;
+                        else if(l.first.second==r.first.second)
+                            return (l.second<r.second);
+                    }
                 }
             }
         }

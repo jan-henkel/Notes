@@ -842,6 +842,29 @@
    <header>notizentextedit.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>categoriesComboBox</tabstop>
+  <tabstop>entryFilterLineEdit</tabstop>
+  <tabstop>entriesListWidget</tabstop>
+  <tabstop>entryTextEdit</tabstop>
+  <tabstop>addCategoryPushButton</tabstop>
+  <tabstop>addEntryPushButton</tabstop>
+  <tabstop>removeCategoryPushButton</tabstop>
+  <tabstop>removeEntryPushButton</tabstop>
+  <tabstop>printCategoryPushButton</tabstop>
+  <tabstop>printEntryPushButton</tabstop>
+  <tabstop>encryptionPushButton</tabstop>
+  <tabstop>savePushButton</tabstop>
+  <tabstop>stayOnTopToolButton</tabstop>
+  <tabstop>settingsPushButton</tabstop>
+  <tabstop>colorPushButton</tabstop>
+  <tabstop>fontComboBox</tabstop>
+  <tabstop>fontSizeSpinBox</tabstop>
+  <tabstop>italicToolButton</tabstop>
+  <tabstop>underlineToolButton</tabstop>
+  <tabstop>boldToolButton</tabstop>
+  <tabstop>makeLinkCheckBox</tabstop>
+ </tabstops>
  <resources>
   <include location="icons.qrc"/>
  </resources>
