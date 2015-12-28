@@ -20,6 +20,10 @@ void SettingsDialog::showSettings(NotesInternals *notesInternals)
     QSettings settings("settings.ini",QSettings::IniFormat,this);
 
     settings.beginGroup("entry");
+    ui->confirmDeleteCheckBox->setChecked(settings.value("confirm_deletion",DefaultValues::confirmDelete).toBool());
+    ui->autoSaveOnLeavingCheckBox->setChecked(settings.value("auto_save",DefaultValues::autoSaveOnLeavingEntry).toBool());
+    ui->applySearchFilterCheckBox->setChecked(settings.value("apply_searchfilter",DefaultValues::applySearchFilterToEntryList).toBool());
+
     ui->fontFamilyComboBox->setCurrentFont(settings.value("fontfamily",DefaultValues::entryFont.family()).toString());
     ui->fontSizeSpinbox->setValue(settings.value("fontsize",DefaultValues::entryFont.pointSize()).toInt());
     ui->fontBoldToolButton->setChecked(settings.value("fontbold",DefaultValues::entryFont.bold()).toBool());
@@ -96,6 +100,10 @@ void SettingsDialog::on_applyPushButton_clicked()
 {
     QSettings settings("settings.ini",QSettings::IniFormat,this);
     settings.beginGroup("entry");
+    settings.setValue("confirm_deletion",ui->confirmDeleteCheckBox->isChecked());
+    settings.setValue("auto_save",ui->autoSaveOnLeavingCheckBox->isChecked());
+    settings.setValue("apply_searchfilter",ui->applySearchFilterCheckBox->isChecked());
+
     settings.setValue("fontfamily",ui->fontFamilyComboBox->currentFont().family());
     settings.setValue("fontsize",ui->fontSizeSpinbox->value());
     settings.setValue("fontbold",ui->fontBoldToolButton->isChecked());
@@ -274,6 +282,10 @@ void SettingsDialog::on_resetPushButton_2_clicked()
 void SettingsDialog::on_resetPushButton_clicked()
 {
     untickCheckboxes();
+    ui->confirmDeleteCheckBox->setChecked(DefaultValues::confirmDelete);
+    ui->autoSaveOnLeavingCheckBox->setChecked(DefaultValues::autoSaveOnLeavingEntry);
+    ui->applySearchFilterCheckBox->setChecked(DefaultValues::applySearchFilterToEntryList);
+
     ui->fontFamilyComboBox->setCurrentFont(DefaultValues::entryFont.family());
     ui->fontSizeSpinbox->setValue(DefaultValues::entryFont.pointSize());
     ui->fontBoldToolButton->setChecked(DefaultValues::entryFont.bold());

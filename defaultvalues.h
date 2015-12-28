@@ -24,6 +24,9 @@ namespace DefaultValues
     extern bool windowAlwaysOnTop;
     extern int mainWindowWidth;
     extern int mainWindowHeight;
+    extern bool confirmDelete;
+    extern bool autoSaveOnLeavingEntry;
+    extern bool applySearchFilterToEntryList;
 }
 
 class DefaultValuesInitializer

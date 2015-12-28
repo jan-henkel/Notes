@@ -19,133 +19,133 @@
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Eintrag&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.ui" line="656"/>
+        <location filename="../notizenmainwindow.ui" line="659"/>
         <source>Trebuchet MS</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.ui" line="783"/>
+        <location filename="../notizenmainwindow.ui" line="786"/>
         <source>Link</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.ui" line="807"/>
+        <location filename="../notizenmainwindow.ui" line="810"/>
         <source>Rename category</source>
         <translation>Rubrik umbenennen</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.ui" line="812"/>
         <location filename="../notizenmainwindow.ui" line="815"/>
+        <location filename="../notizenmainwindow.ui" line="818"/>
         <source>Rename entry</source>
         <translation>Eintrag umbenennen</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.ui" line="820"/>
-        <location filename="../notizenmainwindow.cpp" line="455"/>
+        <location filename="../notizenmainwindow.ui" line="823"/>
+        <location filename="../notizenmainwindow.cpp" line="473"/>
         <source>Edit URL</source>
         <translation>Link-Adresse einstellen</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.ui" line="825"/>
-        <location filename="../notizenmainwindow.cpp" line="82"/>
+        <location filename="../notizenmainwindow.ui" line="828"/>
+        <location filename="../notizenmainwindow.cpp" line="84"/>
         <source>Delete entry</source>
         <translation>Eintrag löschen</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.ui" line="830"/>
-        <location filename="../notizenmainwindow.cpp" line="74"/>
+        <location filename="../notizenmainwindow.ui" line="833"/>
+        <location filename="../notizenmainwindow.cpp" line="75"/>
         <source>Delete category</source>
         <translation>Rubrik löschen</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="74"/>
-        <location filename="../notizenmainwindow.cpp" line="82"/>
+        <location filename="../notizenmainwindow.cpp" line="75"/>
+        <location filename="../notizenmainwindow.cpp" line="84"/>
         <source>Are you sure?</source>
         <translation>Sind Sie sicher?</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="91"/>
-        <location filename="../notizenmainwindow.cpp" line="128"/>
-        <location filename="../notizenmainwindow.cpp" line="619"/>
+        <location filename="../notizenmainwindow.cpp" line="101"/>
+        <location filename="../notizenmainwindow.cpp" line="138"/>
+        <location filename="../notizenmainwindow.cpp" line="637"/>
         <source>Error</source>
         <translation>Fehler</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="91"/>
-        <location filename="../notizenmainwindow.cpp" line="128"/>
+        <location filename="../notizenmainwindow.cpp" line="101"/>
+        <location filename="../notizenmainwindow.cpp" line="138"/>
         <source>No printers found</source>
         <translation>Keine Drucker gefunden</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="158"/>
-        <location filename="../notizenmainwindow.cpp" line="172"/>
+        <location filename="../notizenmainwindow.cpp" line="171"/>
+        <location filename="../notizenmainwindow.cpp" line="185"/>
         <source>Choose new title</source>
         <translation>Neuen Titel wählen</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="158"/>
+        <location filename="../notizenmainwindow.cpp" line="171"/>
         <source>Enter a new name for category &apos;</source>
         <translation>Geben Sie einen neuen Namen ein für die Rubrik &apos;</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="172"/>
+        <location filename="../notizenmainwindow.cpp" line="185"/>
         <source>Enter a new name for entry &apos;</source>
         <translation>Geben Sie einen neuen Namen ein für den Eintrag &apos;</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="231"/>
-        <location filename="../notizenmainwindow.cpp" line="666"/>
+        <location filename="../notizenmainwindow.cpp" line="244"/>
+        <location filename="../notizenmainwindow.cpp" line="684"/>
         <source>Master key not set</source>
         <translation>Kein Master Key gefunden</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="231"/>
-        <location filename="../notizenmainwindow.cpp" line="666"/>
+        <location filename="../notizenmainwindow.cpp" line="244"/>
+        <location filename="../notizenmainwindow.cpp" line="684"/>
         <source>No master key set. Do you wish to create a new one?</source>
         <translation>Es ist kein Master Key eingestellt. Möchten Sie einen neuen erstellen?</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="455"/>
+        <location filename="../notizenmainwindow.cpp" line="473"/>
         <source>Set a new URL for the current selection:</source>
         <translation>Geben Sie eine neue Link-Adresse für den aktuell selektierten Text ein:</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="498"/>
+        <location filename="../notizenmainwindow.cpp" line="516"/>
         <source>Save changes</source>
         <translation>Änderungen speichern</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="498"/>
+        <location filename="../notizenmainwindow.cpp" line="516"/>
         <source>The current entry was edited. Do you wish to save the changes?</source>
         <translation>Der aktuelle Eintrag wurde verändert. Möchten Sie die änderungen sichern?</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="619"/>
+        <location filename="../notizenmainwindow.cpp" line="637"/>
         <source>An error occured while setting up encryption.</source>
         <translation>Beim Einrichten der Verschlüsselung ist ein Fehler aufgetreten.</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="636"/>
+        <location filename="../notizenmainwindow.cpp" line="654"/>
         <source>Wrong password</source>
         <translation>Falsches Passwort</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="636"/>
+        <location filename="../notizenmainwindow.cpp" line="654"/>
         <source>The password you entered is incorrect.</source>
         <translation>Das eingegebene Passwort ist nicht korrekt.</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="645"/>
+        <location filename="../notizenmainwindow.cpp" line="663"/>
         <source>Inputs don&apos;t match</source>
         <translation>Eingaben unterscheiden sich</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="645"/>
+        <location filename="../notizenmainwindow.cpp" line="663"/>
         <source>The passwords you entered do not match.</source>
         <translation>Die eingegebenen Passwörter stimmen nicht überein.</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="792"/>
+        <location filename="../notizenmainwindow.cpp" line="808"/>
         <source>Move entry</source>
         <translation>Eintrag verschieben</translation>
     </message>
@@ -191,94 +191,94 @@
         <translation>Einstellungen</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="46"/>
+        <location filename="../settingsdialog.ui" line="417"/>
         <source>Entries</source>
         <translation>Einträge</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="64"/>
+        <location filename="../settingsdialog.ui" line="404"/>
         <source>Default settings</source>
         <translation>Standardeinstellungen</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="97"/>
+        <location filename="../settingsdialog.ui" line="450"/>
         <source>Apply to existing entries</source>
         <translation>Auf existierende Einträge anwenden</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="115"/>
+        <location filename="../settingsdialog.ui" line="478"/>
         <source>Font family</source>
         <translation>Schriftfamilie</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="146"/>
+        <location filename="../settingsdialog.ui" line="511"/>
         <source>Font size</source>
         <translation>Schriftgröße</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="177"/>
+        <location filename="../settingsdialog.ui" line="499"/>
         <source>Font style</source>
         <translation>Schriftstil</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="272"/>
+        <location filename="../settingsdialog.ui" line="369"/>
         <source>Font color</source>
         <translation>Schriftfarbe</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="317"/>
+        <location filename="../settingsdialog.ui" line="325"/>
         <source>Printing</source>
         <translation>Drucken</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="324"/>
+        <location filename="../settingsdialog.ui" line="386"/>
         <source>Font for category headings</source>
         <translation>Schriftart für Rubriküberschriften</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="437"/>
+        <location filename="../settingsdialog.ui" line="61"/>
         <source>Font for entry headings</source>
         <translation>Schriftart für Eintragsüberschriften</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="591"/>
-        <location filename="../settingsdialog.ui" line="725"/>
+        <location filename="../settingsdialog.ui" line="42"/>
+        <location filename="../settingsdialog.ui" line="750"/>
         <source>Reset</source>
         <translation>Zurücksetzen</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="601"/>
-        <location filename="../settingsdialog.ui" line="735"/>
+        <location filename="../settingsdialog.ui" line="52"/>
+        <location filename="../settingsdialog.ui" line="760"/>
         <source>Apply</source>
         <translation>Anwenden</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="1239"/>
+        <location filename="../settingsdialog.ui" line="1264"/>
         <source>Always on top</source>
         <translation>Immer im Vordergrund</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="1246"/>
+        <location filename="../settingsdialog.ui" line="1271"/>
         <source>Language</source>
         <translation>Sprache</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="1257"/>
+        <location filename="../settingsdialog.ui" line="1282"/>
         <source>English</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="685"/>
+        <location filename="../settingsdialog.ui" line="710"/>
         <source>Default position</source>
         <translation>Standardposition</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="744"/>
+        <location filename="../settingsdialog.ui" line="769"/>
         <source>Reset window dimensions</source>
         <translation>Fenstermaße zurücksetzen</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="1072"/>
+        <location filename="../settingsdialog.ui" line="1097"/>
         <source>Top left</source>
         <translation>Oben links</translation>
     </message>
@@ -288,77 +288,92 @@
         <translation>Einträge und Drucken</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="611"/>
+        <location filename="../settingsdialog.ui" line="619"/>
+        <source>Deletions require confirmation</source>
+        <translation>Löschen erfordert Bestätigung</translation>
+    </message>
+    <message>
+        <location filename="../settingsdialog.ui" line="612"/>
+        <source>Auto save on leaving entry</source>
+        <translation>Autom. Speichern bei Schliessen von Eintrag</translation>
+    </message>
+    <message>
+        <location filename="../settingsdialog.ui" line="626"/>
+        <source>Search text is applied as filter</source>
+        <translation>Suchtext als Filter anwenden</translation>
+    </message>
+    <message>
+        <location filename="../settingsdialog.ui" line="636"/>
         <source>User interface</source>
         <translation>Benutzeroberfläche</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="774"/>
+        <location filename="../settingsdialog.ui" line="799"/>
         <source>Misc. default window settings</source>
         <translation>Versch. Standardeinstellungen</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="1077"/>
+        <location filename="../settingsdialog.ui" line="1102"/>
         <source>Top right</source>
         <translation>Oben rechts</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="1082"/>
+        <location filename="../settingsdialog.ui" line="1107"/>
         <source>Bottom left</source>
         <translation>Unten links</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="1087"/>
+        <location filename="../settingsdialog.ui" line="1112"/>
         <source>Bottom right</source>
         <translation>Unten rechts</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="1092"/>
+        <location filename="../settingsdialog.ui" line="1117"/>
         <source>Center</source>
         <translation>Mitte</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="700"/>
+        <location filename="../settingsdialog.ui" line="725"/>
         <source>Default category</source>
         <translation>Standardrubrik</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="622"/>
+        <location filename="../settingsdialog.ui" line="647"/>
         <source>UI font</source>
         <translation>Oberflächenschriftart</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="943"/>
+        <location filename="../settingsdialog.ui" line="968"/>
         <source>Entry List</source>
         <translation>Eintragsliste</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="637"/>
+        <location filename="../settingsdialog.ui" line="662"/>
         <source>Label font</source>
         <translation>Label-Schriftart</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="670"/>
+        <location filename="../settingsdialog.ui" line="695"/>
         <source>Label colors</source>
         <translation>Label-Farben</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="1108"/>
+        <location filename="../settingsdialog.ui" line="1133"/>
         <source>Entry</source>
         <translation>Eintrag</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="1124"/>
+        <location filename="../settingsdialog.ui" line="1149"/>
         <source>Category</source>
         <translation>Rubrik</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="1266"/>
+        <location filename="../settingsdialog.ui" line="1291"/>
         <source>Encryption</source>
         <translation>Verschlüsselung</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.ui" line="1277"/>
+        <location filename="../settingsdialog.ui" line="1302"/>
         <source>Change password</source>
         <translation>Passwort ändern</translation>
     </message>

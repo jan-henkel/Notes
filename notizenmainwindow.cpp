@@ -71,17 +71,27 @@ void NotizenMainWindow::addEntry()
 
 void NotizenMainWindow::removeCategory()
 {
-    if(QMessageBox(QMessageBox::Question,tr("Delete category"),tr("Are you sure?"),QMessageBox::Yes | QMessageBox::No,this).exec()!=QMessageBox::Yes)
-        return;
+    if(confirmDelete)
+        if(QMessageBox(QMessageBox::Question,tr("Delete category"),tr("Are you sure?"),QMessageBox::Yes | QMessageBox::No,this).exec()!=QMessageBox::Yes)
+            return;
     notesInternals.removeCurrentCategory();
     syncModelAndUI();
 }
 
 void NotizenMainWindow::removeEntry()
 {
-    if(QMessageBox(QMessageBox::Question,tr("Delete entry"),tr("Are you sure?"),QMessageBox::Yes | QMessageBox::No,this).exec()!=QMessageBox::Yes)
-        return;
+    if(confirmDelete)
+        if(QMessageBox(QMessageBox::Question,tr("Delete entry"),tr("Are you sure?"),QMessageBox::Yes | QMessageBox::No,this).exec()!=QMessageBox::Yes)
+            return;
+    int index=std::distance(entryPairList.begin(),std::find(entryPairList.begin(),entryPairList.end(),notesInternals.currentEntryPair()));
+
+    if(index<(int)entryPairList.size()-1)
+        ++index;
+    else
+        --index;
     notesInternals.removeCurrentEntry();
+    if(index>=0)
+        notesInternals.selectEntry(entryPairList[index]);
     syncModelAndUI();
 }
 
@@ -305,17 +315,24 @@ void NotizenMainWindow::syncModelAndUI()
         ui->entriesListWidget->clear();
         if(notesInternals.isValid(notesInternals.currentCategoryPair()))
         {
-            //entries which start with searchfilter text go first
-            for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
+            if(applySearchFilterToEntryList)
             {
-                if(NotesInternals::getEntryName(*i).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
-                    entryPairList.push_back(*i);
+                //entries which start with searchfilter text go first
+                for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
+                {
+                    if(NotesInternals::getEntryName(*i).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
+                        entryPairList.push_back(*i);
+                }
+                //entries which don't begin with the searchfilter text but do otherwise match the filter go second
+                for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
+                {
+                    if(!NotesInternals::getEntryName(*i).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive) && NotesInternals::getEntryName(*i).contains(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
+                        entryPairList.push_back(*i);
+                }
             }
-            //entries which don't begin with the searchfilter text but do otherwise match the filter go second
-            for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
+            else
             {
-                if(!NotesInternals::getEntryName(*i).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive) && NotesInternals::getEntryName(*i).contains(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
-                    entryPairList.push_back(*i);
+                std::copy(NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin(),NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend(),std::back_inserter(entryPairList));
             }
             //entry list widget is filled with items corresponding to elements of entryPairList
             for(int i=0;i<(int)entryPairList.size();++i)
@@ -368,6 +385,9 @@ void NotizenMainWindow::readSettings()
     QSettings settings("settings.ini",QSettings::IniFormat,this);
 
     settings.beginGroup("entry");
+    confirmDelete=settings.value("confirm_deletion",DefaultValues::confirmDelete).toBool();
+    autoSaveOnLeavingEntry=settings.value("auto_save",DefaultValues::autoSaveOnLeavingEntry).toBool();
+    applySearchFilterToEntryList=settings.value("apply_searchfilter",DefaultValues::applySearchFilterToEntryList).toBool();
     entryFont=QFont(settings.value("fontfamily",DefaultValues::entryFont.family()).toString(),
                     settings.value("fontsize",DefaultValues::entryFont.pointSize()).toInt(),
                     settings.value("fontbold",DefaultValues::entryFont.bold()).toBool()?QFont::Bold:QFont::Normal,
@@ -500,7 +520,7 @@ void NotizenMainWindow::saveChanges()
 {
     if(edited())
     {
-        if(QMessageBox(QMessageBox::Question,tr("Save changes"),tr("The current entry was edited. Do you wish to save the changes?"),QMessageBox::Yes|QMessageBox::No,this).exec()==QMessageBox::Yes)
+        if(autoSaveOnLeavingEntry || QMessageBox(QMessageBox::Question,tr("Save changes"),tr("The current entry was edited. Do you wish to save the changes?"),QMessageBox::Yes|QMessageBox::No,this).exec()==QMessageBox::Yes)
             saveEntry();
     }
 }
@@ -601,12 +621,30 @@ void NotizenMainWindow::on_categoriesComboBox_activated(int index)
 void NotizenMainWindow::on_entryFilterLineEdit_textEdited(const QString &arg1)
 {
     Q_UNUSED(arg1)
-    saveChanges();
-    updateFlags|=EntryListContentChanged;
-    //notesInternals.selectEntry(NotesInternals::invalidEntryPair()); //optional, depending on search behavior
-    syncModelAndUI();
-    if(!entryPairList.empty())
-        notesInternals.selectEntry(entryPairList[0]);
+    if(applySearchFilterToEntryList)
+    {
+        saveChanges();
+        updateFlags|=EntryListContentChanged;
+        //notesInternals.selectEntry(NotesInternals::invalidEntryPair()); //optional, depending on search behavior
+        syncModelAndUI();
+        if(!entryPairList.empty())
+            notesInternals.selectEntry(entryPairList[0]);
+    }
+    else if(ui->entryFilterLineEdit->text()!="")
+    {
+        int j=-1;
+        int k=-1;
+        for(int i=0;i<(int)entryPairList.size() && j==-1;++i)
+        {
+            if(notesInternals.getEntryName(entryPairList[i]).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
+                j=i;
+            if(notesInternals.getEntryName(entryPairList[i]).contains(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive) && k==-1)
+                k=i;
+        }
+        j=std::max(j,k);
+        if(j>=0)
+            notesInternals.selectEntry(entryPairList[j]);
+    }
     //else
     //    notesInternals.selectEntry(NotesInternals::invalidEntryPair());
     syncModelAndUI();

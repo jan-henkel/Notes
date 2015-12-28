@@ -19,6 +19,9 @@ namespace DefaultValues
     bool windowAlwaysOnTop;
     int mainWindowWidth;
     int mainWindowHeight;
+    bool confirmDelete;
+    bool autoSaveOnLeavingEntry;
+    bool applySearchFilterToEntryList;
 }
 
 using namespace DefaultValues;
@@ -49,4 +52,7 @@ void DefaultValuesInitializer::initialize()
     windowAlwaysOnTop=true;
     mainWindowWidth=610;
     mainWindowHeight=505;
+    confirmDelete=true;
+    autoSaveOnLeavingEntry=false;
+    applySearchFilterToEntryList=true;
 }

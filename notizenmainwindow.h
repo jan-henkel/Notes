@@ -80,6 +80,13 @@ private:
     //boolean to make sure settings are only read on the initial show event of the main window
     bool initialShow_;
 
+    //boolean to determine whether deletions require confirmation
+    bool confirmDelete;
+    //boolean to determine whether entries are automatically saved when an entry is closed
+    bool autoSaveOnLeavingEntry;
+    //boolean to determine whether search text is applied as a filter
+    bool applySearchFilterToEntryList;
+
     //ctrl+s shortcut to save entry changes
     //QShortcut saveEntryShortcut;
 
