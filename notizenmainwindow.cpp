@@ -864,7 +864,7 @@ void NotizenMainWindow::on_entryTextEdit_currentCharFormatChanged(const QTextCha
     ui->colorPushButton->setStyleSheet("background-color: "+ui->entryTextEdit->textColor().name());
     ui->fontSizeSpinBox->setValue(ui->entryTextEdit->fontPointSize());
     ui->italicToolButton->setChecked(ui->entryTextEdit->fontItalic());
-    ui->boldToolButton->setChecked(ui->entryTextEdit->font().bold());
+    ui->boldToolButton->setChecked(ui->entryTextEdit->fontWeight()==QFont::Bold);
     ui->underlineToolButton->setChecked(ui->entryTextEdit->fontUnderline());
 }
 
