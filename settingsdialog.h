@@ -26,7 +26,7 @@ class SettingsDialog : public QDialog
 public:
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();
-    void showSettings(NotesInternals* notesInternals);
+    void showSettings(NotesInternals* notesInternals, std::vector<CategoryPair>* categoryPairList);
     void untickCheckboxes();
 signals:
     void updateMainWindow();
@@ -56,6 +56,7 @@ private slots:
 
 private:
     NotesInternals *notesInternals_;
+    std::vector<CategoryPair> *categoryPairList_;
     Ui::SettingsDialog *ui;
 
     //a few settings can't easily be obtained from widget properties and thus are stored separately

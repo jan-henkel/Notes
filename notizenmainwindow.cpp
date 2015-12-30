@@ -259,7 +259,7 @@ void NotizenMainWindow::toggleEncryption()
 
 void NotizenMainWindow::openSettings()
 {
-    settingsDialog->showSettings(&this->notesInternals);
+    settingsDialog->showSettings(&this->notesInternals,&this->categoryPairList);
 }
 
 void NotizenMainWindow::showEvent(QShowEvent *e)
@@ -439,7 +439,15 @@ void NotizenMainWindow::readSettings()
         break;
     }
 
-    ui->categoriesComboBox->setCurrentIndex(settings.value("default_category",DefaultValues::categoryIndex).toInt());
+    QString categoryName=settings.value("default_category_name",DefaultValues::categoryName).toString();
+    QString categoryDateTime=settings.value("default_category_date_time",DefaultValues::categoryDateTime).toString();
+    int j=-1;
+    for(int i=0;i<(int)categoryPairList.size() && j==-1;++i)
+    {
+        if(NotesInternals::getCategoryName(categoryPairList[i])==categoryName && NotesInternals::getCategoryDate(categoryPairList[i]).toString()==categoryDateTime)
+            j=i;
+    }
+    ui->categoriesComboBox->setCurrentIndex(j);
     selectCategory();
     ui->categoriesComboBox->setFont(QFont(settings.value("ui_fontfamily",DefaultValues::uiFont.family()).toString(),
                                     settings.value("ui_fontsize",DefaultValues::uiFont.pointSize()).toInt(),
@@ -848,16 +856,16 @@ void NotizenMainWindow::on_encryptionPushButton_clicked()
 
 void NotizenMainWindow::on_entryTextEdit_currentCharFormatChanged(const QTextCharFormat &f)
 {
-    ui->fontComboBox->setCurrentText(f.fontFamily());
+    ui->fontComboBox->setCurrentText(ui->entryTextEdit->fontFamily());
     if(f.anchorHref()!="" || f.anchorName()!="" || f.isAnchor())
         ui->makeLinkCheckBox->setChecked(true);
     else
         ui->makeLinkCheckBox->setChecked(false);
-    ui->colorPushButton->setStyleSheet("background-color: "+f.foreground().color().name());
-    ui->fontSizeSpinBox->setValue(f.font().pointSize());
-    ui->italicToolButton->setChecked(f.font().italic());
-    ui->boldToolButton->setChecked(f.font().bold());
-    ui->underlineToolButton->setChecked(f.font().underline());
+    ui->colorPushButton->setStyleSheet("background-color: "+ui->entryTextEdit->textColor().name());
+    ui->fontSizeSpinBox->setValue(ui->entryTextEdit->fontPointSize());
+    ui->italicToolButton->setChecked(ui->entryTextEdit->fontItalic());
+    ui->boldToolButton->setChecked(ui->entryTextEdit->font().bold());
+    ui->underlineToolButton->setChecked(ui->entryTextEdit->fontUnderline());
 }
 
 void NotizenMainWindow::on_categoriesComboBox_customContextMenuRequested(const QPoint &pos)
