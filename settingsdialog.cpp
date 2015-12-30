@@ -186,13 +186,13 @@ void SettingsDialog::on_applyPushButton_2_clicked()
         settings.setValue("default_category_name",DefaultValues::categoryName);
         settings.setValue("default_category_date_time",DefaultValues::categoryDateTime);
     }
-    settings.setValue("ui_fontfamily",ui->uiFontFamilyComboBox->currentFont());
+    settings.setValue("ui_fontfamily",ui->uiFontFamilyComboBox->currentFont().family());
     settings.setValue("ui_fontsize",ui->uiFontSizeSpinBox->value());
     settings.setValue("ui_fontbold",ui->uiFontBoldToolButton->isChecked());
     settings.setValue("ui_fontitalic",ui->uiFontItalicToolButton->isChecked());
     settings.setValue("entrylist_fontbold",ui->entryListFontBoldToolButton->isChecked());
     settings.setValue("entrylist_fontitalic",ui->entryListFontItalicToolButton->isChecked());
-    settings.setValue("label_fontfamily",ui->labelFontFamilyComboBox->currentFont());
+    settings.setValue("label_fontfamily",ui->labelFontFamilyComboBox->currentFont().family());
     settings.setValue("label_fontsize",ui->labelFontSizeSpinBox->value());
     settings.setValue("label_fontbold",ui->labelFontBoldToolButton->isChecked());
     settings.setValue("label_fontitalic",ui->labelFontItalicToolButton->isChecked());
