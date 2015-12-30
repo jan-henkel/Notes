@@ -61,6 +61,7 @@ To disable encryption, press the "lock" button again. Encrypted categories now n
 Technical aspects
 -----------------------------------------------------------------------------------
 
+The library used for all encryption capabilities is QCA (Qt Cryptographic Architecture).
 Entries are encrypted with AES256 in CBC mode with random (128 bit) initialization vectors and a 256 bit master key, which is randomly generated when the password is first set. PBKDF2-SHA1 is used to derive a 512 bit key from the password plus a random salt (256 bits). The first 256 bits serve as an intermediate key to encrypt the master key, again using a random initialization vector. The SHA1-hash of the second 256 bits is used for password verification.
 The encrypted master key resides in ./enc/masterkey (relative to the application path). The initialization vector, random salt and SHA1-hash are also stored there.
 Encrypted entry files lead with their respective initialization vectors.
