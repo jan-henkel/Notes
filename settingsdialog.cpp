@@ -13,9 +13,10 @@ SettingsDialog::~SettingsDialog()
     delete ui;
 }
 
-void SettingsDialog::showSettings(NotesInternals *notesInternals)
+void SettingsDialog::showSettings(NotesInternals *notesInternals, std::vector<CategoryPair> *categoryPairList)
 {
     notesInternals_=notesInternals;
+    categoryPairList_=categoryPairList;
     untickCheckboxes();
     QSettings settings("settings.ini",QSettings::IniFormat,this);
 
@@ -45,10 +46,7 @@ void SettingsDialog::showSettings(NotesInternals *notesInternals)
     ui->printingFontEntryUnderlineToolButton->setChecked(settings.value("entry_heading_underline",DefaultValues::printingFontEntry.underline()).toBool());
     settings.endGroup();
 
-    ui->defaultCategoryComboBox->clear();
-    ui->defaultCategoryComboBox->addItem("");
-    for(CategorySet::const_iterator i=notesInternals_->categorySet()->cbegin();i!=notesInternals_->categorySet()->cend();++i)
-        ui->defaultCategoryComboBox->addItem(notesInternals->getCategoryName(*i));
+
 
     QDirIterator langFiles("./localization",QStringList()<<"*.qm");
     while(langFiles.hasNext())
@@ -62,7 +60,21 @@ void SettingsDialog::showSettings(NotesInternals *notesInternals)
 
     settings.beginGroup("mainwindow");
     ui->defaultPositionComboBox->setCurrentIndex(settings.value("default_position",DefaultValues::mainWindowPosition).toInt());
-    ui->defaultCategoryComboBox->setCurrentIndex(settings.value("default_category",DefaultValues::categoryIndex).toInt()+1);
+
+    QString categoryName=settings.value("default_category_name",DefaultValues::categoryName).toString();
+    QString categoryDateTime=settings.value("default_category_date_time",DefaultValues::categoryDateTime).toString();
+
+    int j=-1;
+    ui->defaultCategoryComboBox->clear();
+    ui->defaultCategoryComboBox->addItem("");
+    for(int i=0;i<(int)categoryPairList_->size();++i)
+    {
+        ui->defaultCategoryComboBox->addItem(notesInternals->getCategoryName((*categoryPairList_)[i]));
+        if(NotesInternals::getCategoryName((*categoryPairList_)[i])==categoryName && NotesInternals::getCategoryDate((*categoryPairList_)[i]).toString()==categoryDateTime)
+            j=i;
+    }
+    ui->defaultCategoryComboBox->setCurrentIndex(j+1);
+
     ui->uiFontFamilyComboBox->setCurrentFont(settings.value("ui_fontfamily",DefaultValues::uiFont.family()).toString());
     ui->uiFontSizeSpinBox->setValue(settings.value("ui_fontsize",DefaultValues::uiFont.pointSize()).toInt());
     ui->uiFontBoldToolButton->setChecked(settings.value("ui_fontbold",DefaultValues::uiFont.bold()).toBool());
@@ -163,7 +175,17 @@ void SettingsDialog::on_applyPushButton_2_clicked()
 
     settings.beginGroup("mainwindow");
     settings.setValue("default_position",ui->defaultPositionComboBox->currentIndex());
-    settings.setValue("default_category",ui->defaultCategoryComboBox->currentIndex()-1);
+
+    if(ui->defaultCategoryComboBox->currentIndex()>0)
+    {
+        settings.setValue("default_category_name",ui->defaultCategoryComboBox->currentText());
+        settings.setValue("default_category_date_time",NotesInternals::getCategoryDate((*categoryPairList_)[ui->defaultCategoryComboBox->currentIndex()-1]).toString());
+    }
+    else
+    {
+        settings.setValue("default_category_name",DefaultValues::categoryName);
+        settings.setValue("default_category_date_time",DefaultValues::categoryDateTime);
+    }
     settings.setValue("ui_fontfamily",ui->uiFontFamilyComboBox->currentFont());
     settings.setValue("ui_fontsize",ui->uiFontSizeSpinBox->value());
     settings.setValue("ui_fontbold",ui->uiFontBoldToolButton->isChecked());
@@ -257,7 +279,7 @@ void SettingsDialog::on_changePasswordPushButton_clicked()
 void SettingsDialog::on_resetPushButton_2_clicked()
 {
     ui->defaultPositionComboBox->setCurrentIndex(DefaultValues::mainWindowPosition);
-    ui->defaultCategoryComboBox->setCurrentIndex(DefaultValues::categoryIndex);
+    ui->defaultCategoryComboBox->setCurrentIndex(0);
     ui->uiFontFamilyComboBox->setCurrentFont(DefaultValues::uiFont.family());
     ui->uiFontSizeSpinBox->setValue(DefaultValues::uiFont.pointSize());
     ui->uiFontBoldToolButton->setChecked(DefaultValues::uiFont.bold());

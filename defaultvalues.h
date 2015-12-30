@@ -4,6 +4,7 @@
 #include <QFont>
 #include <QTextCharFormat>
 #include <QColor>
+#include <QDateTime>
 
 namespace DefaultValues
 {
@@ -12,7 +13,8 @@ namespace DefaultValues
     extern QFont printingFontCategory;
     extern QFont printingFontEntry;
     extern int mainWindowPosition;
-    extern int categoryIndex;
+    extern QString categoryName;
+    extern QString categoryDateTime;
     extern QFont uiFont;
     extern bool entryListFontBold;
     extern bool entryListFontItalic;

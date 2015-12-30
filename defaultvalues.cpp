@@ -7,7 +7,8 @@ namespace DefaultValues
     QFont printingFontCategory;
     QFont printingFontEntry;
     int mainWindowPosition;
-    int categoryIndex;
+    QString categoryName;
+    QString categoryDateTime;
     QFont uiFont;
     bool entryListFontBold;
     bool entryListFontItalic;
@@ -40,7 +41,8 @@ void DefaultValuesInitializer::initialize()
     printingFontEntry=QFont(QFont().defaultFamily(),14,QFont::Bold,false);
     printingFontEntry.setUnderline(true);
     mainWindowPosition=0;
-    categoryIndex=-1;
+    categoryName="";
+    categoryDateTime=QDateTime::fromMSecsSinceEpoch(0).toString();
     uiFont=QFont(QFont().defaultFamily(),10,QFont::Bold,false);
     entryListFontBold=false;
     entryListFontItalic=false;

@@ -5,6 +5,10 @@
 NotesInternals::NotesInternals(QObject *parent) : QObject(parent),hashFunction_("sha256"),currentCategoryPair_(invalidCategoryPair()),currentEntryPair_(invalidEntryPair()),encryptionEnabled_(false)
 {
     QCA::init();
+    if(!QDir("./plain").exists())
+        QDir(".").mkdir("plain");
+    if(!QDir("./enc").exists())
+        QDir(".").mkdir("enc");
     loadUnencryptedCategories();
 }
 
