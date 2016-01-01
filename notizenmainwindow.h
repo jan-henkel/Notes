@@ -59,6 +59,7 @@ public:
     void saveEntry();
     void renameCategory();
     void renameEntry();
+    void toggleCategoryEncryption();
     void moveEntry(CategoryPair newCategory);
     void selectCategory();
     void selectEntry();
@@ -167,6 +168,8 @@ private slots:
     //action slots for "delete" menu items for categories and entries. again taken care of by high level functions
     void on_actionDeleteEntry_triggered();
     void on_actionDeleteCategory_triggered();
+    //action slot for "toggle encryption" menu item
+    void on_actionCategoryToggleEncryption_triggered();
 
     //slots for various UI elements. mostly just call high level functions
 

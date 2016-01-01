@@ -88,6 +88,30 @@ const CategoryPair NotesInternals::renameCategory(CategoryPair &categoryPair, QS
     return ret;
 }
 
+const CategoryPair NotesInternals::toggleCategoryEncryption(CategoryPair categoryPair)
+{
+    //return invalid pair if passed pair is invalid or encryption is not active
+    if(!isValid(categoryPair) || !encryptionEnabled_)
+        return invalidCategoryPair();
+
+    //change encryption setting
+    getCategory_(categoryPair)->encrypted_=!getCategory_(categoryPair)->encrypted_;
+
+    //update category file and folder
+    updateCategoryFile(categoryPair);
+
+    //update all entry files, to make sure they're encrypted / decrypted according to the new setting
+    for(EntrySet::iterator i=getCategory_(categoryPair)->entrySet_.begin();i!=getCategory_(categoryPair)->entrySet_.end();++i)
+        updateEntryFile(categoryPair,*i);
+
+    //set of categories was altered. entries not necessarily (UI doesn't care about new files)
+    emit categoryListChanged();
+
+    //selection is not altered by these internal changes
+
+    return categoryPair;
+}
+
 const EntryPair NotesInternals::addEntry(CategoryPair &categoryPair, QString entryName)
 {
     //return invalid pair if passed category pair is invalid

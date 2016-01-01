@@ -132,6 +132,8 @@ public:
     bool removeCategory(CategoryPair &categoryPair);
     //rename category specified by pair to newCategoryName. returns updated category pair if successful, invalid pair otherwise
     const CategoryPair renameCategory(CategoryPair &categoryPair,QString newCategoryName);
+    //encrypt or decrypt category associated with categoryPair
+    const CategoryPair toggleCategoryEncryption(CategoryPair categoryPair);
     //add entry of name entryName to category specified by pair. returns newly generated entry pair if successful, invalid pair otherwise
     //(e.g. if passed category pair is invalid)
     const EntryPair addEntry(CategoryPair &categoryPair,QString entryName);
@@ -214,6 +216,8 @@ public:
         {return removeCategory(currentCategoryPair_);}
     const CategoryPair renameCurrentCategory(QString newCategoryName)
         {return renameCategory(currentCategoryPair_,newCategoryName);}
+    const CategoryPair toggleCurrentCategoryEncryption()
+        {return toggleCategoryEncryption(currentCategoryPair_);}
     const EntryPair addEntryToCurrentCategory(QString entryName)
         {return addEntry(currentCategoryPair_,entryName);}
     bool removeCurrentEntry()
