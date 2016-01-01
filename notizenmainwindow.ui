@@ -833,6 +833,11 @@
     <string>Delete category</string>
    </property>
   </action>
+  <action name="actionCategoryToggleEncryption">
+   <property name="text">
+    <string>Toggle encryption</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>

@@ -192,6 +192,15 @@ void NotizenMainWindow::renameEntry()
     }
 }
 
+void NotizenMainWindow::toggleCategoryEncryption()
+{
+    if(NotesInternals::getCategoryEncrypted(notesInternals.currentCategoryPair()))
+        if(QMessageBox(QMessageBox::Warning,tr("Are you sure?"),tr("Decrypting a category will cause its contents to be written on disk in plaintext. Proceed?"),QMessageBox::Yes|QMessageBox::No,this).exec()!=QMessageBox::Yes)
+            return;
+    notesInternals.toggleCurrentCategoryEncryption();
+    syncModelAndUI();
+}
+
 void NotizenMainWindow::moveEntry(CategoryPair newCategory)
 {
     notesInternals.moveCurrentEntry(newCategory);
@@ -876,6 +885,8 @@ void NotizenMainWindow::on_categoriesComboBox_customContextMenuRequested(const Q
     categoriesContextMenu->removeAction(categoriesContextMenu->actions()[0]);
     if(notesInternals.isValid(notesInternals.currentCategoryPair()))
     {
+        if(notesInternals.encryptionEnabled())
+            categoriesContextMenu->insertAction(categoriesContextMenu->actions()[0],ui->actionCategoryToggleEncryption);
         categoriesContextMenu->insertAction(categoriesContextMenu->actions()[0],ui->actionDeleteCategory);
         categoriesContextMenu->insertAction(categoriesContextMenu->actions()[0],ui->actionRenameCategory);
     }
@@ -891,6 +902,12 @@ void NotizenMainWindow::on_actionRenameCategory_triggered()
 void NotizenMainWindow::on_actionDeleteCategory_triggered()
 {
     removeCategory();
+}
+
+
+void NotizenMainWindow::on_actionCategoryToggleEncryption_triggered()
+{
+    toggleCategoryEncryption();
 }
 
 void NotizenMainWindow::on_entryFilterLineEdit_returnPressed()

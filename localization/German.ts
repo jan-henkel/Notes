@@ -41,7 +41,7 @@
     </message>
     <message>
         <location filename="../notizenmainwindow.ui" line="823"/>
-        <location filename="../notizenmainwindow.cpp" line="473"/>
+        <location filename="../notizenmainwindow.cpp" line="497"/>
         <source>Edit URL</source>
         <translation>Link-Adresse einstellen</translation>
     </message>
@@ -58,15 +58,21 @@
         <translation>Rubrik löschen</translation>
     </message>
     <message>
+        <location filename="../notizenmainwindow.ui" line="838"/>
+        <source>Toggle encryption</source>
+        <translation>Verschlüsselung ein-/ausschalten</translation>
+    </message>
+    <message>
         <location filename="../notizenmainwindow.cpp" line="75"/>
         <location filename="../notizenmainwindow.cpp" line="84"/>
+        <location filename="../notizenmainwindow.cpp" line="198"/>
         <source>Are you sure?</source>
         <translation>Sind Sie sicher?</translation>
     </message>
     <message>
         <location filename="../notizenmainwindow.cpp" line="101"/>
         <location filename="../notizenmainwindow.cpp" line="138"/>
-        <location filename="../notizenmainwindow.cpp" line="637"/>
+        <location filename="../notizenmainwindow.cpp" line="679"/>
         <source>Error</source>
         <translation>Fehler</translation>
     </message>
@@ -93,59 +99,64 @@
         <translation>Geben Sie einen neuen Namen ein für den Eintrag &apos;</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="244"/>
-        <location filename="../notizenmainwindow.cpp" line="684"/>
+        <location filename="../notizenmainwindow.cpp" line="198"/>
+        <source>Decrypting a category will cause its contents to be written on disk in plaintext. Proceed?</source>
+        <translation>Beim Entschlüsseln einer Rubrik wird ihr Inhalt im Klartext auf die Festplatte geschrieben. Fortfahren?</translation>
+    </message>
+    <message>
+        <location filename="../notizenmainwindow.cpp" line="253"/>
+        <location filename="../notizenmainwindow.cpp" line="726"/>
         <source>Master key not set</source>
         <translation>Kein Master Key gefunden</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="244"/>
-        <location filename="../notizenmainwindow.cpp" line="684"/>
+        <location filename="../notizenmainwindow.cpp" line="253"/>
+        <location filename="../notizenmainwindow.cpp" line="726"/>
         <source>No master key set. Do you wish to create a new one?</source>
         <translation>Es ist kein Master Key eingestellt. Möchten Sie einen neuen erstellen?</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="473"/>
+        <location filename="../notizenmainwindow.cpp" line="497"/>
         <source>Set a new URL for the current selection:</source>
         <translation>Geben Sie eine neue Link-Adresse für den aktuell selektierten Text ein:</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="516"/>
+        <location filename="../notizenmainwindow.cpp" line="540"/>
         <source>Save changes</source>
         <translation>Änderungen speichern</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="516"/>
+        <location filename="../notizenmainwindow.cpp" line="540"/>
         <source>The current entry was edited. Do you wish to save the changes?</source>
         <translation>Der aktuelle Eintrag wurde verändert. Möchten Sie die änderungen sichern?</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="637"/>
+        <location filename="../notizenmainwindow.cpp" line="679"/>
         <source>An error occured while setting up encryption.</source>
         <translation>Beim Einrichten der Verschlüsselung ist ein Fehler aufgetreten.</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="654"/>
+        <location filename="../notizenmainwindow.cpp" line="696"/>
         <source>Wrong password</source>
         <translation>Falsches Passwort</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="654"/>
+        <location filename="../notizenmainwindow.cpp" line="696"/>
         <source>The password you entered is incorrect.</source>
         <translation>Das eingegebene Passwort ist nicht korrekt.</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="663"/>
+        <location filename="../notizenmainwindow.cpp" line="705"/>
         <source>Inputs don&apos;t match</source>
         <translation>Eingaben unterscheiden sich</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="663"/>
+        <location filename="../notizenmainwindow.cpp" line="705"/>
         <source>The passwords you entered do not match.</source>
         <translation>Die eingegebenen Passwörter stimmen nicht überein.</translation>
     </message>
     <message>
-        <location filename="../notizenmainwindow.cpp" line="808"/>
+        <location filename="../notizenmainwindow.cpp" line="850"/>
         <source>Move entry</source>
         <translation>Eintrag verschieben</translation>
     </message>
