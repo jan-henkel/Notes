@@ -193,6 +193,36 @@
         <source>Generate new master key</source>
         <translation>Neuen Master Key erstellen</translation>
     </message>
+    <message>
+        <location filename="../passworddialog.h" line="34"/>
+        <source>Change password</source>
+        <translation>Passwort ändern</translation>
+    </message>
+    <message>
+        <location filename="../passworddialog.h" line="34"/>
+        <source>Create master key</source>
+        <translation>Master Key erstellen</translation>
+    </message>
+    <message>
+        <location filename="../passworddialog.h" line="34"/>
+        <source>Enter password</source>
+        <translation>Passwort eingeben</translation>
+    </message>
+    <message>
+        <location filename="../passworddialog.h" line="35"/>
+        <source>Enter your new password twice and press Ok to confirm.</source>
+        <translation>Geben Sie ihr neues Passwort zweimal ein und klicken Sie auf Ok um Ihre Wahl zu bestätigen.</translation>
+    </message>
+    <message>
+        <location filename="../passworddialog.h" line="35"/>
+        <source>Pick a password, enter it twice and press Ok to confirm.</source>
+        <translation>Wählen Sie ein Passwort, geben Sie es zweimal ein und drücken Sie auf Ok um Ihre Wahl zu bestätigen.</translation>
+    </message>
+    <message>
+        <location filename="../passworddialog.h" line="35"/>
+        <source>Enter your current password.</source>
+        <translation>Geben Sie Ihr aktuelles Passwort ein.</translation>
+    </message>
 </context>
 <context>
     <name>SettingsDialog</name>

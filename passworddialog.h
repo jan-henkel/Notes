@@ -31,8 +31,8 @@ private slots:
 
 private:
     Mode mode_;
-    QString windowTitleString_[3]={"Change password","Create master key","Enter password"};
-    QString labelString_[3]={"Enter your new password twice and press Ok to confirm.", "Pick a password, enter it twice and press Ok to confirm.", "Enter your current password."};
+    QString windowTitleString_[3]={tr("Change password"),tr("Create master key"),tr("Enter password")};
+    QString labelString_[3]={tr("Enter your new password twice and press Ok to confirm."), tr("Pick a password, enter it twice and press Ok to confirm."), tr("Enter your current password.")};
     bool confirmPW_[3]={true,true,false};
     bool createMasterKeyOption_[3]={true,false,false};
     Ui::PasswordDialog *ui;
