@@ -47,7 +47,8 @@ void SettingsDialog::showSettings(NotesInternals *notesInternals, std::vector<Ca
     settings.endGroup();
 
 
-
+    ui->languageComboBox->clear();
+    ui->languageComboBox->addItem("English");
     QDirIterator langFiles("./localization",QStringList()<<"*.qm");
     while(langFiles.hasNext())
     {
