@@ -25,8 +25,9 @@ NotizenMainWindow::NotizenMainWindow(QWidget *parent) :
     //set default char format. to do: read this from a config file instead of hardcoding
     defaultTextCharFormat=ui->entryTextEdit->currentCharFormat();
 
-    //set up event filter for category combobox (as of now unnecessary) and entry list
+    //set up event filter for category combobox (as of now unnecessary), entry filter/search box and entry list
     ui->categoriesComboBox->installEventFilter(this);
+    ui->entryFilterLineEdit->installEventFilter(this);
     ui->entriesListWidget->installEventFilter(this);
     this->installEventFilter(this);
 
@@ -588,7 +589,20 @@ bool NotizenMainWindow::eventFilter(QObject *target, QEvent *e)
             }
         }
     }
-
+    //select search text when entry search box gains focus
+    if(target==ui->entryFilterLineEdit)
+    {
+        static bool selected=false;
+        if(e->type()==QEvent::FocusOut)
+            selected=false;
+        if(e->type()==QEvent::MouseButtonPress && !selected && ui->entryFilterLineEdit->selectionStart()!=-1)
+            selected=true;
+        if(e->type()==QEvent::MouseButtonRelease && !selected)
+        {
+            ui->entryFilterLineEdit->selectAll();
+            selected=true;
+        }
+    }
     if(e->type()==QEvent::KeyPress && ((QKeyEvent*)e)->matches(QKeySequence::Save))
         saveEntry();
 
