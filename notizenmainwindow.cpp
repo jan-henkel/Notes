@@ -504,7 +504,6 @@ void NotizenMainWindow::editEntryTextURL()
     if(changeURLDialog.textValue()=="")
     {
         f.setAnchor(false);
-        f.setAnchorName("");
         f.setAnchorHref("");
         //set char format for current selection
         ui->entryTextEdit->textCursor().setCharFormat(f);
@@ -513,7 +512,6 @@ void NotizenMainWindow::editEntryTextURL()
     else
     {
         f.setAnchor(true);
-        f.setAnchorName(ui->entryTextEdit->textCursor().selectedText());
         f.setAnchorHref(changeURLDialog.textValue());
         f.setFontUnderline(true);
         f.setForeground(Qt::blue);
@@ -804,7 +802,6 @@ void NotizenMainWindow::on_makeLinkCheckBox_clicked(bool checked)
     if(f.anchorHref()!="" || f.anchorName()!="" || f.isAnchor())
     {
         f.setAnchor(false);
-        f.setAnchorName("");
         f.setAnchorHref("");
         f.setFontUnderline(false);
         ui->entryTextEdit->textCursor().setCharFormat(f);
@@ -812,7 +809,6 @@ void NotizenMainWindow::on_makeLinkCheckBox_clicked(bool checked)
     else
     {
         f.setAnchor(true);
-        f.setAnchorName(ui->entryTextEdit->textCursor().selectedText());
         f.setAnchorHref(ui->entryTextEdit->textCursor().selectedText());
         f.setFontUnderline(true);
         f.setForeground(Qt::blue);
