@@ -15,6 +15,7 @@
 #include <Qca-qt5/QtCrypto/QtCrypto>
 #include <QAbstractListModel>
 #include <QMetaType>
+#include <QRegularExpression>
 #include "cryptointerface.h"
 
 class Entry;

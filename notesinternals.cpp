@@ -536,12 +536,20 @@ bool NotesInternals::updateEntryFile(CategoryPair categoryPair, EntryPair entryP
     hashFunction_.clear();
     hashFunction_.update(content);
     QString hash=QString(hashFunction_.final().toByteArray().toHex());
-    QString fileName=hash+QString(".entry");
+    QString fileName;
+    QRegularExpression regExp("[^A-Za-z0-9]");
+    if(getCategoryEncrypted(categoryPair))
+        fileName=hash+QString(".entry");
+    else
+        fileName=getEntryName(entryPair).replace(regExp,"").left(27)+"-"+hash.left(5)+".entry";
     file.setFileName(getCategoryFolderName(categoryPair)+fileName);
     int i=0;
     while(file.exists())
     {
-        fileName=hash+QString("-")+QString::number(i++)+QString(".entry");
+        if(getCategoryEncrypted(categoryPair))
+            fileName=hash+QString("-")+QString::number(i++)+QString(".entry");
+        else
+            fileName=getEntryName(entryPair).replace(regExp,"").left(27)+"-"+hash.left(5)+QString("-")+QString::number(i++)+".entry";
         file.setFileName(getCategoryFolderName(categoryPair)+fileName);
     }
 
@@ -593,12 +601,22 @@ bool NotesInternals::updateCategoryFile(CategoryPair categoryPair)
     QString hash=QString(hashFunction_.final().toByteArray().toHex());
     //pick ./enc or ./plain subdirectories depending on encryption boolean
     QString pre=getCategoryEncrypted(categoryPair)?QString("./enc/"):QString("./plain/");
-    QString folderName=pre+hash+QString("/");
+
+    QString folderName;
+    QRegularExpression regExp("[^A-Za-z0-9]");
+    if(getCategoryEncrypted(categoryPair))
+        folderName=pre+hash+QString("/");
+    else
+        folderName=pre+getCategoryName(categoryPair).replace(regExp,"").left(27)+"-"+hash.left(5)+QString("/");
+
     QDir dir(folderName);
     int i=0;
     while(dir.exists())
     {
-        folderName=pre+hash+QString("-")+QString::number(i++)+QString("/");
+        if(getCategoryEncrypted(categoryPair))
+            folderName=pre+hash+QString("-")+QString::number(i++)+QString("/");
+        else
+            folderName=pre+getCategoryName(categoryPair).replace(regExp,"").left(27)+"-"+hash.left(5)+QString("-")+QString::number(i++)+QString("/");
         dir.setPath(folderName);
     }
 
