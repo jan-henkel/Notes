@@ -661,6 +661,7 @@ void NotizenMainWindow::on_entryFilterLineEdit_textEdited(const QString &arg1)
     }
     else if(ui->entryFilterLineEdit->text()!="")
     {
+        saveChanges();
         int j=-1;
         int k=-1;
         for(int i=0;i<(int)entryPairList.size() && j==-1;++i)
