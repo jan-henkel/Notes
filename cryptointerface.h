@@ -12,13 +12,10 @@
 #include <cryptopp/misc.h>
 #include <cryptopp/modes.h>
 #include <cryptopp/osrng.h>
+#include <cryptopp/filters.h>
 #include <QFile>
 #include <QByteArray>
 #include <algorithm>
-
-class AES256 : public CryptoPP::AES {
-    static const int BLOCKSIZE=32;
-};
 
 class CryptoInterface : public QObject
 {

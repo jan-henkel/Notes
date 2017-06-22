@@ -48,19 +48,25 @@ bool CryptoInterface::verifyK2(const CryptoPP::SecByteBlock &hk2, CryptoPP::SecB
 void CryptoInterface::decryptData(const CryptoPP::SecByteBlock &k1, const CryptoPP::SecByteBlock &iv, const CryptoPP::SecByteBlock &ciphertext, CryptoPP::SecByteBlock &rPlaintext)
 {
     //aes-decrypt ciphertext using key k1, initialization vector iv. save to rPlaintext
-    CryptoPP::CBC_Mode<AES256>::Decryption decrypt;
-    rPlaintext.resize((ciphertext.SizeInBytes()/16-1)*16);
+    CryptoPP::CBC_Mode<CryptoPP::AES>::Decryption decrypt;
     decrypt.SetKeyWithIV(k1.BytePtr(),k1.SizeInBytes(),iv.BytePtr(),iv.SizeInBytes());
-    decrypt.ProcessData(rPlaintext.BytePtr(),ciphertext.BytePtr(),ciphertext.SizeInBytes());
+    CryptoPP::StreamTransformationFilter decryptor(decrypt,NULL);
+    decryptor.Put(ciphertext.BytePtr(),ciphertext.SizeInBytes());
+    decryptor.MessageEnd();
+    rPlaintext.resize(decryptor.MaxRetrievable());
+    decryptor.Get(rPlaintext.BytePtr(),rPlaintext.SizeInBytes());
 }
 
 void CryptoInterface::encryptData(const CryptoPP::SecByteBlock &k1, const CryptoPP::SecByteBlock &iv, CryptoPP::SecByteBlock &rCiphertext, const CryptoPP::SecByteBlock &plaintext)
 {
     //aes-encrypt plaintext using key k1, initialization vector iv. save to rCiphertext
-    CryptoPP::CBC_Mode<AES256>::Encryption encrypt;
-    rCiphertext.resize((plaintext.SizeInBytes()/16+1)*16);
+    CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption encrypt;
     encrypt.SetKeyWithIV(k1.BytePtr(),k1.SizeInBytes(),iv.BytePtr(),iv.SizeInBytes());
-    encrypt.ProcessData(rCiphertext.BytePtr(),plaintext.BytePtr(),plaintext.SizeInBytes());
+    CryptoPP::StreamTransformationFilter encryptor(encrypt,NULL);
+    encryptor.Put(plaintext.BytePtr(),plaintext.SizeInBytes());
+    encryptor.MessageEnd();
+    rCiphertext.resize(encryptor.MaxRetrievable());
+    encryptor.Get(rCiphertext.BytePtr(),rCiphertext.SizeInBytes());
 }
 
 CryptoInterface::Result CryptoInterface::readMasterKey(const CryptoPP::SecByteBlock &password, QString fileName)
