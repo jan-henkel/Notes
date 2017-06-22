@@ -13,7 +13,6 @@
 #include <QDir>
 #include <QDirIterator>
 #include <QDateTime>
-#include <Qca-qt5/QtCrypto/QtCrypto>
 #include <QAbstractListModel>
 #include <QMetaType>
 #include <QRegularExpression>
@@ -78,7 +77,7 @@ class EntryContent
     friend class NotesInternals;
     friend class CategoryContent;
 private:
-    QCA::SecureArray text_; //unencrypted text of the entry
+    CryptoPP::SecByteBlock text_; //unencrypted text of the entry
     QString fileName_;  //file name without path associated with the entry
 };
 
@@ -126,16 +125,16 @@ public:
     const Entry moveEntry(Category &oldCategory, Entry &entry, Category &newCategory);
     //change entry text of entry specified by (category,entry) to newEntryText.
     //return entry if successful, invalid otherwise
-    const Entry modifyEntryText(Category category, Entry entry, QCA::SecureArray newEntryText);
+    const Entry modifyEntryText(Category category, Entry entry, CryptoPP::SecByteBlock newEntryText);
 
     //enable encryption, add encrypted categories. returns false if password is wrong or not set
-    bool enableEncryption(const QCA::SecureArray & password);
+    bool enableEncryption(const CryptoPP::SecByteBlock & password);
     //disable encryption, remove encrypted categories
     void disableEncryption();
 
     //create new password and master key
-    bool createNewMasterKey(const QCA::SecureArray & newPassword);
-    bool createNewPassword(const QCA::SecureArray & newPassword);
+    bool createNewMasterKey(const CryptoPP::SecByteBlock & newPassword);
+    bool createNewPassword(const CryptoPP::SecByteBlock &newPassword);
     bool masterKeyExists()
         {return QFile("./enc/masterkey").exists();}
 
@@ -153,8 +152,8 @@ public:
         {return category.content?category.content->encrypted_:false;}
     static QString getPath(const Category &category)
         {return category.content?category.content->path_:QString("");}
-    static QCA::SecureArray getText(const Entry &entry)
-        {return entry.content?entry.content->text_:QCA::SecureArray(0,0);}
+    static CryptoPP::SecByteBlock getText(const Entry &entry)
+        {return entry.content?entry.content->text_:CryptoPP::SecByteBlock(0,0);}
     static QString getFileName(const Entry &entry)
         {return entry.content?entry.content->fileName_:QString("");}
 
@@ -192,8 +191,9 @@ public:
         {return renameEntry(currentCategory_,currentEntry_,newEntryName);}
     const Entry moveCurrentEntry(Category &newCategory)
         {return moveEntry(currentCategory_,currentEntry_,newCategory);}
-    const Entry modifyCurrentEntryText(QCA::SecureArray newEntryText)
+    const Entry modifyCurrentEntryText(CryptoPP::SecByteBlock newEntryText)
         {return modifyEntryText(currentCategory_,currentEntry_,newEntryText);}
+
 signals:
     //signals to keep track of changes in category set, selected items
     //meant to notify GUI
@@ -206,7 +206,7 @@ private:
     //crypto interface to take care of encrypted files
     CryptoInterface cryptoInterface_;
     //hash function used in naming files and folders
-    QCA::Hash hashFunction_;
+    CryptoPP::SHA256 hashFunction_;
 
     //set of categories
     CategorySet categorySet_;

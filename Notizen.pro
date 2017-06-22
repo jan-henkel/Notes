@@ -12,7 +12,6 @@ win32:RC_ICONS += icons/notepad.ico
 
 TARGET = Notizen
 TEMPLATE = app
-CONFIG += crypto
 CONFIG += c++11
 CONFIG += -no-opengl
 
@@ -42,3 +41,5 @@ RESOURCES += \
     icons.qrc
 
 TRANSLATIONS = localization/German.ts
+
+LIBS += -lcryptopp
