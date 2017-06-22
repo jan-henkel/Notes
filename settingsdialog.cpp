@@ -13,10 +13,10 @@ SettingsDialog::~SettingsDialog()
     delete ui;
 }
 
-void SettingsDialog::showSettings(NotesInternals *notesInternals, std::vector<CategoryPair> *categoryPairList)
+void SettingsDialog::showSettings(NotesInternals *notesInternals, std::vector<Category> *categoryList)
 {
     notesInternals_=notesInternals;
-    categoryPairList_=categoryPairList;
+    categoryList_=categoryList;
     untickCheckboxes();
     QSettings settings("settings.ini",QSettings::IniFormat,this);
 
@@ -68,10 +68,10 @@ void SettingsDialog::showSettings(NotesInternals *notesInternals, std::vector<Ca
     int j=-1;
     ui->defaultCategoryComboBox->clear();
     ui->defaultCategoryComboBox->addItem("");
-    for(int i=0;i<(int)categoryPairList_->size();++i)
+    for(int i=0;i<(int)categoryList_->size();++i)
     {
-        ui->defaultCategoryComboBox->addItem(notesInternals->getCategoryName((*categoryPairList_)[i]));
-        if(NotesInternals::getCategoryName((*categoryPairList_)[i])==categoryName && NotesInternals::getCategoryDate((*categoryPairList_)[i]).toString()==categoryDateTime)
+        ui->defaultCategoryComboBox->addItem((*categoryList_)[i].name);
+        if((*categoryList_)[i].name==categoryName && (*categoryList_)[i].date.toString()==categoryDateTime)
             j=i;
     }
     ui->defaultCategoryComboBox->setCurrentIndex(j+1);
@@ -143,10 +143,10 @@ void SettingsDialog::on_applyPushButton_clicked()
         NotizenTextEdit edit(this);
         for(CategorySet::const_iterator i=notesInternals_->categorySet()->cbegin();i!=notesInternals_->categorySet()->cend();++i)
         {
-            const Category *category=notesInternals_->getCategory(*i);
+            std::shared_ptr<const CategoryContent> category=notesInternals_->getContent(*i);
             for(EntrySet::const_iterator j=category->entrySet()->cbegin();j!=category->entrySet()->cend();++j)
             {
-                edit.setHtml(notesInternals_->getEntryText(*j));
+                edit.setHtml(notesInternals_->getText(*j));
                 edit.selectAll();
                 if(ui->fontFamilyApplyAllCheckBox->isChecked())
                     edit.setFontFamily(ui->fontFamilyComboBox->currentFont().family());
@@ -180,7 +180,7 @@ void SettingsDialog::on_applyPushButton_2_clicked()
     if(ui->defaultCategoryComboBox->currentIndex()>0)
     {
         settings.setValue("default_category_name",ui->defaultCategoryComboBox->currentText());
-        settings.setValue("default_category_date_time",NotesInternals::getCategoryDate((*categoryPairList_)[ui->defaultCategoryComboBox->currentIndex()-1]).toString());
+        settings.setValue("default_category_date_time",(*categoryList_)[ui->defaultCategoryComboBox->currentIndex()-1].date.toString());
     }
     else
     {

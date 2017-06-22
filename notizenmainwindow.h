@@ -60,7 +60,7 @@ public:
     void renameCategory();
     void renameEntry();
     void toggleCategoryEncryption();
-    void moveEntry(CategoryPair newCategory);
+    void moveEntry(Category newCategory);
     void selectCategory();
     void selectEntry();
     //encryption
@@ -101,10 +101,10 @@ private:
     //settings dialog, non-modal
     SettingsDialog *settingsDialog;
 
-    //vectors containing CategoryPair and EntryPair elements corresponding to the categories and entries
+    //vectors containing Category and Entry elements corresponding to the ones
     //listed in UI-widgets. used to interact with notesInternals object
-    std::vector<CategoryPair> categoryPairList;
-    std::vector<EntryPair> entryPairList;
+    std::vector<Category> categoryList;
+    std::vector<Entry> entryList;
 
     //overload showEvent() for the purpose of loading settings once the window is visible (important, because frameGeometry() will return spurious values otherwise)
     void showEvent(QShowEvent *e);
