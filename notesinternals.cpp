@@ -360,7 +360,7 @@ void NotesInternals::loadCategories(bool encrypted)
     std::shared_ptr<EntryContent> entryContent;
 
     //initialization vector in case of encryption. located at start of the file
-    CryptoPP::SecByteBlock iv(32);
+    CryptoPP::SecByteBlock iv(16);
 
     //integers to store line break positions
     int i,j;
@@ -380,8 +380,10 @@ void NotesInternals::loadCategories(bool encrypted)
                 //read category file
                 file.open(QFile::ReadOnly);
                 //in case of encryption, read initialization vector
-                if(encrypted)
-                    iv.Assign((const byte*)file.read(32).data(),32);
+                if(encrypted) {
+                    iv.Assign((const byte*)file.read(16).data(),16);
+                    file.read(16);
+                }
                 //read rest of content
                 content=file.readAll();
                 file.close();
@@ -419,8 +421,10 @@ void NotesInternals::loadCategories(bool encrypted)
                     file.setFileName(filePath);
                     file.open(QFile::ReadOnly);
                     //read iv if encrypted
-                    if(encrypted)
-                        iv.Assign((const byte*)file.read(32).data(),32);
+                    if(encrypted) {
+                        iv.Assign((const byte*)file.read(16).data(),16);
+                        file.read(16);
+                    }
                     //read rest
                     content=file.readAll();
                     file.close();
@@ -505,9 +509,9 @@ bool NotesInternals::updateEntryFile(Category category, Entry entry)
     //encrypt content if category is set to encrypted, otherwise use plaintext
     if(isEncrypted(category))
     {
-        CryptoPP::SecByteBlock iv(32);
+        CryptoPP::SecByteBlock iv(16);
         CryptoInterface::randomize(iv);
-        content=CryptoInterface::toPermByteArray(iv+cryptoInterface_.encrypt(plain,iv));
+        content=CryptoInterface::toPermByteArray(iv+iv+cryptoInterface_.encrypt(plain,iv));
     }
     else
         content=CryptoInterface::toPermByteArray(plain);
@@ -571,9 +575,9 @@ bool NotesInternals::updateCategoryFile(Category category)
     QByteArray plain=(category.name+QString("\n")+category.date.toString()).toUtf8();
     if(isEncrypted(category))
     {
-        CryptoPP::SecByteBlock iv(32);
+        CryptoPP::SecByteBlock iv(16);
         CryptoInterface::randomize(iv);
-        content=CryptoInterface::toPermByteArray(iv+cryptoInterface_.encrypt(CryptoInterface::toSecBlock(plain),iv));
+        content=CryptoInterface::toPermByteArray(iv+iv+cryptoInterface_.encrypt(CryptoInterface::toSecBlock(plain),iv));
     }
     else
         content=plain;

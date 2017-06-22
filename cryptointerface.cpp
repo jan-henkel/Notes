@@ -50,9 +50,7 @@ void CryptoInterface::decryptData(const CryptoPP::SecByteBlock &k1, const Crypto
     //aes-decrypt ciphertext using key k1, initialization vector iv. save to rPlaintext
     CryptoPP::CBC_Mode<AES256>::Decryption decrypt;
     rPlaintext.resize((ciphertext.SizeInBytes()/16-1)*16);
-    decrypt.SetKeyWithIV(k1.BytePtr(),k1.SizeInBytes(),iv.BytePtr(),std::min((int)iv.SizeInBytes(),16));
-    //for(int i=16;i<iv.SizeInBytes();++i)
-    //    decrypt.ProcessByte(iv[i]);
+    decrypt.SetKeyWithIV(k1.BytePtr(),k1.SizeInBytes(),iv.BytePtr(),iv.SizeInBytes());
     decrypt.ProcessData(rPlaintext.BytePtr(),ciphertext.BytePtr(),ciphertext.SizeInBytes());
 }
 
@@ -61,9 +59,7 @@ void CryptoInterface::encryptData(const CryptoPP::SecByteBlock &k1, const Crypto
     //aes-encrypt plaintext using key k1, initialization vector iv. save to rCiphertext
     CryptoPP::CBC_Mode<AES256>::Encryption encrypt;
     rCiphertext.resize((plaintext.SizeInBytes()/16+1)*16);
-    encrypt.SetKeyWithIV(k1.BytePtr(),k1.SizeInBytes(),iv.BytePtr(),std::min((int)iv.SizeInBytes(),16));
-    //for(int i=16;i<iv.SizeInBytes();++i)
-    //    encrypt.ProcessByte(iv[i]);
+    encrypt.SetKeyWithIV(k1.BytePtr(),k1.SizeInBytes(),iv.BytePtr(),iv.SizeInBytes());
     encrypt.ProcessData(rCiphertext.BytePtr(),plaintext.BytePtr(),plaintext.SizeInBytes());
 }
 
