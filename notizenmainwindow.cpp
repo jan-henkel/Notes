@@ -246,8 +246,8 @@ void NotizenMainWindow::toggleEncryption()
     {
         PasswordDialog dlg(this);
         dlg.setModal(true);
-        QObject::connect(&dlg,SIGNAL(newPasswordSet(QCA::SecureArray,bool)),this,SLOT(createNewPassword(QCA::SecureArray,bool)));
-        QObject::connect(&dlg,SIGNAL(passwordEntered(QCA::SecureArray)),this,SLOT(passwordEntered(QCA::SecureArray)));
+        QObject::connect(&dlg,SIGNAL(newPasswordSet(CryptoPP::SecByteBlock,bool)),this,SLOT(createNewPassword(CryptoPP::SecByteBlock,bool)));
+        QObject::connect(&dlg,SIGNAL(passwordEntered(CryptoPP::SecByteBlock)),this,SLOT(passwordEntered(CryptoPP::SecByteBlock)));
         QObject::connect(&dlg,SIGNAL(passwordMismatch()),this,SLOT(passwordMismatch()));
         if(!notesInternals.masterKeyExists())
         {
@@ -680,7 +680,7 @@ void NotizenMainWindow::on_entryFilterLineEdit_textEdited(const QString &arg1)
     syncModelAndUI();
 }
 
-void NotizenMainWindow::createNewPassword(QCA::SecureArray password, bool createMasterKey)
+void NotizenMainWindow::createNewPassword(CryptoPP::SecByteBlock password, bool createMasterKey)
 {
     if(createMasterKey)
     {
@@ -702,7 +702,7 @@ void NotizenMainWindow::createNewPassword(QCA::SecureArray password, bool create
     }
 }
 
-void NotizenMainWindow::passwordEntered(QCA::SecureArray password)
+void NotizenMainWindow::passwordEntered(CryptoPP::SecByteBlock password)
 {
     if(!notesInternals.enableEncryption(password))
     {
@@ -729,8 +729,8 @@ void NotizenMainWindow::settingsChangePassword()
 {
     PasswordDialog dlg(this);
     dlg.setModal(true);
-    QObject::connect(&dlg,SIGNAL(newPasswordSet(QCA::SecureArray,bool)),this,SLOT(createNewPassword(QCA::SecureArray,bool)));
-    QObject::connect(&dlg,SIGNAL(passwordEntered(QCA::SecureArray)),this,SLOT(passwordEntered(QCA::SecureArray)));
+    QObject::connect(&dlg,SIGNAL(newPasswordSet(CryptoPP::SecByteBlock,bool)),this,SLOT(createNewPassword(CryptoPP::SecByteBlock,bool)));
+    QObject::connect(&dlg,SIGNAL(passwordEntered(CryptoPP::SecByteBlock)),this,SLOT(passwordEntered(CryptoPP::SecByteBlock)));
     QObject::connect(&dlg,SIGNAL(passwordMismatch()),this,SLOT(passwordMismatch()));
     if(!notesInternals.encryptionEnabled())
     {

@@ -2,9 +2,10 @@
 #define NEWPASSWORDDIALOG_H
 
 #include <QDialog>
-#include <QtCrypto>
 #include <QKeyEvent>
 #include <QEvent>
+#include "cryptointerface.h"
+
 namespace Ui {
 class PasswordDialog;
 }
@@ -20,8 +21,8 @@ public:
     int showWithMode(Mode mode);
     ~PasswordDialog();
 signals:
-    void newPasswordSet(QCA::SecureArray password,bool generateMasterKey);
-    void passwordEntered(QCA::SecureArray password);
+    void newPasswordSet(CryptoPP::SecByteBlock password,bool generateMasterKey);
+    void passwordEntered(CryptoPP::SecByteBlock password);
     void passwordMismatch();
 private slots:
     void on_showPassword_clicked(bool checked);

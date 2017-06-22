@@ -1,10 +1,7 @@
 #include "notesinternals.h"
 
-
-
-NotesInternals::NotesInternals(QObject *parent) : QObject(parent),hashFunction_("sha256"),currentCategory_(invalidCategory()),currentEntry_(invalidEntry()),encryptionEnabled_(false)
+NotesInternals::NotesInternals(QObject *parent) : QObject(parent),currentCategory_(invalidCategory()),currentEntry_(invalidEntry()),encryptionEnabled_(false)
 {
-    QCA::init();
     if(!QDir("./plain").exists())
         QDir(".").mkdir("plain");
     if(!QDir("./enc").exists())
@@ -211,7 +208,7 @@ const Entry NotesInternals::moveEntry(Category &oldCategory, Entry &entry, Categ
     return entry;
 }
 
-const Entry NotesInternals::modifyEntryText(Category category, Entry entry, QCA::SecureArray newEntryText)
+const Entry NotesInternals::modifyEntryText(Category category, Entry entry, CryptoPP::SecByteBlock newEntryText)
 {
     //return invalid entry in case (category,entry) does not represent a valid entry
     if(!isValid(category,entry))
@@ -231,7 +228,7 @@ const Entry NotesInternals::modifyEntryText(Category category, Entry entry, QCA:
     return entry;
 }
 
-bool NotesInternals::enableEncryption(const QCA::SecureArray &password)
+bool NotesInternals::enableEncryption(const CryptoPP::SecByteBlock &password)
 {
     if(encryptionEnabled_)
         return true;
@@ -253,7 +250,7 @@ void NotesInternals::disableEncryption()
     encryptionEnabled_=false;
 }
 
-bool NotesInternals::createNewMasterKey(const QCA::SecureArray &newPassword)
+bool NotesInternals::createNewMasterKey(const CryptoPP::SecByteBlock &newPassword)
 {
     //create new master key and save it with newPassword
     cryptoInterface_.setRandomMasterKey();
@@ -274,7 +271,7 @@ bool NotesInternals::createNewMasterKey(const QCA::SecureArray &newPassword)
     return true;
 }
 
-bool NotesInternals::createNewPassword(const QCA::SecureArray &newPassword)
+bool NotesInternals::createNewPassword(const CryptoPP::SecByteBlock &newPassword)
 {
     //save existing master key with newPassword
     if(cryptoInterface_.masterKeySet()==false)
@@ -345,7 +342,8 @@ void NotesInternals::loadCategories(bool encrypted)
 
 
     QByteArray content;
-    QCA::SecureArray securecontent;
+    CryptoPP::SecByteBlock securecontent;
+
 
     //folderName holds name of category folders, filePath holds full path (relative to application path) of entries
     QString folderName,filePath;
@@ -355,14 +353,14 @@ void NotesInternals::loadCategories(bool encrypted)
     QString categoryDateTime;
     QString entryName;
     QString entryDateTime;
-    QCA::SecureArray entryText;
+    CryptoPP::SecByteBlock entryText;
 
     //category and entry pointers to create and temporarily point to new objects
     std::shared_ptr<CategoryContent> categoryContent;
     std::shared_ptr<EntryContent> entryContent;
 
     //initialization vector in case of encryption. located at start of the file
-    QCA::InitializationVector iv;
+    CryptoPP::SecByteBlock iv(32);
 
     //integers to store line break positions
     int i,j;
@@ -383,7 +381,7 @@ void NotesInternals::loadCategories(bool encrypted)
                 file.open(QFile::ReadOnly);
                 //in case of encryption, read initialization vector
                 if(encrypted)
-                    iv=file.read(32);
+                    iv.Assign((const byte*)file.read(32).data(),32);
                 //read rest of content
                 content=file.readAll();
                 file.close();
@@ -391,8 +389,8 @@ void NotesInternals::loadCategories(bool encrypted)
                 //decrypt content if necessary
                 if(encrypted)
                 {
-                    securecontent=cryptoInterface_.decrypt(QCA::SecureArray(content),iv);
-                    content=QByteArray(securecontent.constData(),securecontent.size());
+                    cryptoInterface_.decrypt(CryptoInterface::toSecBlock(content),securecontent,iv);
+                    content=CryptoInterface::toTmpByteArray(securecontent);
                 }
 
                 //find line break, set categoryName to first line
@@ -422,7 +420,7 @@ void NotesInternals::loadCategories(bool encrypted)
                     file.open(QFile::ReadOnly);
                     //read iv if encrypted
                     if(encrypted)
-                        iv=file.read(32);
+                        iv.Assign((const byte*)file.read(32).data(),32);
                     //read rest
                     content=file.readAll();
                     file.close();
@@ -430,20 +428,20 @@ void NotesInternals::loadCategories(bool encrypted)
                     //decrypt if necessary
                     if(encrypted)
                     {
-                        securecontent=cryptoInterface_.decrypt(QCA::SecureArray(content),iv);
-                        content=QByteArray(securecontent.constData(),securecontent.size());
+                        cryptoInterface_.decrypt(CryptoInterface::toSecBlock(content),securecontent,iv);
+                        content=CryptoInterface::toTmpByteArray(securecontent);
                     }
 
                     //find first and second newline. first line is entry name, second is creation date, everything from the 3rd line on is entry text
                     QByteArray content1;
-                    QByteArray content2;
                     i=content.indexOf('\n');
                     entryName=content.mid(0,i);
-                    content1=QByteArray(content.constData()+i+1);
+                    content1=QByteArray::fromRawData(content.constData()+i+1,content.size()-(i+1));
                     j=content1.indexOf('\n');
                     entryDateTime=content1.mid(0,j);
-                    content2=QByteArray(content1.constData()+j+1);
-                    entryText=QCA::SecureArray(content2);
+                    entryText=CryptoPP::SecByteBlock((const byte*)(content1.constData()+j+1),content1.size()-(j+1));
+                    content1=QByteArray();
+                    content=QByteArray();
                     //create new entry object corresponding to current file
                     entryContent=std::make_shared<EntryContent>();
                     //set content accordingly, remove path of subdirectory from filePath to obtain fileName_
@@ -498,19 +496,21 @@ bool NotesInternals::updateEntryFile(Category category, Entry entry)
 
     //prepare plaintext content
     QByteArray content;
-    QCA::SecureArray plain=QCA::SecureArray(entry.name.toUtf8())
-                            +=QCA::SecureArray(QString("\n").toUtf8())
-                            +=QCA::SecureArray(entry.date.toString().toUtf8())
-                            +=QCA::SecureArray(QString("\n").toUtf8())
-                            +=getText(entry);
+
+    CryptoPP::SecByteBlock plain=CryptoInterface::toSecBlock(entry.name.toUtf8())
+                            +CryptoInterface::toSecBlock(QString("\n").toUtf8())
+                            +CryptoInterface::toSecBlock(entry.date.toString().toUtf8())
+                            +CryptoInterface::toSecBlock(QString("\n").toUtf8())
+                            +getText(entry);
     //encrypt content if category is set to encrypted, otherwise use plaintext
     if(isEncrypted(category))
     {
-        QCA::InitializationVector iv(32);
-        content=iv.toByteArray()+cryptoInterface_.encrypt(plain,iv).toByteArray();
+        CryptoPP::SecByteBlock iv(32);
+        CryptoInterface::randomize(iv);
+        content=CryptoInterface::toPermByteArray(iv+cryptoInterface_.encrypt(plain,iv));
     }
     else
-        content=plain.toByteArray();
+        content=CryptoInterface::toPermByteArray(plain);
 
     //backup previous file if there is one
     QFile file;
@@ -521,9 +521,11 @@ bool NotesInternals::updateEntryFile(Category category, Entry entry)
     }
 
     //use hash of content as new filename (with failsafe in case of collision)
-    hashFunction_.clear();
-    hashFunction_.update(content);
-    QString hash=QString(hashFunction_.final().toByteArray().toHex());
+    hashFunction_.Restart();
+    hashFunction_.Update((const byte*)content.constData(),content.size());
+    QByteArray digest(hashFunction_.DigestSize(),(char)0);
+    hashFunction_.Final((byte*)digest.data());
+    QString hash=QString(digest.toHex());
     QString fileName;
     QRegularExpression regExp("[^A-Za-z0-9]");
     QString entryName=entry.name; //replace has no const qualifier, therefore introduce temporary non-const string
@@ -569,8 +571,9 @@ bool NotesInternals::updateCategoryFile(Category category)
     QByteArray plain=(category.name+QString("\n")+category.date.toString()).toUtf8();
     if(isEncrypted(category))
     {
-        QCA::InitializationVector iv(32);
-        content=iv.toByteArray()+cryptoInterface_.encrypt(QCA::SecureArray(plain),iv).toByteArray();
+        CryptoPP::SecByteBlock iv(32);
+        CryptoInterface::randomize(iv);
+        content=CryptoInterface::toPermByteArray(iv+cryptoInterface_.encrypt(CryptoInterface::toSecBlock(plain),iv));
     }
     else
         content=plain;
@@ -585,9 +588,11 @@ bool NotesInternals::updateCategoryFile(Category category)
     }
 
     //use hash of content for new folder name, again with failsafe for collisions
-    hashFunction_.clear();
-    hashFunction_.update(content);
-    QString hash=QString(hashFunction_.final().toByteArray().toHex());
+    hashFunction_.Restart();
+    hashFunction_.Update((const byte*)content.constData(),content.size());
+    QByteArray digest(hashFunction_.DigestSize(),(char)0);
+    hashFunction_.Final((byte*)digest.data());
+    QString hash=QString(digest.toHex());
     //pick ./enc or ./plain subdirectories depending on encryption boolean
     QString pre=isEncrypted(category)?QString("./enc/"):QString("./plain/");
 

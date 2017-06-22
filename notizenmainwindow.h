@@ -148,9 +148,9 @@ private slots:
     //slots to be called by password dialog
 
     //sets a new password. also creates a new master key if desired (in which case all encrypted entries are written to files again, using the new master key)
-    void createNewPassword(QCA::SecureArray password, bool createMasterKey);
+    void createNewPassword(CryptoPP::SecByteBlock password, bool createMasterKey);
     //attempts to use entered password to decrypt
-    void passwordEntered(QCA::SecureArray password);
+    void passwordEntered(CryptoPP::SecByteBlock password);
     //notifies the user that the contents of the 2 password fields don't match (when setting a new password)
     void passwordMismatch();
 

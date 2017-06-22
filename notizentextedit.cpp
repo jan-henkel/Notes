@@ -5,19 +5,19 @@ NotizenTextEdit::NotizenTextEdit(QWidget *parent):QTextBrowser(parent)
     QObject::connect((QTextEdit*)this,SIGNAL(currentCharFormatChanged(QTextCharFormat)),this,SLOT(textCharFormatChanged(QTextCharFormat)));
 }
 
-QCA::SecureArray NotizenTextEdit::toHtml() const
+CryptoPP::SecByteBlock NotizenTextEdit::toHtml() const
 {
-    return QCA::SecureArray(((QTextBrowser*)this)->toHtml().toUtf8());
+    return CryptoInterface::toSecBlock(((QTextBrowser*)this)->toHtml().toUtf8());
 }
 
-void NotizenTextEdit::insertHtml(const QCA::SecureArray &text)
+void NotizenTextEdit::insertHtml(const CryptoPP::SecByteBlock &text)
 {
-    ((QTextBrowser*)this)->insertHtml(QString(QByteArray(text.constData(),text.size())));
+    ((QTextBrowser*)this)->insertHtml(QString(CryptoInterface::toPermByteArray(text)));
 }
 
-void NotizenTextEdit::setHtml(const QCA::SecureArray &text)
+void NotizenTextEdit::setHtml(const CryptoPP::SecByteBlock &text)
 {
-    ((QTextBrowser*)this)->setHtml(QString(QByteArray(text.constData(),text.size())));
+    ((QTextBrowser*)this)->setHtml(QString(CryptoInterface::toPermByteArray(text)));
 }
 
 void NotizenTextEdit::keyPressEvent(QKeyEvent *ev)

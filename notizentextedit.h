@@ -7,15 +7,16 @@
 #include <QTextEdit>
 #include <QMouseEvent>
 #include <QTextCursor>
-#include <QtCrypto>
+#include "cryptointerface.h"
+
 class NotizenTextEdit : public QTextBrowser
 {
     Q_OBJECT
 public:
     NotizenTextEdit(QWidget *parent);
-    QCA::SecureArray toHtml() const;
-    void insertHtml(const QCA::SecureArray &text);
-    void setHtml(const QCA::SecureArray &text);
+    CryptoPP::SecByteBlock toHtml() const;
+    void insertHtml(const CryptoPP::SecByteBlock &text);
+    void setHtml(const CryptoPP::SecByteBlock &text);
 protected:
     void keyPressEvent(QKeyEvent *ev);
 private:
