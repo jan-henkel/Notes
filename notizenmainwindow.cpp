@@ -84,15 +84,15 @@ void NotizenMainWindow::removeEntry()
     if(confirmDelete)
         if(QMessageBox(QMessageBox::Question,tr("Delete entry"),tr("Are you sure?"),QMessageBox::Yes | QMessageBox::No,this).exec()!=QMessageBox::Yes)
             return;
-    int index=std::distance(entryPairList.begin(),std::find(entryPairList.begin(),entryPairList.end(),notesInternals.currentEntryPair()));
+    int index=std::distance(entryList.begin(),std::find(entryList.begin(),entryList.end(),notesInternals.currentEntry()));
 
-    if(index<(int)entryPairList.size()-1)
+    if(index<(int)entryList.size()-1)
         ++index;
     else
         --index;
     notesInternals.removeCurrentEntry();
     if(index>=0)
-        notesInternals.selectEntry(entryPairList[index]);
+        notesInternals.selectEntry(entryList[index]);
     syncModelAndUI();
 }
 
@@ -103,29 +103,29 @@ void NotizenMainWindow::printCategory()
     else
     {
         QPrinter printer;
-        QPrintDialog *printDialog=new QPrintDialog(&printer,this);
+        std::unique_ptr<QPrintDialog> printDialog(new QPrintDialog(&printer,this));
         NotizenTextEdit textEdit(this);
-        if(printDialog->exec() == QDialog::Accepted && notesInternals.isValid(notesInternals.currentCategoryPair()))
+        if(printDialog->exec() == QDialog::Accepted && notesInternals.isValid(notesInternals.currentCategory()))
         {
             textEdit.moveCursor(QTextCursor::End);
             QTextBlockFormat f;
             f.setAlignment(Qt::AlignCenter);
             textEdit.setCurrentFont(printingFontCategory);
             textEdit.textCursor().insertBlock(f);
-            textEdit.textCursor().insertText(NotesInternals::getCategoryName(notesInternals.currentCategoryPair()));
+            textEdit.textCursor().insertText(notesInternals.currentCategory().name);
             f.setAlignment(Qt::AlignLeft);
             textEdit.textCursor().insertBlock(f);
-            for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
+            for(EntrySet::const_iterator i=NotesInternals::getContent(notesInternals.currentCategory())->entrySet()->cbegin();i!=NotesInternals::getContent(notesInternals.currentCategory())->entrySet()->cend();++i)
             {
                 textEdit.setCurrentFont(printingFontEntry);
                 QTextCharFormat f=textEdit.currentCharFormat();
                 f.setForeground(Qt::black);
                 textEdit.setCurrentCharFormat(f);
                 textEdit.insertPlainText(QString("\n\n"));
-                textEdit.insertPlainText(NotesInternals::getEntryName(*i)+QString("\n\n"));
+                textEdit.insertPlainText((*i).name+QString("\n\n"));
 
                 textEdit.setCurrentFont(DefaultValues::entryFont);
-                textEdit.insertHtml(NotesInternals::getEntryText(*i));
+                textEdit.insertHtml(NotesInternals::getText(*i));
             }
 
             textEdit.print(&printer);
@@ -140,15 +140,15 @@ void NotizenMainWindow::printEntry()
     else
     {
         QPrinter printer;
-        QPrintDialog *printDialog=new QPrintDialog(&printer,this);
+        std::unique_ptr<QPrintDialog> printDialog(new QPrintDialog(&printer,this));
         NotizenTextEdit textEdit(this);
         if(printDialog->exec() == QDialog::Accepted)
         {
             textEdit.setCurrentFont(printingFontEntry);
-            textEdit.insertPlainText(NotesInternals::getEntryName(notesInternals.currentEntryPair())+QString("\n\n"));
+            textEdit.insertPlainText((notesInternals.currentEntry()).name+QString("\n\n"));
 
             textEdit.setCurrentFont(DefaultValues::entryFont);
-            textEdit.insertHtml(NotesInternals::getEntryText(notesInternals.currentEntryPair()));
+            textEdit.insertHtml(NotesInternals::getText(notesInternals.currentEntry()));
 
             textEdit.print(&printer);
         }
@@ -169,8 +169,8 @@ void NotizenMainWindow::saveEntry()
 void NotizenMainWindow::renameCategory()
 {
     QInputDialog renameDialog(this);
-    setUpModalInputDialog(renameDialog,tr("Choose new title"),tr("Enter a new name for category '")+notesInternals.getCategoryName(notesInternals.currentCategoryPair())+QString("'"),
-                          QInputDialog::TextInput,notesInternals.getCategoryName(notesInternals.currentCategoryPair()));
+    setUpModalInputDialog(renameDialog,tr("Choose new title"),tr("Enter a new name for category '")+notesInternals.currentCategory().name+QString("'"),
+                          QInputDialog::TextInput,notesInternals.currentCategory().name);
     renameDialog.exec();
     if(renameDialog.result()==QInputDialog::Accepted && renameDialog.textValue()!="")
     {
@@ -183,8 +183,8 @@ void NotizenMainWindow::renameEntry()
 {
     saveChanges();
     QInputDialog renameDialog(this);
-    setUpModalInputDialog(renameDialog,tr("Choose new title"),tr("Enter a new name for entry '")+notesInternals.getEntryName(notesInternals.currentEntryPair())+QString("'"),
-                          QInputDialog::TextInput,notesInternals.getEntryName(notesInternals.currentEntryPair()));
+    setUpModalInputDialog(renameDialog,tr("Choose new title"),tr("Enter a new name for entry '")+(notesInternals.currentEntry()).name+QString("'"),
+                          QInputDialog::TextInput,(notesInternals.currentEntry()).name);
     renameDialog.exec();
     if(renameDialog.result()==QInputDialog::Accepted && renameDialog.textValue()!="")
     {
@@ -195,14 +195,14 @@ void NotizenMainWindow::renameEntry()
 
 void NotizenMainWindow::toggleCategoryEncryption()
 {
-    if(NotesInternals::getCategoryEncrypted(notesInternals.currentCategoryPair()))
+    if(NotesInternals::isEncrypted(notesInternals.currentCategory()))
         if(QMessageBox(QMessageBox::Warning,tr("Are you sure?"),tr("Decrypting a category will cause its contents to be written on disk in plaintext. Proceed?"),QMessageBox::Yes|QMessageBox::No,this).exec()!=QMessageBox::Yes)
             return;
     notesInternals.toggleCurrentCategoryEncryption();
     syncModelAndUI();
 }
 
-void NotizenMainWindow::moveEntry(CategoryPair newCategory)
+void NotizenMainWindow::moveEntry(Category newCategory)
 {
     notesInternals.moveCurrentEntry(newCategory);
     syncModelAndUI();
@@ -212,18 +212,18 @@ void NotizenMainWindow::selectCategory()
 {
     saveChanges();
     int index=ui->categoriesComboBox->currentIndex();
-    if(index>=0 && index<(int)categoryPairList.size())
+    if(index>=0 && index<(int)categoryList.size())
     {
         updateFlags|=EntryListContentChanged;
         ui->entryFilterLineEdit->setText("");
-        notesInternals.selectCategory(categoryPairList[index]);
+        notesInternals.selectCategory(categoryList[index]);
         syncModelAndUI();
     }
     else
     {
         updateFlags|=EntryListContentChanged;
         ui->entryFilterLineEdit->setText("");
-        notesInternals.selectCategory(notesInternals.invalidCategoryPair());
+        notesInternals.selectCategory(notesInternals.invalidCategory());
         syncModelAndUI();
     }
 }
@@ -232,9 +232,9 @@ void NotizenMainWindow::selectEntry()
 {
     saveChanges();
     int i=ui->entriesListWidget->currentIndex().row();
-    if(i>=0 && i<(int)entryPairList.size())
+    if(i>=0 && i<(int)entryList.size())
     {
-        notesInternals.selectEntry(entryPairList[i]);
+        notesInternals.selectEntry(entryList[i]);
         syncModelAndUI();
     }
 }
@@ -269,7 +269,7 @@ void NotizenMainWindow::toggleEncryption()
 
 void NotizenMainWindow::openSettings()
 {
-    settingsDialog->showSettings(&this->notesInternals,&this->categoryPairList);
+    settingsDialog->showSettings(&this->notesInternals,&this->categoryList);
 }
 
 void NotizenMainWindow::showEvent(QShowEvent *e)
@@ -286,31 +286,31 @@ void NotizenMainWindow::showEvent(QShowEvent *e)
 
 void NotizenMainWindow::syncModelAndUI()
 {
-    //set of visible categories has changed, update categoryPairList and subsequently the combobox widget
+    //set of visible categories has changed, update categoryList and subsequently the combobox widget
     if(updateFlags & CategoryListChanged)
     {
-        categoryPairList.clear();
+        categoryList.clear();
         //encrypted categories go first, unencrypted second
         for(CategorySet::const_iterator i=notesInternals.categorySet()->cbegin();i!=notesInternals.categorySet()->cend();++i)
         {
-            if(NotesInternals::getCategoryEncrypted(*i))
-                categoryPairList.push_back(*i);
+            if(NotesInternals::isEncrypted(*i))
+                categoryList.push_back(*i);
         }
         for(CategorySet::const_iterator i=notesInternals.categorySet()->cbegin();i!=notesInternals.categorySet()->cend();++i)
         {
-            if(!NotesInternals::getCategoryEncrypted(*i))
-                categoryPairList.push_back(*i);
+            if(!NotesInternals::isEncrypted(*i))
+                categoryList.push_back(*i);
         }
         ui->categoriesComboBox->clear();
         int j=-1;
         //fill combobox with categories
-        for(int i=0;i<(int)categoryPairList.size();++i)
+        for(int i=0;i<(int)categoryList.size();++i)
         {
             //encrypted categories get a lock-icon
-            ui->categoriesComboBox->addItem(NotesInternals::getCategoryEncrypted(categoryPairList[i])?QIcon(":/icons/lock.png"):QIcon(""),
-                                            NotesInternals::getCategoryName(categoryPairList[i]));
+            ui->categoriesComboBox->addItem(NotesInternals::isEncrypted(categoryList[i])?QIcon(":/icons/lock.png"):QIcon(""),
+                                            categoryList[i].name);
             //find index of current selection as specified by notesInternals (adapts to changes like renaming)
-            if(notesInternals.currentCategoryPair()==categoryPairList[i])
+            if(notesInternals.currentCategory()==categoryList[i])
                 j=i;
         }
         //select item corresponding to current category (-1 if current category is not set, i.e. invalid)
@@ -318,35 +318,35 @@ void NotizenMainWindow::syncModelAndUI()
         //category list was dealt with, remove flag
         updateFlags &= ~CategoryListChanged;
     }
-    //selected category or set of entries matching the search filter has changed, update entryPairList and entry list widget accordingly
+    //selected category or set of entries matching the search filter has changed, update entryList and entry list widget accordingly
     if(updateFlags & (CategorySelectionChanged|EntryListContentChanged))
     {
-        entryPairList.clear();
+        entryList.clear();
         ui->entriesListWidget->clear();
-        if(notesInternals.isValid(notesInternals.currentCategoryPair()))
+        if(notesInternals.isValid(notesInternals.currentCategory()))
         {
             if(applySearchFilterToEntryList)
             {
                 //entries which start with searchfilter text go first
-                for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
+                for(EntrySet::const_iterator i=NotesInternals::getContent(notesInternals.currentCategory())->entrySet()->cbegin();i!=NotesInternals::getContent(notesInternals.currentCategory())->entrySet()->cend();++i)
                 {
-                    if(NotesInternals::getEntryName(*i).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
-                        entryPairList.push_back(*i);
+                    if((*i).name.startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
+                        entryList.push_back(*i);
                 }
                 //entries which don't begin with the searchfilter text but do otherwise match the filter go second
-                for(EntrySet::const_iterator i=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin();i!=NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend();++i)
+                for(EntrySet::const_iterator i=NotesInternals::getContent(notesInternals.currentCategory())->entrySet()->cbegin();i!=NotesInternals::getContent(notesInternals.currentCategory())->entrySet()->cend();++i)
                 {
-                    if(!NotesInternals::getEntryName(*i).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive) && NotesInternals::getEntryName(*i).contains(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
-                        entryPairList.push_back(*i);
+                    if(!(*i).name.startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive) && (*i).name.contains(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
+                        entryList.push_back(*i);
                 }
             }
             else
             {
-                std::copy(NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cbegin(),NotesInternals::getCategory(notesInternals.currentCategoryPair())->entrySet()->cend(),std::back_inserter(entryPairList));
+                std::copy(NotesInternals::getContent(notesInternals.currentCategory())->entrySet()->cbegin(),NotesInternals::getContent(notesInternals.currentCategory())->entrySet()->cend(),std::back_inserter(entryList));
             }
-            //entry list widget is filled with items corresponding to elements of entryPairList
-            for(int i=0;i<(int)entryPairList.size();++i)
-                ui->entriesListWidget->addItem(NotesInternals::getEntryName(entryPairList[i]));
+            //entry list widget is filled with items corresponding to elements of entryList
+            for(int i=0;i<(int)entryList.size();++i)
+                ui->entriesListWidget->addItem((entryList[i]).name);
             //flag is not yet deleted, since entry selection wasn't dealt with
         }
     }
@@ -355,14 +355,14 @@ void NotizenMainWindow::syncModelAndUI()
     {
         int j=-1;
         //find entry list widget index associated with the entry currently selected (as specified by the notesInternals object)
-        for(int i=0;i<(int)entryPairList.size();++i)
+        for(int i=0;i<(int)entryList.size();++i)
         {
-            if(notesInternals.currentEntryPair()==entryPairList[i])
+            if(notesInternals.currentEntry()==entryList[i])
                 j=i;
         }
-        //if entry isn't currently represented in entryPairList (i.e. not visible), notesInternals must be adjusted to ensure that GUI and model agree
+        //if entry isn't currently represented in entryList (i.e. not visible), notesInternals must be adjusted to ensure that GUI and model agree
         if(j==-1)
-            notesInternals.selectEntry(NotesInternals::invalidEntryPair());
+            notesInternals.selectEntry(NotesInternals::invalidEntry());
         //select item corresponding to currently selected entry
         ui->entriesListWidget->setCurrentRow(j);
         //all effects of selecting a category and otherwise altering the listed entries are dealt with, remove associated flags
@@ -372,7 +372,7 @@ void NotizenMainWindow::syncModelAndUI()
     if(updateFlags & (EntrySelectionChanged|EntryContentChanged))
     {
         //load appropriate content from notesInternals
-        ui->entryTextEdit->setHtml(notesInternals.getEntryText(notesInternals.currentEntryPair()));
+        ui->entryTextEdit->setHtml(notesInternals.getText(notesInternals.currentEntry()));
         //remaining unsaved changes (if any) are void
         setEdited(false);
         //effects of altered entry content were dealt with, remove related flag
@@ -452,9 +452,9 @@ void NotizenMainWindow::readSettings()
     QString categoryName=settings.value("default_category_name",DefaultValues::categoryName).toString();
     QString categoryDateTime=settings.value("default_category_date_time",DefaultValues::categoryDateTime).toString();
     int j=-1;
-    for(int i=0;i<(int)categoryPairList.size() && j==-1;++i)
+    for(int i=0;i<(int)categoryList.size() && j==-1;++i)
     {
-        if(NotesInternals::getCategoryName(categoryPairList[i])==categoryName && NotesInternals::getCategoryDate(categoryPairList[i]).toString()==categoryDateTime)
+        if(categoryList[i].name==categoryName && categoryList[i].date.toString()==categoryDateTime)
             j=i;
     }
     ui->categoriesComboBox->setCurrentIndex(j);
@@ -579,8 +579,8 @@ bool NotizenMainWindow::eventFilter(QObject *target, QEvent *e)
             if(((QKeyEvent*)e)->text()=="\n" || ((QKeyEvent*)e)->text()=="\r")
             {
                 bool nameExists=false;
-                for(int i=0;i<(int)categoryPairList.size();++i)
-                    if(notesInternals.getCategoryName(categoryPairList[i])==ui->categoriesComboBox->currentText())
+                for(int i=0;i<(int)categoryList.size();++i)
+                    if(categoryList[i].name==ui->categoriesComboBox->currentText())
                         nameExists=true;
                 if(!nameExists)
                     addCategory();
@@ -654,29 +654,29 @@ void NotizenMainWindow::on_entryFilterLineEdit_textEdited(const QString &arg1)
     {
         saveChanges();
         updateFlags|=EntryListContentChanged;
-        //notesInternals.selectEntry(NotesInternals::invalidEntryPair()); //optional, depending on search behavior
+        //notesInternals.selectEntry(NotesInternals::invalidEntry()); //optional, depending on search behavior
         syncModelAndUI();
-        if(!entryPairList.empty())
-            notesInternals.selectEntry(entryPairList[0]);
+        if(!entryList.empty())
+            notesInternals.selectEntry(entryList[0]);
     }
     else if(ui->entryFilterLineEdit->text()!="")
     {
         saveChanges();
         int j=-1;
         int k=-1;
-        for(int i=0;i<(int)entryPairList.size() && j==-1;++i)
+        for(int i=0;i<(int)entryList.size() && j==-1;++i)
         {
-            if(notesInternals.getEntryName(entryPairList[i]).startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
+            if((entryList[i]).name.startsWith(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive))
                 j=i;
-            if(notesInternals.getEntryName(entryPairList[i]).contains(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive) && k==-1)
+            if((entryList[i]).name.contains(ui->entryFilterLineEdit->text(),Qt::CaseInsensitive) && k==-1)
                 k=i;
         }
         j=std::max(j,k);
         if(j>=0)
-            notesInternals.selectEntry(entryPairList[j]);
+            notesInternals.selectEntry(entryList[j]);
     }
     //else
-    //    notesInternals.selectEntry(NotesInternals::invalidEntryPair());
+    //    notesInternals.selectEntry(NotesInternals::invalidEntry());
     syncModelAndUI();
 }
 
@@ -752,7 +752,7 @@ void NotizenMainWindow::settingsChangePassword()
 
 void NotizenMainWindow::moveEntryMenu(QAction *action)
 {
-    moveEntry(categoryPairList[action->data().toInt()]);
+    moveEntry(categoryList[action->data().toInt()]);
 }
 
 void NotizenMainWindow::on_savePushButton_clicked()
@@ -854,13 +854,13 @@ void NotizenMainWindow::on_boldToolButton_clicked(bool checked)
 void NotizenMainWindow::on_entriesListWidget_customContextMenuRequested(const QPoint &pos)
 {
     Q_UNUSED(pos)
-    if(notesInternals.isValid(notesInternals.currentCategoryPair(),notesInternals.currentEntryPair()))
+    if(notesInternals.isValid(notesInternals.currentCategory(),notesInternals.currentEntry()))
     {
         QMenu entriesContextMenu(this);
         QMenu moveMenu(this);
         moveMenu.setTitle(tr("Move entry"));
-        for(int i=0;i<(int)categoryPairList.size();++i)
-            moveMenu.addAction(notesInternals.getCategoryName(categoryPairList[i]))->setData(i);
+        for(int i=0;i<(int)categoryList.size();++i)
+            moveMenu.addAction(categoryList[i].name)->setData(i);
         QObject::connect(&moveMenu,SIGNAL(triggered(QAction*)),this,SLOT(moveEntryMenu(QAction*)));
         entriesContextMenu.addMenu(&moveMenu);
         entriesContextMenu.addAction(this->ui->actionRenameEntry);
@@ -891,10 +891,10 @@ void NotizenMainWindow::on_entryTextEdit_currentCharFormatChanged(const QTextCha
 void NotizenMainWindow::on_categoriesComboBox_customContextMenuRequested(const QPoint &pos)
 {
     Q_UNUSED(pos)
-    QMenu *categoriesContextMenu=ui->categoriesComboBox->lineEdit()->createStandardContextMenu();
+    std::unique_ptr<QMenu> categoriesContextMenu(ui->categoriesComboBox->lineEdit()->createStandardContextMenu());
     categoriesContextMenu->removeAction(categoriesContextMenu->actions()[0]);
     categoriesContextMenu->removeAction(categoriesContextMenu->actions()[0]);
-    if(notesInternals.isValid(notesInternals.currentCategoryPair()))
+    if(notesInternals.isValid(notesInternals.currentCategory()))
     {
         if(notesInternals.encryptionEnabled())
             categoriesContextMenu->insertAction(categoriesContextMenu->actions()[0],ui->actionCategoryToggleEncryption);
@@ -902,7 +902,6 @@ void NotizenMainWindow::on_categoriesComboBox_customContextMenuRequested(const Q
         categoriesContextMenu->insertAction(categoriesContextMenu->actions()[0],ui->actionRenameCategory);
     }
     categoriesContextMenu->exec(QCursor::pos());
-    delete categoriesContextMenu;
 }
 
 void NotizenMainWindow::on_actionRenameCategory_triggered()
@@ -945,11 +944,11 @@ void NotizenMainWindow::on_actionDeleteEntry_triggered()
 void NotizenMainWindow::on_entryTextEdit_customContextMenuRequested(const QPoint &pos)
 {
     Q_UNUSED(pos)
-    QMenu *entryTextContextMenu=ui->entryTextEdit->createStandardContextMenu();
+    std::unique_ptr<QMenu> entryTextContextMenu(ui->entryTextEdit->createStandardContextMenu());
     if(!ui->entryTextEdit->textCursor().selection().isEmpty())
         entryTextContextMenu->addAction(ui->actionEditURL);
     entryTextContextMenu->exec(QCursor::pos());
-    delete entryTextContextMenu;
+    //delete entryTextContextMenu;
 }
 
 void NotizenMainWindow::on_actionEditURL_triggered()
@@ -964,7 +963,7 @@ void NotizenMainWindow::on_actionEditURL_triggered()
 
 void NotizenMainWindow::on_entryTextEdit_textChanged()
 {
-    if(notesInternals.isValid(notesInternals.currentCategoryPair(),notesInternals.currentEntryPair()))
+    if(notesInternals.isValid(notesInternals.currentCategory(),notesInternals.currentEntry()))
         setEdited(true);
 }
 

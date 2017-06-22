@@ -2,7 +2,7 @@
 
 
 
-NotesInternals::NotesInternals(QObject *parent) : QObject(parent),hashFunction_("sha256"),currentCategoryPair_(invalidCategoryPair()),currentEntryPair_(invalidEntryPair()),encryptionEnabled_(false)
+NotesInternals::NotesInternals(QObject *parent) : QObject(parent),hashFunction_("sha256"),currentCategory_(invalidCategory()),currentEntry_(invalidEntry()),encryptionEnabled_(false)
 {
     QCA::init();
     if(!QDir("./plain").exists())
@@ -12,67 +12,61 @@ NotesInternals::NotesInternals(QObject *parent) : QObject(parent),hashFunction_(
     loadUnencryptedCategories();
 }
 
-const CategoryPair NotesInternals::addCategory(QString categoryName)
+const Category NotesInternals::addCategory(QString categoryName)
 {
-    //create category object
-    Category* category=new Category();
-    //create pair from name, current time, category. insert pair into categorySet_
-    CategoryPair ret=CategoryPair(NameDate(categoryName,QDateTime::currentDateTime()),category);
+    std::shared_ptr<CategoryContent> content(new CategoryContent());
+    Category ret=Category(categoryName,QDateTime::currentDateTime(),content);
     categorySet_.insert(ret);
 
     //set encryption according to current encryption state
-    category->encrypted_=encryptionEnabled_;
+    content->encrypted_=encryptionEnabled_;
 
     //set empty folder name, update to create new category folder and file
-    category->folderName_="";
+    content->path_="";
     updateCategoryFile(ret);
 
     //set of categories has changed, notify UI
     emit categoryListChanged();
 
-    //return new category pair
+    //return new category
     return ret;
 }
 
-bool NotesInternals::removeCategory(CategoryPair &categoryPair)
+bool NotesInternals::removeCategory(Category &category)
 {
-    //return false if pair is invalid
-    if(!isValid(categoryPair))
+    //return false if category is invalid
+    if(!isValid(category))
         return false;
 
     //remove category directory and files therein
-    QDir dir(getCategoryFolderName(categoryPair));
+    QDir dir(getPath(category));
     dir.removeRecursively();
 
     //delete category object. entries contained in category will be cleaned up by destructor
-    delete getCategory(categoryPair);
+    //delete getContent_(category);
 
-    //remove pair from set
-    categorySet_.erase(categoryPair);
+    //remove from set
+    categorySet_.erase(category);
 
     //set of categories has changed, notify UI
     emit categoryListChanged();
 
-    //if the deleted pair was selected, select invalid pair instead
-    if(currentCategoryPair_==categoryPair)
-        selectCategory(invalidCategoryPair());
+    //if the deleted category was selected, select invalid category instead
+    if(currentCategory_==category)
+        selectCategory(invalidCategory());
 
     return true;
 }
 
-const CategoryPair NotesInternals::renameCategory(CategoryPair &categoryPair, QString newCategoryName)
+const Category NotesInternals::renameCategory(Category &category, QString newCategoryName)
 {
-    //return invalid pair if passed pair is invalid
-    if(!isValid(categoryPair))
-        return invalidCategoryPair();
+    //return invalid if passed category is invalid
+    if(!isValid(category))
+        return invalidCategory();
 
-    //store category pointer
-    Category* category=getCategory_(categoryPair);
-    //remove category pair from set
-    categorySet_.erase(categoryPair);
-
-    //create new pair with newCategoryName and category pointer, insert into category set
-    CategoryPair ret=CategoryPair(NameDate(newCategoryName,getCategoryDate(categoryPair)),category);
+    categorySet_.erase(category);
+    //create new category with newCategoryName and content, insert into category set
+    Category ret=Category(newCategoryName,category.date,category.content);
     categorySet_.insert(ret);
 
     //update category file and folder
@@ -81,164 +75,160 @@ const CategoryPair NotesInternals::renameCategory(CategoryPair &categoryPair, QS
     //set of categories has changed, notify UI
     emit categoryListChanged();
 
-    //if the renamed category was selected, select the newly created pair to retain selection of the same category
-    if(currentCategoryPair_==categoryPair)
+    //if the renamed category was selected, retain selection of the renamed created category
+    if(currentCategory_==category)
         selectCategory(ret);
 
     return ret;
 }
 
-const CategoryPair NotesInternals::toggleCategoryEncryption(CategoryPair categoryPair)
+const Category NotesInternals::toggleCategoryEncryption(Category category)
 {
-    //return invalid pair if passed pair is invalid or encryption is not active
-    if(!isValid(categoryPair) || !encryptionEnabled_)
-        return invalidCategoryPair();
+    //return invalid category if passed category is invalid or encryption is not active
+    if(!isValid(category) || !encryptionEnabled_)
+        return invalidCategory();
 
     //change encryption setting
-    getCategory_(categoryPair)->encrypted_=!getCategory_(categoryPair)->encrypted_;
+    category.content->encrypted_=!category.content->encrypted_;
 
     //update category file and folder
-    updateCategoryFile(categoryPair);
+    updateCategoryFile(category);
 
     //update all entry files, to make sure they're encrypted / decrypted according to the new setting
-    for(EntrySet::iterator i=getCategory_(categoryPair)->entrySet_.begin();i!=getCategory_(categoryPair)->entrySet_.end();++i)
-        updateEntryFile(categoryPair,*i);
+    for(EntrySet::iterator i=category.content->entrySet_.begin();i!=category.content->entrySet_.end();++i)
+        updateEntryFile(category,*i);
 
     //set of categories was altered. entries not necessarily (UI doesn't care about new files)
     emit categoryListChanged();
 
     //selection is not altered by these internal changes
 
-    return categoryPair;
+    return category;
 }
 
-const EntryPair NotesInternals::addEntry(CategoryPair &categoryPair, QString entryName)
+const Entry NotesInternals::addEntry(Category &category, QString entryName)
 {
-    //return invalid pair if passed category pair is invalid
-    if(!isValid(categoryPair))
-        return invalidEntryPair();
+    //return invalid if passed category is invalid
+    if(!isValid(category))
+        return invalidEntry();
 
     //create entry objec
-    Entry* entry=new Entry();
-    //create pair from name, current time, entry. insert entry into category corresponding to categoryPair
-    EntryPair ret=EntryPair(NameDate(entryName,QDateTime::currentDateTime()),entry);
-    getCategory_(categoryPair)->entrySet_.insert(ret);
+    std::shared_ptr<EntryContent> content(new EntryContent());
+    //create entry from name, current time, content. insert entry into category
+    Entry ret=Entry(entryName,QDateTime::currentDateTime(),content);
+    category.content->entrySet_.insert(ret);
 
     //set empty file name, update to create new entry file
-    entry->fileName_="";
-    updateEntryFile(categoryPair,ret);
+    content->fileName_="";
+    updateEntryFile(category,ret);
 
-    //if categoryPair is currently selected, notify GUI of changes
-    if(currentCategoryPair_==categoryPair)
+    //if category is currently selected, notify GUI of changes
+    if(currentCategory_==category)
         emit categoryContentChanged();
     return ret;
 }
 
-bool NotesInternals::removeEntry(CategoryPair &categoryPair, EntryPair &entryPair)
+bool NotesInternals::removeEntry(Category &category, Entry &entry)
 {
-    //return false if (categoryPair,entryPair) don't represent a valid entry
-    if(!isValid(categoryPair,entryPair))
+    //return false if (category,entry) don't represent a valid entry
+    if(!isValid(category,entry))
         return false;
 
     //remove entry file
-    QFile file(getCategoryFolderName(categoryPair)+getEntryFileName(entryPair));
+    QFile file(getPath(category)+getFileName(entry));
     file.remove();
 
-    //delete entry object
-    delete getEntry_(entryPair);
-    //remove entry pair from category
-    getCategory_(categoryPair)->entrySet_.erase(entryPair);
+    //remove entry from category
+    category.content->entrySet_.erase(entry);
 
-    //if categoryPair is currently selected, notify GUI
-    if(currentCategoryPair_==categoryPair)
+    //if category is currently selected, notify GUI
+    if(currentCategory_==category)
     {
         emit categoryContentChanged();
-        //if entryPair was currently selected, select invalid pair instead
-        if(currentEntryPair_==entryPair)
-            selectEntry(invalidEntryPair());
+        //if entry was currently selected, select invalid instead
+        if(currentEntry_==entry)
+            selectEntry(invalidEntry());
     }
     return true;
 }
 
-const EntryPair NotesInternals::renameEntry(CategoryPair &categoryPair, EntryPair &entryPair, QString newEntryName)
+const Entry NotesInternals::renameEntry(Category &category, Entry &entry, QString newEntryName)
 {
-    //return false if (categoryPair,entryPair) don't represent a valid entry
-    if(!isValid(categoryPair,entryPair))
-        return invalidEntryPair();
+    //return false if (category,entry) don't represent a valid entry
+    if(!isValid(category,entry))
+        return invalidEntry();
 
-    //remove entry pair from category
-    Entry* entry=getEntry_(entryPair);
-    Category* category=getCategory_(categoryPair);
-    category->entrySet_.erase(entryPair);
-    //create entry pair with new name, same entry pointer and creation date, place it into the entry set of the category
-    EntryPair ret=EntryPair(NameDate(newEntryName,getEntryDate(entryPair)),entry);
-    category->entrySet_.insert(ret);
+    //remove entry from category
+    category.content->entrySet_.erase(entry);
+    //create entry with new name, creation date and content, place it into the entry set of the category
+    Entry ret=Entry(newEntryName,entry.date,entry.content);
+    category.content->entrySet_.insert(ret);
 
     //update entry file to reflect name change
-    updateEntryFile(categoryPair,ret);
+    updateEntryFile(category,ret);
 
-    //if categoryPair is currently selected, notify UI
-    if(currentCategoryPair_==categoryPair)
+    //if category is currently selected, notify UI
+    if(currentCategory_==category)
     {
         emit categoryContentChanged();
-        //if entry pair was currently selected, select the newly created one
-        if(currentEntryPair_==entryPair)
+        //if entry was currently selected, select the newly created one
+        if(currentEntry_==entry)
             selectEntry(ret);
     }
 
-    //return entry pair with new name
+    //return entry with new name
     return ret;
 }
 
-const EntryPair NotesInternals::moveEntry(CategoryPair &oldCategoryPair, EntryPair &entryPair, CategoryPair &newCategoryPair)
+const Entry NotesInternals::moveEntry(Category &oldCategory, Entry &entry, Category &newCategory)
 {
-    //if either (oldCategoryPair,entryPair) don't represent a valid entry or newCategoryPair does not represent a category, return invalid pair
-    if(!isValid(oldCategoryPair,entryPair) || !isValid(newCategoryPair))
-        return invalidEntryPair();
+    //if either (oldCategory,entry) don't represent a valid entry or newCategory does not represent a category, return invalid
+    if(!isValid(oldCategory,entry) || !isValid(newCategory))
+        return invalidEntry();
 
     //remove entry from old category, insert into new one
-    getCategory_(oldCategoryPair)->entrySet_.erase(entryPair);
-    getCategory_(newCategoryPair)->entrySet_.insert(entryPair);
+    oldCategory.content->entrySet_.erase(entry);
+    newCategory.content->entrySet_.insert(entry);
 
     //rename entry file, move it to new category folder, update fileName_
-    QDir("./").rename(getCategoryFolderName(oldCategoryPair)+getEntry_(entryPair)->fileName_,getCategoryFolderName(newCategoryPair)+getEntry_(entryPair)->fileName_+".tmp");
-    getEntry_(entryPair)->fileName_=getEntry_(entryPair)->fileName_+".tmp";
+    QDir("./").rename(getPath(oldCategory)+entry.content->fileName_,getPath(newCategory)+entry.content->fileName_+".tmp");
+    entry.content->fileName_=entry.content->fileName_+".tmp";
 
     //update entry file, which means delete the moved and renamed version, create a new one
     //(deals with both possible existing file of the same name as well as the case where one category is encrypted and the other is not)
-    updateEntryFile(newCategoryPair,entryPair);
+    updateEntryFile(newCategory,entry);
 
     //if currently selected category is either the previous or new category of the moved entry, notify UI of changes
-    if(currentCategoryPair_==oldCategoryPair || currentCategoryPair_==newCategoryPair)
+    if(currentCategory_==oldCategory || currentCategory_==newCategory)
     {
         emit categoryContentChanged();
-        //if entry was currently selected, select invalid pair instead
-        if(currentCategoryPair_==oldCategoryPair && currentEntryPair_==entryPair)
-            selectEntry(invalidEntryPair());
+        //if entry was currently selected, select invalid instead
+        if(currentCategory_==oldCategory && currentEntry_==entry)
+            selectEntry(invalidEntry());
     }
 
-    //return entry pair passed (no internal changes have occured)
-    return entryPair;
+    //return entry passed (no internal changes have occured)
+    return entry;
 }
 
-const EntryPair NotesInternals::modifyEntryText(CategoryPair categoryPair, EntryPair entryPair, QCA::SecureArray newEntryText)
+const Entry NotesInternals::modifyEntryText(Category category, Entry entry, QCA::SecureArray newEntryText)
 {
-    //return invalid entry pair in case (categoryPair,entryPair) does not represent a valid entry
-    if(!isValid(categoryPair,entryPair))
-        return invalidEntryPair();
+    //return invalid entry in case (category,entry) does not represent a valid entry
+    if(!isValid(category,entry))
+        return invalidEntry();
 
     //update entry text
-    getEntry_(entryPair)->entryText_=newEntryText;
+    entry.content->text_=newEntryText;
 
     //update entry file with new text
-    updateEntryFile(categoryPair,entryPair);
+    updateEntryFile(category,entry);
 
     //notify UI if entry is currently selected
-    if(currentCategoryPair_==categoryPair && currentEntryPair_==entryPair)
+    if(currentCategory_==category && currentEntry_==entry)
         emit entryContentChanged();
 
-    //return entry pair (above changes do not affect the pair directly)
-    return entryPair;
+    //return entry (above changes do not affect the entry object directly)
+    return entry;
 }
 
 bool NotesInternals::enableEncryption(const QCA::SecureArray &password)
@@ -276,7 +266,7 @@ bool NotesInternals::createNewMasterKey(const QCA::SecureArray &newPassword)
         for(CategorySet::iterator i=categorySet_.begin();i!=categorySet_.end();++i)
         {
             updateCategoryFile(*i);
-            for(EntrySet::iterator j=getCategory(*i)->entrySet_.begin();j!=getCategory(*i)->entrySet_.end();++j)
+            for(EntrySet::iterator j=getContent(*i)->entrySet_.begin();j!=getContent(*i)->entrySet_.end();++j)
                 updateEntryFile(*i,*j);
         }
     }
@@ -294,51 +284,51 @@ bool NotesInternals::createNewPassword(const QCA::SecureArray &newPassword)
     return true;
 }
 
-//category and entry selection routines notify UI of changes if either a tracked pair is or becomes invalid
-//or the newly selected pair is different from the previous one
+//category and entry selection routines notify UI of changes if a
+//tracked ("current") category / entry is affected
 
-void NotesInternals::selectCategory(const CategoryPair &categoryPair)
+void NotesInternals::selectCategory(const Category &category)
 {
-    if(!isValid(categoryPair))
+    if(!isValid(category))
     {
-        //if invalid category is selected, set currently selected pairs to invalid prototypes
-        currentCategoryPair_=invalidCategoryPair();
-        currentEntryPair_=invalidEntryPair();
+        //if invalid category is selected, set currently selected items to invalid prototypes
+        currentCategory_=invalidCategory();
+        currentEntry_=invalidEntry();
         //notify UI of changes
         emit categorySelectionChanged();
         emit entrySelectionChanged();
     }
     else
     {
-        //if different from the old one, select new category pair (might belong to same category, e.g. renamed), notify UI
-        if(currentCategoryPair_!=categoryPair)
+        //if different from the old one, select new category (might have identical content, e.g. renamed), notify UI
+        if(currentCategory_!=category)
         {
-            currentCategoryPair_=categoryPair;
+            currentCategory_=category;
             emit categorySelectionChanged();
             //if currently tracked entry does not belong to selected category anymore, select invalid entry and notify UI
-            if(!isValid(currentCategoryPair_,currentEntryPair_))
+            if(!isValid(currentCategory_,currentEntry_))
             {
-                currentEntryPair_=invalidEntryPair();
+                currentEntry_=invalidEntry();
                 emit entrySelectionChanged();
             }
         }
     }
 }
 
-void NotesInternals::selectEntry(const EntryPair &entryPair)
+void NotesInternals::selectEntry(const Entry &entry)
 {
     //if entry to be selected is not present in currently selected category, set it to invalid and notify UI
-    if(!isValid(currentCategoryPair_,entryPair))
+    if(!isValid(currentCategory_,entry))
     {
-        currentEntryPair_=invalidEntryPair();
+        currentEntry_=invalidEntry();
         emit entrySelectionChanged();
     }
     else
     {
-        //if a new entry pair is selected, notify UI
-        if(currentEntryPair_!=entryPair)
+        //if a new entry is selected, notify UI
+        if(currentEntry_!=entry)
         {
-            currentEntryPair_=entryPair;
+            currentEntry_=entry;
             emit entrySelectionChanged();
         }
     }
@@ -368,8 +358,8 @@ void NotesInternals::loadCategories(bool encrypted)
     QCA::SecureArray entryText;
 
     //category and entry pointers to create and temporarily point to new objects
-    Category *category;
-    Entry *entry;
+    std::shared_ptr<CategoryContent> categoryContent;
+    std::shared_ptr<EntryContent> entryContent;
 
     //initialization vector in case of encryption. located at start of the file
     QCA::InitializationVector iv;
@@ -415,12 +405,12 @@ void NotesInternals::loadCategories(bool encrypted)
                     categoryDateTime="";
 
                 //create new category object corresponding to current folder
-                category=new Category();
+                categoryContent=std::make_shared<CategoryContent> ();
                 //set content accordingly
-                category->folderName_=folderName+QString("/");
-                category->encrypted_=encrypted;
-                //add category pair for newly created category to categorySet_
-                categorySet_.insert(CategoryPair(NameDate(categoryName,QDateTime::fromString(categoryDateTime)),category));
+                categoryContent->path_=folderName+QString("/");
+                categoryContent->encrypted_=encrypted;
+                //add newly created category to categorySet_
+                categorySet_.insert(Category(categoryName,QDateTime::fromString(categoryDateTime),categoryContent));
 
                 //iterate over *.entry files in current folder
                 QDirIterator fileIterator(folderName,QStringList()<<"*.entry",QDir::Files,QDirIterator::NoIteratorFlags);
@@ -455,13 +445,13 @@ void NotesInternals::loadCategories(bool encrypted)
                     content2=QByteArray(content1.constData()+j+1);
                     entryText=QCA::SecureArray(content2);
                     //create new entry object corresponding to current file
-                    entry=new Entry();
+                    entryContent=std::make_shared<EntryContent>();
                     //set content accordingly, remove path of subdirectory from filePath to obtain fileName_
-                    entry->fileName_=filePath.remove(2,folderName.length()-2);
-                    entry->entryText_=entryText;
+                    entryContent->fileName_=filePath.remove(2,folderName.length()-2);
+                    entryContent->text_=entryText;
 
-                    //add entry pair to current category
-                    category->entrySet_.insert(EntryPair(NameDate(entryName,QDateTime::fromString(entryDateTime)),entry));
+                    //add entry to current category
+                    categoryContent->entrySet_.insert(Entry(entryName,QDateTime::fromString(entryDateTime),entryContent));
                 }
             }
         }
@@ -486,14 +476,12 @@ void NotesInternals::removeEncryptedCategories()
     CategorySet::iterator i=categorySet_.begin();
     while(i!=categorySet_.end())
     {
-        //if category is encrypted, delete category object, remove pair from categorySet_
-        if(getCategoryEncrypted(*i))
+        if(isEncrypted(*i))
         {
-            //if category pair to be removed is currently selected, select invalid pair
-            if(currentCategoryPair_==*i)
-                selectCategory(invalidCategoryPair());
-            delete getCategory(*i);
-            //advance iterator and remove pair from categorySet_ in one step
+            //if category to be removed is currently selected, select invalid
+            if(currentCategory_==*i)
+                selectCategory(invalidCategory());
+            //advance iterator and remove category from set in one step
             i=categorySet_.erase(i);
         }
         else
@@ -503,20 +491,20 @@ void NotesInternals::removeEncryptedCategories()
     emit categoryListChanged();
 }
 
-bool NotesInternals::updateEntryFile(CategoryPair categoryPair, EntryPair entryPair)
+bool NotesInternals::updateEntryFile(Category category, Entry entry)
 {
     //save previous file name
-    QString previousFileName=getEntryFileName(entryPair);
+    QString previousFileName=getFileName(entry);
 
     //prepare plaintext content
     QByteArray content;
-    QCA::SecureArray plain=QCA::SecureArray(getEntryName(entryPair).toUtf8())
+    QCA::SecureArray plain=QCA::SecureArray(entry.name.toUtf8())
                             +=QCA::SecureArray(QString("\n").toUtf8())
-                            +=QCA::SecureArray(getEntryDate(entryPair).toString().toUtf8())
+                            +=QCA::SecureArray(entry.date.toString().toUtf8())
                             +=QCA::SecureArray(QString("\n").toUtf8())
-                            +=getEntryText(entryPair);
+                            +=getText(entry);
     //encrypt content if category is set to encrypted, otherwise use plaintext
-    if(getCategoryEncrypted(categoryPair))
+    if(isEncrypted(category))
     {
         QCA::InitializationVector iv(32);
         content=iv.toByteArray()+cryptoInterface_.encrypt(plain,iv).toByteArray();
@@ -528,8 +516,8 @@ bool NotesInternals::updateEntryFile(CategoryPair categoryPair, EntryPair entryP
     QFile file;
     if(previousFileName!="")
     {
-        file.setFileName(getCategoryFolderName(categoryPair)+previousFileName);
-        file.rename(getCategoryFolderName(categoryPair)+previousFileName+".bak");
+        file.setFileName(getPath(category)+previousFileName);
+        file.rename(getPath(category)+previousFileName+".bak");
     }
 
     //use hash of content as new filename (with failsafe in case of collision)
@@ -538,19 +526,20 @@ bool NotesInternals::updateEntryFile(CategoryPair categoryPair, EntryPair entryP
     QString hash=QString(hashFunction_.final().toByteArray().toHex());
     QString fileName;
     QRegularExpression regExp("[^A-Za-z0-9]");
-    if(getCategoryEncrypted(categoryPair))
+    QString entryName=entry.name; //replace has no const qualifier, therefore introduce temporary non-const string
+    if(isEncrypted(category))
         fileName=hash+QString(".entry");
     else
-        fileName=getEntryName(entryPair).replace(regExp,"").left(27)+"-"+hash.left(5)+".entry";
-    file.setFileName(getCategoryFolderName(categoryPair)+fileName);
+        fileName=entryName.replace(regExp,"").left(27)+"-"+hash.left(5)+".entry";
+    file.setFileName(getPath(category)+fileName);
     int i=0;
     while(file.exists())
     {
-        if(getCategoryEncrypted(categoryPair))
+        if(isEncrypted(category))
             fileName=hash+QString("-")+QString::number(i++)+QString(".entry");
         else
-            fileName=getEntryName(entryPair).replace(regExp,"").left(27)+"-"+hash.left(5)+QString("-")+QString::number(i++)+".entry";
-        file.setFileName(getCategoryFolderName(categoryPair)+fileName);
+            fileName=entryName.replace(regExp,"").left(27)+"-"+hash.left(5)+QString("-")+QString::number(i++)+".entry";
+        file.setFileName(getPath(category)+fileName);
     }
 
     //write content
@@ -559,26 +548,26 @@ bool NotesInternals::updateEntryFile(CategoryPair categoryPair, EntryPair entryP
     file.close();
 
     //set new filename
-    getEntry_(entryPair)->fileName_=fileName;
+    entry.content->fileName_=fileName;
 
     //delete backup
     if(previousFileName!="")
     {
-        file.setFileName(getCategoryFolderName(categoryPair)+previousFileName+".bak");
+        file.setFileName(getPath(category)+previousFileName+".bak");
         file.remove();
     }
     return true;
 }
 
-bool NotesInternals::updateCategoryFile(CategoryPair categoryPair)
+bool NotesInternals::updateCategoryFile(Category category)
 {
     //save previous folder name
-    QString previousFolderName=getCategoryFolderName(categoryPair);
+    QString previousFolderName=getPath(category);
 
     //prepare plaintext content
     QByteArray content;
-    QByteArray plain=(getCategoryName(categoryPair)+QString("\n")+getCategoryDate(categoryPair).toString()).toUtf8();
-    if(getCategoryEncrypted(categoryPair))
+    QByteArray plain=(category.name+QString("\n")+category.date.toString()).toUtf8();
+    if(isEncrypted(category))
     {
         QCA::InitializationVector iv(32);
         content=iv.toByteArray()+cryptoInterface_.encrypt(QCA::SecureArray(plain),iv).toByteArray();
@@ -600,23 +589,23 @@ bool NotesInternals::updateCategoryFile(CategoryPair categoryPair)
     hashFunction_.update(content);
     QString hash=QString(hashFunction_.final().toByteArray().toHex());
     //pick ./enc or ./plain subdirectories depending on encryption boolean
-    QString pre=getCategoryEncrypted(categoryPair)?QString("./enc/"):QString("./plain/");
+    QString pre=isEncrypted(category)?QString("./enc/"):QString("./plain/");
 
     QString folderName;
     QRegularExpression regExp("[^A-Za-z0-9]");
-    if(getCategoryEncrypted(categoryPair))
+    if(isEncrypted(category))
         folderName=pre+hash+QString("/");
     else
-        folderName=pre+getCategoryName(categoryPair).replace(regExp,"").left(27)+"-"+hash.left(5)+QString("/");
+        folderName=pre+category.name.replace(regExp,"").left(27)+"-"+hash.left(5)+QString("/");
 
     QDir dir(folderName);
     int i=0;
     while(dir.exists())
     {
-        if(getCategoryEncrypted(categoryPair))
+        if(isEncrypted(category))
             folderName=pre+hash+QString("-")+QString::number(i++)+QString("/");
         else
-            folderName=pre+getCategoryName(categoryPair).replace(regExp,"").left(27)+"-"+hash.left(5)+QString("-")+QString::number(i++)+QString("/");
+            folderName=pre+category.name.replace(regExp,"").left(27)+"-"+hash.left(5)+QString("-")+QString::number(i++)+QString("/");
         dir.setPath(folderName);
     }
 
@@ -632,8 +621,8 @@ bool NotesInternals::updateCategoryFile(CategoryPair categoryPair)
     file.write(content);
     file.close();
 
-    //set new folder name
-    getCategory_(categoryPair)->folderName_=folderName;
+    //set new path
+    category.content->path_=folderName;
 
     //delete backup
     if(previousFolderName!="")
@@ -644,14 +633,15 @@ bool NotesInternals::updateCategoryFile(CategoryPair categoryPair)
     return true;
 }
 
-Category::Category()
+CategoryContent::CategoryContent()
 {
 
 }
 
-Category::~Category()
+CategoryContent::~CategoryContent()
 {
     //clean up, i.e. remove entries belonging to category
-    for(EntrySet::iterator i=entrySet_.begin();i!=entrySet_.end();++i)
-        delete NotesInternals::getEntry(*i);
+    entrySet_.clear();
+    //for(EntrySet::iterator i=entrySet_.begin();i!=entrySet_.end();++i)
+    //    delete NotesInternals::getContent(*i);
 }
