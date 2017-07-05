@@ -14,6 +14,7 @@ TARGET = Notizen
 TEMPLATE = app
 CONFIG += c++11
 CONFIG += -no-opengl
+CONFIG += static
 
 QT += printsupport
 
@@ -42,4 +43,5 @@ RESOURCES += \
 
 TRANSLATIONS = localization/German.ts
 
-LIBS += -lcryptopp
+LIBS += -L$$PWD/./ -lcryptopp
+QMAKE_LFLAGS = -static
