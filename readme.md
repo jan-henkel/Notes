@@ -35,6 +35,7 @@ Some URLs (those not beginning with "www") might require "http://" or "https://"
 There are 2 ways to delete a category (and all entries therein):
 1. Select it (if it's not currently selected) and click on the "-" button for categories.
 2. Select it and right click on it, click "Delete category" in the context menu.
+
 For entries there are 3 ways:
 1. By selecting it and using the "-" button for entries.
 2. By right clicking on it in the list and selecting "Delete entry" from the menu.
