@@ -17,6 +17,8 @@
 #include <QByteArray>
 #include <algorithm>
 
+using CryptoPP::byte;
+
 class CryptoInterface : public QObject
 {
     Q_OBJECT
