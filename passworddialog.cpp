@@ -69,7 +69,7 @@ void PasswordDialog::proceed()
         }
         else
         {
-            emit newPasswordSet(CryptoInterface::toSecBlock(ui->passwordLineEdit->text().toUtf8()),createMasterKeyOption_[mode_]?ui->generateMasterKeyCheckbox->checkState():(mode_==CreateMasterKey));
+            emit newPasswordSet(CryptoInterface::toSecBlock(ui->passwordLineEdit->text().toUtf8()),createMasterKeyOption_[mode_]?ui->generateMasterKeyCheckbox->isChecked():(mode_==CreateMasterKey));
             return;
         }
     }
