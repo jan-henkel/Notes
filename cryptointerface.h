@@ -6,6 +6,7 @@
 #include <QObject>
 #include <cryptopp/cryptlib.h>
 #include <cryptopp/secblock.h>
+#include <cryptopp/algparam.h>
 #include <cryptopp/pwdbased.h>
 #include <cryptopp/sha.h>
 #include <cryptopp/aes.h>
