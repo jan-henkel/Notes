@@ -43,5 +43,6 @@ RESOURCES += \
 
 TRANSLATIONS = localization/German.ts
 
-LIBS += -L$$PWD/./ -lcryptopp
+win32:LIBS += -L$$PWD/cryptopp-install-windows/lib -lcryptopp
+win32:INCLUDEPATH += $$PWD/cryptopp-install-windows/include
 QMAKE_LFLAGS = -static
